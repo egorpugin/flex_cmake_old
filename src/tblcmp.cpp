@@ -296,8 +296,8 @@ void    expand_nxt_chk (void)
 
 	++num_reallocs;
 
-	nxt = reallocate_integer_array (nxt, current_max_xpairs);
-	chk = reallocate_integer_array (chk, current_max_xpairs);
+	nxt = (decltype(nxt))reallocate_integer_array (nxt, current_max_xpairs);
+	chk = (decltype(chk))reallocate_integer_array (chk, current_max_xpairs);
 
 	memset(chk + old_max, 0, MAX_XPAIRS_INCREMENT * sizeof(int));
 }
@@ -695,7 +695,7 @@ void    mktemplate (int state[], int statenum, int comstate)
 
 		++num_reallocs;
 
-		tnxt = reallocate_integer_array (tnxt,
+		tnxt = (decltype(tnxt))reallocate_integer_array (tnxt,
 						 current_max_template_xpairs);
 	}
 

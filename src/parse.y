@@ -162,7 +162,7 @@ sect1		:  sect1 startconddecl namelist1
 sect1end	:  SECTEND
 			{
 			check_options();
-			scon_stk = allocate_integer_array( lastsc + 1 );
+			scon_stk = (decltype(scon_stk))allocate_integer_array( lastsc + 1 );
 			scon_stk_ptr = 0;
 			}
 		;

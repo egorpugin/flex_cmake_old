@@ -596,19 +596,19 @@ current_mns);
 
 		++num_reallocs;
 
-		firstst = reallocate_integer_array (firstst, current_mns);
-		lastst = reallocate_integer_array (lastst, current_mns);
-		finalst = reallocate_integer_array (finalst, current_mns);
+		firstst = (decltype(firstst))reallocate_integer_array (firstst, current_mns);
+		lastst = (decltype(lastst))reallocate_integer_array (lastst, current_mns);
+		finalst = (decltype(finalst))reallocate_integer_array (finalst, current_mns);
 		transchar =
-			reallocate_integer_array (transchar, current_mns);
-		trans1 = reallocate_integer_array (trans1, current_mns);
-		trans2 = reallocate_integer_array (trans2, current_mns);
+            (decltype(transchar))reallocate_integer_array (transchar, current_mns);
+		trans1 = (decltype(trans1))reallocate_integer_array (trans1, current_mns);
+		trans2 = (decltype(trans2))reallocate_integer_array (trans2, current_mns);
 		accptnum =
-			reallocate_integer_array (accptnum, current_mns);
+            (decltype(accptnum))reallocate_integer_array (accptnum, current_mns);
 		assoc_rule =
-			reallocate_integer_array (assoc_rule, current_mns);
+            (decltype(assoc_rule))reallocate_integer_array (assoc_rule, current_mns);
 		state_type =
-			reallocate_integer_array (state_type, current_mns);
+            (decltype(state_type))reallocate_integer_array (state_type, current_mns);
 	}
 
 	firstst[lastnfa] = lastnfa;
@@ -684,13 +684,13 @@ void    new_rule (void)
 	if (++num_rules >= current_max_rules) {
 		++num_reallocs;
 		current_max_rules += MAX_RULES_INCREMENT;
-		rule_type = reallocate_integer_array (rule_type,
+		rule_type = (decltype(rule_type))reallocate_integer_array (rule_type,
 						      current_max_rules);
-		rule_linenum = reallocate_integer_array (rule_linenum,
+		rule_linenum = (decltype(rule_linenum))reallocate_integer_array (rule_linenum,
 							 current_max_rules);
-		rule_useful = reallocate_integer_array (rule_useful,
+		rule_useful = (decltype(rule_useful))reallocate_integer_array (rule_useful,
 							current_max_rules);
-		rule_has_nl = reallocate_bool_array (rule_has_nl,
+		rule_has_nl = (decltype(rule_has_nl))reallocate_bool_array (rule_has_nl,
 						     current_max_rules);
 	}
 

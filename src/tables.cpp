@@ -36,6 +36,10 @@
 #include "flexdef.h"
 #include "tables.h"
 
+#ifdef WIN32
+#include <WinSock2.h>
+#endif
+
 /** Convert size_t to t_flag.
  *  @param n in {1,2,4}
  *  @return YYTD_DATA*. 
@@ -463,7 +467,7 @@ void yytbl_data_compress (struct yytbl_data *tbl)
 	flex_int32_t i, newsz, total_len;
 	struct yytbl_data newtbl;
 
-	yytbl_data_init (&newtbl, tbl->td_id);
+	yytbl_data_init (&newtbl, (yytbl_id)tbl->td_id);
 	newtbl.td_hilen = tbl->td_hilen;
 	newtbl.td_lolen = tbl->td_lolen;
 	newtbl.td_flags = tbl->td_flags;

@@ -60,10 +60,9 @@ static struct hash_entry *ccltab[CCL_HASH_SIZE];
 /* declare functions that have forward references */
 
 static int addsym(char[], char *, int, hash_table, int);
-static struct hash_entry *findsym PROTO ((const char *sym,
+static hash_entry *findsym(const char *sym,
 					  hash_table table,
-
-					  int table_size));
+					  int table_size);
 static int hashfunct(const char *, int);
 
 
@@ -88,7 +87,7 @@ static int addsym (char sym[], char *str_def, int int_def, hash_table table, int
 	}
 
 	/* create new entry */
-	new_entry = malloc(sizeof(struct hash_entry));
+	new_entry = (decltype(new_entry))malloc(sizeof(struct hash_entry));
 
 	if (new_entry == NULL)
 		flexfatal (_("symbol table memory allocation failed"));
@@ -119,7 +118,7 @@ void    cclinstal (unsigned char ccltxt[], int cclnum)
 	 * called unless the symbol is new.
 	 */
 
-	(void) addsym (xstrdup(ccltxt),
+	(void) addsym (xstrdup((const char *)ccltxt),
 		       (char *) 0, cclnum, ccltab, CCL_HASH_SIZE);
 }
 
@@ -137,7 +136,7 @@ int     ccllookup (unsigned char ccltxt[])
 
 /* findsym - find symbol in symbol table */
 
-static struct hash_entry *findsym (const char *sym, hash_table table, int table_size)
+static hash_entry *findsym (const char *sym, hash_table table, int table_size)
 {
 	static struct hash_entry empty_entry = {
 		NULL, NULL, NULL, NULL, 0,
@@ -180,7 +179,7 @@ void    ndinstal (const char *name, unsigned char definition[])
 {
 
 	if (addsym (xstrdup(name),
-		    xstrdup(definition), 0,
+		    xstrdup((const char*)definition), 0,
 		    ndtbl, NAME_TABLE_HASH_SIZE))
 			synerr (_("name defined twice"));
 }
@@ -205,11 +204,11 @@ void    scextend (void)
 
 	++num_reallocs;
 
-	scset = reallocate_integer_array (scset, current_max_scs);
-	scbol = reallocate_integer_array (scbol, current_max_scs);
-	scxclu = reallocate_integer_array (scxclu, current_max_scs);
-	sceof = reallocate_integer_array (sceof, current_max_scs);
-	scname = reallocate_char_ptr_array (scname, current_max_scs);
+	scset = (decltype(scset))reallocate_integer_array (scset, current_max_scs);
+	scbol = (decltype(scbol))reallocate_integer_array (scbol, current_max_scs);
+	scxclu = (decltype(scxclu))reallocate_integer_array (scxclu, current_max_scs);
+	sceof = (decltype(sceof))reallocate_integer_array (sceof, current_max_scs);
+	scname = (decltype(scname))reallocate_char_ptr_array (scname, current_max_scs);
 }
 
 

@@ -150,7 +150,7 @@ scanopt_t *scanopt_init (const optspec_t *options, int argc, char **argv, int fl
 {
 	int     i;
 	struct _scanopt_t *s;
-	s = malloc(sizeof (struct _scanopt_t));
+	s = (decltype(s))malloc(sizeof (struct _scanopt_t));
 
 	s->options = options;
 	s->optc = 0;
@@ -169,7 +169,7 @@ scanopt_t *scanopt_init (const optspec_t *options, int argc, char **argv, int fl
 		s->optc++;
 
 	/* Build auxiliary data */
-	s->aux = malloc(s->optc * sizeof (struct _aux));
+	s->aux = (decltype(s->aux))malloc(s->optc * sizeof (struct _aux));
 
 	for (i = 0; i < s->optc; i++) {
 		const unsigned char *p, *pname;
@@ -273,7 +273,7 @@ int     scanopt_usage (scanopt_t *scanner, FILE *fp, const char *usage)
 	fprintf (fp, "\n");
 
 	/* Sort by r_val and string. Yes, this is O(n*n), but n is small. */
-	store = malloc(s->optc * sizeof (usg_elem));
+	store = (decltype(store))malloc(s->optc * sizeof (usg_elem));
 	for (i = 0; i < s->optc; i++) {
 
 		/* grab the next preallocate node. */

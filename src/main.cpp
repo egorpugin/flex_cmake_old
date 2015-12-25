@@ -148,21 +148,24 @@ int flex_main (int argc, char *argv[])
 	 * exit(n);
 	 */
 	exit_status = setjmp (flex_main_jmp_buf);
-	if (exit_status){
+    if (exit_status)
+    {
+        chain_pipe.stop();
+        getExecutor().stop();
+
         if (stdout && !_stdout_closed && !ferror(stdout)){
             fflush(stdout);
             fclose(stdout);
         }
-        while (wait(&child_status) > 0){
+        /*while (wait(&child_status) > 0){
             if (!WIFEXITED (child_status)
                 || WEXITSTATUS (child_status) != 0){
-                /* report an error of a child
-                 */
+                // report an error of a child
                 if( exit_status <= 1 )
                     exit_status = 2;
 
             }
-        }
+        }*/
         return exit_status - 1;
     }
 
@@ -186,6 +189,8 @@ int flex_main (int argc, char *argv[])
 
 	/* Generate the C state transition tables from the DFA. */
 	make_tables ();
+
+    // do m4, write to output
 
 	/* Note, flexend does not return.  It exits with its argument
 	 * as status.
@@ -349,7 +354,7 @@ void check_options (void)
     /* Setup the filter chain. */
     output_chain = filter_create_int(NULL, filter_tee_header, headerfilename);
     if ( !(m4 = getenv("M4"))) {
-	    char *slash;
+	    const char *slash;
 		m4 = M4;
 		if (slash = strrchr(M4, '/')) {
 			m4 = slash+1;
@@ -376,8 +381,10 @@ void check_options (void)
 					m4_path[endOfDir-path] = '/';
 					m4_path[endOfDir-path+1] = '\0';
 					strncat(m4_path, m4, sizeof(m4_path));
-					if (stat(m4_path, &sbuf) == 0 &&
-						(S_ISREG(sbuf.st_mode)) && sbuf.st_mode & S_IXUSR) {
+					if (stat(m4_path, &sbuf) == 0
+                        //&&
+						//(S_ISREG(sbuf.st_mode)) && sbuf.st_mode & S_IXUSR
+                        ) {
 						m4 = strdup(m4_path);
 						break;
 					}
@@ -395,6 +402,8 @@ void check_options (void)
     if (preproc_level > 0) {
         filter_truncate(output_chain, preproc_level);
         filter_apply_chain(output_chain);
+
+        //sleep(100000);
     }
     yyout = stdout;
 
@@ -419,7 +428,7 @@ void check_options (void)
 
 		if (!tablesfilename) {
 			nbytes = strlen (prefix) + strlen (tablesfile_template) + 2;
-			tablesfilename = pname = calloc(nbytes, 1);
+			tablesfilename = pname = (decltype(pname))calloc(nbytes, 1);
 			snprintf (pname, nbytes, tablesfile_template, prefix);
 		}
 
@@ -431,7 +440,7 @@ void check_options (void)
 		yytbl_writer_init (&tableswr, tablesout);
 
 		nbytes = strlen (prefix) + strlen ("tables") + 2;
-		tablesname = calloc(nbytes, 1);
+		tablesname = (decltype(tablesname))calloc(nbytes, 1);
 		snprintf (tablesname, nbytes, "%stables", prefix);
 		yytbl_hdr_init (&hdr, flex_version, tablesname);
 
@@ -468,40 +477,39 @@ void check_options (void)
 
     /* Define the start condition macros. */
     {
-        struct Buf tmpbuf;
+        Buf tmpbuf;
         buf_init(&tmpbuf, sizeof(char));
         for (i = 1; i <= lastsc; i++) {
              char *str, *fmt = "#define %s %d\n";
              size_t strsz;
 
              strsz = strlen(fmt) + strlen(scname[i]) + (int)(1 + log10(i)) + 2;
-             str = malloc(strsz);
+             str = (decltype(str))malloc(strsz);
              if (!str)
                flexfatal(_("allocation of macro definition failed"));
              snprintf(str, strsz, fmt,      scname[i], i - 1);
              buf_strappend(&tmpbuf, str);
              free(str);
         }
-        buf_m4_define(&m4defs_buf, "M4_YY_SC_DEFS", tmpbuf.elts);
+        buf_m4_define(&m4defs_buf, "M4_YY_SC_DEFS", (const char *)tmpbuf.getText().c_str());
         buf_destroy(&tmpbuf);
     }
 
     /* This is where we begin writing to the file. */
 
     /* Dump the %top code. */
-    if( top_buf.elts)
-        outn((char*) top_buf.elts);
+    if( !top_buf.empty())
+        outn((char*) top_buf.getText().c_str());
 
     /* Dump the m4 definitions. */
     buf_print_strings(&m4defs_buf, stdout);
-    m4defs_buf.nelts = 0; /* memory leak here. */
 
     /* Place a bogus line directive, it will be fixed in the filter. */
     outn("#line 0 \"M4_YY_OUTFILE_NAME\"\n");
 
 	/* Dump the user defined preproc directives. */
-	if (userdef_buf.elts)
-		outn ((char *) (userdef_buf.elts));
+	if (!userdef_buf.empty())
+		outn ((char *) (userdef_buf.getText().c_str()));
 
 	skelout ();
 	/* %% [1.0] */
@@ -950,7 +958,7 @@ void flexinit (int argc, char **argv)
 {
 	int     i, sawcmpflag, rv, optind;
 	char   *arg;
-	scanopt_t sopt;
+	scanopt_t *sopt;
 
 	printstats = syntaxerror = trace = spprdflt = false;
 	lex_compat = posix_compat = C_plus_plus = backing_up_report =
@@ -977,7 +985,7 @@ void flexinit (int argc, char **argv)
 
 	/* Initialize dynamic array for holding the rule actions. */
 	action_size = 2048;	/* default size of action array in bytes */
-	action_array = allocate_character_array (action_size);
+	action_array = (decltype(action_array))allocate_character_array (action_size);
 	defs1_offset = prolog_offset = action_offset = action_index = 0;
 	action_array[0] = '\0';
 
@@ -991,13 +999,11 @@ void flexinit (int argc, char **argv)
         const char * m4defs_init_str[] = {"m4_changequote\n",
                                           "m4_changequote([[, ]])\n"};
         buf_init (&m4defs_buf, sizeof (char *));
-        buf_append (&m4defs_buf, &m4defs_init_str, 2);
+        buf_append(&m4defs_buf, m4defs_init_str[0]);
+        buf_append(&m4defs_buf, m4defs_init_str[1]);
     }
 
     sf_init ();
-
-    /* initialize regex lib */
-    flex_init_regex();
 
 	/* Enable C++ if program name ends with '+'. */
 	program_name = basename2 (argv[0], 0);
@@ -1007,7 +1013,7 @@ void flexinit (int argc, char **argv)
 		C_plus_plus = true;
 
 	/* read flags */
-	sopt = scanopt_init (flexopts, argc, argv, 0);
+	sopt = scanopt_init(flexopts, argc, argv, 0);
 	if (!sopt) {
 		/* This will only happen when flexopts array is altered. */
 		fprintf (stderr,
@@ -1737,55 +1743,55 @@ void set_up_initial_allocations (void)
 {
 	maximum_mns = (long_align ? MAXIMUM_MNS_LONG : MAXIMUM_MNS);
 	current_mns = INITIAL_MNS;
-	firstst = allocate_integer_array (current_mns);
-	lastst = allocate_integer_array (current_mns);
-	finalst = allocate_integer_array (current_mns);
-	transchar = allocate_integer_array (current_mns);
-	trans1 = allocate_integer_array (current_mns);
-	trans2 = allocate_integer_array (current_mns);
-	accptnum = allocate_integer_array (current_mns);
-	assoc_rule = allocate_integer_array (current_mns);
-	state_type = allocate_integer_array (current_mns);
+	firstst = (decltype(firstst))allocate_integer_array (current_mns);
+	lastst = (decltype(lastst))allocate_integer_array (current_mns);
+	finalst = (decltype(finalst))allocate_integer_array (current_mns);
+	transchar = (decltype(transchar))allocate_integer_array (current_mns);
+	trans1 = (decltype(trans1))allocate_integer_array (current_mns);
+	trans2 = (decltype(trans2))allocate_integer_array (current_mns);
+	accptnum = (decltype(accptnum))allocate_integer_array (current_mns);
+	assoc_rule = (decltype(assoc_rule))allocate_integer_array (current_mns);
+	state_type = (decltype(state_type))allocate_integer_array (current_mns);
 
 	current_max_rules = INITIAL_MAX_RULES;
-	rule_type = allocate_integer_array (current_max_rules);
-	rule_linenum = allocate_integer_array (current_max_rules);
-	rule_useful = allocate_integer_array (current_max_rules);
-	rule_has_nl = allocate_bool_array (current_max_rules);
+	rule_type = (decltype(rule_type))allocate_integer_array (current_max_rules);
+	rule_linenum = (decltype(rule_linenum))allocate_integer_array (current_max_rules);
+	rule_useful = (decltype(rule_useful))allocate_integer_array (current_max_rules);
+	rule_has_nl = (decltype(rule_has_nl))allocate_bool_array (current_max_rules);
 
 	current_max_scs = INITIAL_MAX_SCS;
-	scset = allocate_integer_array (current_max_scs);
-	scbol = allocate_integer_array (current_max_scs);
-	scxclu = allocate_integer_array (current_max_scs);
-	sceof = allocate_integer_array (current_max_scs);
-	scname = allocate_char_ptr_array (current_max_scs);
+	scset = (decltype(scset))allocate_integer_array (current_max_scs);
+	scbol = (decltype(scbol))allocate_integer_array (current_max_scs);
+	scxclu = (decltype(scxclu))allocate_integer_array (current_max_scs);
+	sceof = (decltype(sceof))allocate_integer_array (current_max_scs);
+	scname = (decltype(scname))allocate_char_ptr_array (current_max_scs);
 
 	current_maxccls = INITIAL_MAX_CCLS;
-	cclmap = allocate_integer_array (current_maxccls);
-	ccllen = allocate_integer_array (current_maxccls);
-	cclng = allocate_integer_array (current_maxccls);
-	ccl_has_nl = allocate_bool_array (current_maxccls);
+	cclmap = (decltype(cclmap))allocate_integer_array (current_maxccls);
+	ccllen = (decltype(ccllen))allocate_integer_array (current_maxccls);
+	cclng = (decltype(cclng))allocate_integer_array (current_maxccls);
+	ccl_has_nl = (decltype(ccl_has_nl))allocate_bool_array (current_maxccls);
 
 	current_max_ccl_tbl_size = INITIAL_MAX_CCL_TBL_SIZE;
-	ccltbl = allocate_Character_array (current_max_ccl_tbl_size);
+	ccltbl = (decltype(ccltbl))allocate_Character_array (current_max_ccl_tbl_size);
 
 	current_max_dfa_size = INITIAL_MAX_DFA_SIZE;
 
 	current_max_xpairs = INITIAL_MAX_XPAIRS;
-	nxt = allocate_integer_array (current_max_xpairs);
-	chk = allocate_integer_array (current_max_xpairs);
+	nxt = (decltype(nxt))allocate_integer_array (current_max_xpairs);
+	chk = (decltype(chk))allocate_integer_array (current_max_xpairs);
 
 	current_max_template_xpairs = INITIAL_MAX_TEMPLATE_XPAIRS;
-	tnxt = allocate_integer_array (current_max_template_xpairs);
+	tnxt = (decltype(tnxt))allocate_integer_array (current_max_template_xpairs);
 
 	current_max_dfas = INITIAL_MAX_DFAS;
-	base = allocate_integer_array (current_max_dfas);
-	def = allocate_integer_array (current_max_dfas);
-	dfasiz = allocate_integer_array (current_max_dfas);
-	accsiz = allocate_integer_array (current_max_dfas);
-	dhash = allocate_integer_array (current_max_dfas);
-	dss = allocate_int_ptr_array (current_max_dfas);
-	dfaacc = allocate_dfaacc_union (current_max_dfas);
+	base = (decltype(base))allocate_integer_array (current_max_dfas);
+	def = (decltype(def))allocate_integer_array (current_max_dfas);
+	dfasiz = (decltype(dfasiz))allocate_integer_array (current_max_dfas);
+	accsiz = (decltype(accsiz))allocate_integer_array (current_max_dfas);
+	dhash = (decltype(dhash))allocate_integer_array (current_max_dfas);
+	dss = (decltype(dss))allocate_int_ptr_array (current_max_dfas);
+	dfaacc = (decltype(dfaacc))allocate_dfaacc_union (current_max_dfas);
 
 	nultrans = NULL;
 }

@@ -78,7 +78,7 @@ void ccladd (int cclp, int ch)
 
 		++num_reallocs;
 
-		ccltbl = reallocate_Character_array (ccltbl,
+		ccltbl = (uint8_t*)reallocate_Character_array (ccltbl,
 						     current_max_ccl_tbl_size);
 	}
 
@@ -191,12 +191,12 @@ int     cclinit (void)
 		++num_reallocs;
 
 		cclmap =
-			reallocate_integer_array (cclmap, current_maxccls);
+            (int*)reallocate_integer_array (cclmap, current_maxccls);
 		ccllen =
-			reallocate_integer_array (ccllen, current_maxccls);
-		cclng = reallocate_integer_array (cclng, current_maxccls);
+            (int*)reallocate_integer_array (ccllen, current_maxccls);
+		cclng = (int*)reallocate_integer_array (cclng, current_maxccls);
 		ccl_has_nl =
-			reallocate_bool_array (ccl_has_nl,
+            (bool*)reallocate_bool_array (ccl_has_nl,
 					       current_maxccls);
 	}
 

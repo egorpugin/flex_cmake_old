@@ -85,12 +85,12 @@ extern  "C" {
  *   flags   - Control behavior.
  * Return:  A malloc'd pointer .
  */
-	scanopt_t *scanopt_init PROTO ((const optspec_t * options,
-					int argc, char **argv, int flags));
+	scanopt_t *scanopt_init(const optspec_t * options,
+					int argc, char **argv, int flags);
 
 /* Frees memory used by scanner.
  * Always returns 0. */
-	int scanopt_destroy PROTO ((scanopt_t * scanner));
+	int scanopt_destroy(scanopt_t * scanner);
 
 #ifndef NO_SCANOPT_USAGE
 /* Prints a usage message based on contents of optlist.
@@ -101,9 +101,9 @@ extern  "C" {
  * Return:  Always returns 0 (zero).
  */
 	int scanopt_usage
-		PROTO (
+		
 		       (scanopt_t * scanner, FILE * fp,
-			const char *usage));
+			const char *usage);
 #endif
 
 /* Scans command-line options in argv[].
@@ -121,9 +121,9 @@ extern  "C" {
  *
  */
 	int scanopt
-		PROTO (
+		
 		       (scanopt_t * scanner, char **optarg,
-			int *optindex));
+			int *optindex);
 
 #ifdef __cplusplus
 }

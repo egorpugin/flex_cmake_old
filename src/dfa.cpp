@@ -252,8 +252,8 @@ accset[++nacc] = nfaccnum; \
 do { \
 current_max_dfa_size += MAX_DFA_SIZE_INCREMENT; \
 ++num_reallocs; \
-t = reallocate_integer_array( t, current_max_dfa_size ); \
-stk = reallocate_integer_array( stk, current_max_dfa_size ); \
+t = (int*)reallocate_integer_array( t, current_max_dfa_size ); \
+stk = (int*)reallocate_integer_array( stk, current_max_dfa_size ); \
 }while(0) \
 
 #define PUT_ON_STACK(state) \
@@ -282,7 +282,7 @@ ADD_STATE(state); \
 
 
 	if (!did_stk_init) {
-		stk = allocate_integer_array (current_max_dfa_size);
+		stk = (int*)allocate_integer_array (current_max_dfa_size);
 		did_stk_init = true;
 	}
 
@@ -347,17 +347,17 @@ void increase_max_dfas (void)
 
 	++num_reallocs;
 
-	base = reallocate_integer_array (base, current_max_dfas);
-	def = reallocate_integer_array (def, current_max_dfas);
-	dfasiz = reallocate_integer_array (dfasiz, current_max_dfas);
-	accsiz = reallocate_integer_array (accsiz, current_max_dfas);
-	dhash = reallocate_integer_array (dhash, current_max_dfas);
-	dss = reallocate_int_ptr_array (dss, current_max_dfas);
-	dfaacc = reallocate_dfaacc_union (dfaacc, current_max_dfas);
+	base = (int*)reallocate_integer_array (base, current_max_dfas);
+	def = (int*)reallocate_integer_array (def, current_max_dfas);
+	dfasiz = (int*)reallocate_integer_array (dfasiz, current_max_dfas);
+	accsiz = (int*)reallocate_integer_array (accsiz, current_max_dfas);
+	dhash = (int*)reallocate_integer_array (dhash, current_max_dfas);
+	dss = (int**)reallocate_int_ptr_array (dss, current_max_dfas);
+	dfaacc = (dfaacc_union*)reallocate_dfaacc_union (dfaacc, current_max_dfas);
 
 	if (nultrans)
 		nultrans =
-			reallocate_integer_array (nultrans,
+        (int*)reallocate_integer_array (nultrans,
 						  current_max_dfas);
 }
 
@@ -395,8 +395,8 @@ void ntod (void)
 	/* accset needs to be large enough to hold all of the rules present
 	 * in the input, *plus* their YY_TRAILING_HEAD_MASK variants.
 	 */
-	accset = allocate_integer_array ((num_rules + 1) * 2);
-	nset = allocate_integer_array (current_max_dfa_size);
+	accset = (int*)allocate_integer_array ((num_rules + 1) * 2);
+	nset = (int*)allocate_integer_array (current_max_dfa_size);
 
 	/* The "todo" queue is represented by the head, which is the DFA
 	 * state currently being processed, and the "next", which is the
@@ -475,7 +475,7 @@ void ntod (void)
 
 		if (use_NUL_table)
 			nultrans =
-				allocate_integer_array (current_max_dfas);
+            (decltype(nultrans))allocate_integer_array (current_max_dfas);
 
 		/* From now on, nultrans != nil indicates that we're
 		 * saving null transitions for later, separate encoding.
@@ -511,12 +511,12 @@ void ntod (void)
 		 * So we'll have to realloc() on the way...
 		 * we'll wait until we can calculate yynxt_tbl->td_hilen.
 		 */
-		yynxt_tbl = calloc(1, sizeof (struct yytbl_data));
+		yynxt_tbl = (decltype(yynxt_tbl))calloc(1, sizeof (struct yytbl_data));
      
 		yytbl_data_init (yynxt_tbl, YYTD_ID_NXT);
 		yynxt_tbl->td_hilen = 1;
 		yynxt_tbl->td_lolen = num_full_table_rows;
-		yynxt_tbl->td_data = yynxt_data =
+		yynxt_tbl->td_data = yynxt_data = (decltype(yynxt_data))
 			calloc(yynxt_tbl->td_lolen *
 					    yynxt_tbl->td_hilen,
 					    sizeof (flex_int32_t));
@@ -701,7 +701,7 @@ void ntod (void)
 			/* Each time we hit here, it's another td_hilen, so we realloc. */
 			yynxt_tbl->td_hilen++;
 			yynxt_tbl->td_data = yynxt_data =
-				realloc (yynxt_data,
+				(decltype(yynxt_data))realloc (yynxt_data,
 						     yynxt_tbl->td_hilen *
 						     yynxt_tbl->td_lolen *
 						     sizeof (flex_int32_t));
@@ -851,7 +851,7 @@ int snstods (int sns[], int numstates, int accset[], int nacc, int hashval, int 
 
 	newds = lastdfa;
 
-	dss[newds] = allocate_integer_array (numstates + 1);
+	dss[newds] = (int*)allocate_integer_array (numstates + 1);
 
 	/* If we haven't already sorted the states in sns, we do so now,
 	 * so that future comparisons with it can be made quickly.
@@ -884,7 +884,7 @@ int snstods (int sns[], int numstates, int accset[], int nacc, int hashval, int 
 		qsort (&accset [1], nacc, sizeof (accset [1]), intcmp);
 
 		dfaacc[newds].dfaacc_set =
-			allocate_integer_array (nacc + 1);
+            (int*)allocate_integer_array (nacc + 1);
 
 		/* Save the accepting set for later */
 		for (i = 1; i <= nacc; ++i) {

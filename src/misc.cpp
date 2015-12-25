@@ -60,14 +60,14 @@ static void sko_push(bool dc)
 {
     if(!sko_stack){
         sko_sz = 1;
-        sko_stack = malloc(sizeof(struct sko_state) * sko_sz);
+        sko_stack = (decltype(sko_stack))malloc(sizeof(struct sko_state) * sko_sz);
         if (!sko_stack)
             flexfatal(_("allocation of sko_stack failed"));
         sko_len = 0;
     }
     if(sko_len >= sko_sz){
         sko_sz *= 2;
-        sko_stack = realloc(sko_stack,
+        sko_stack = (decltype(sko_stack))realloc(sko_stack,
 			sizeof(struct sko_state) * sko_sz);
     }
     
@@ -108,32 +108,9 @@ void action_define (const char *defname, int value)
 
 	/* track #defines so we can undef them when we're done. */
 	cpy = xstrdup(defname);
-	buf_append (&defs_buf, &cpy, 1);
+	buf_append (&defs_buf, cpy);
 }
 
-
-#ifdef notdef
-/** Append "m4_define([[defname]],[[value]])m4_dnl\n" to the running buffer.
- *  @param defname The macro name.
- *  @param value The macro value, can be NULL, which is the same as the empty string.
- */
-static void action_m4_define (const char *defname, const char * value)
-{
-	char    buf[MAXLINE];
-
-    flexfatal ("DO NOT USE THIS FUNCTION!");
-
-	if ((int) strlen (defname) > MAXLINE / 2) {
-		format_pinpoint_message (_
-					 ("name \"%s\" ridiculously long"),
-					 defname);
-		return;
-	}
-
-	snprintf (buf, sizeof(buf), "m4_define([[%s]],[[%s]])m4_dnl\n", defname, value?value:"");
-	add_action (buf);
-}
-#endif
 
 /* Append "new_text" to the running buffer. */
 void add_action (const char *new_text)
@@ -152,7 +129,7 @@ void add_action (const char *new_text)
 			action_size = new_size;
 
 		action_array =
-			reallocate_character_array (action_array,
+            (decltype(action_array))reallocate_character_array (action_array,
 						    action_size);
 	}
 
@@ -405,7 +382,8 @@ void line_directive_out (FILE *output_file, int do_infile)
 	 * the accumulated actions.
 	 */
 	if (output_file) {
-		fputs (directive, output_file);
+        fputs(directive, output_file);
+        //chain_pipe.push_to_all(directive);
 	}
 	else
 		add_action (directive);
@@ -608,48 +586,72 @@ int otoi (unsigned char str[])
 
 void out (const char *str)
 {
-	fputs (str, stdout);
+    fputs(str, stdout);
+    //chain_pipe.push_to_all(str);
 }
 
 void out_dec (const char *fmt, int n)
 {
-	fprintf (stdout, fmt, n);
+    fprintf(stdout, fmt, n);
+    char buf[8192] = { 0 };
+    sprintf(buf, fmt, n);
+    //chain_pipe.push_to_all(buf);
 }
 
 void out_dec2 (const char *fmt, int n1, int n2)
 {
-	fprintf (stdout, fmt, n1, n2);
+    fprintf(stdout, fmt, n1, n2);
+    char buf[8192] = { 0 };
+    sprintf(buf, fmt, n1, n2);
+    //chain_pipe.push_to_all(buf);
 }
 
 void out_hex (const char *fmt, unsigned int x)
 {
-	fprintf (stdout, fmt, x);
+    fprintf(stdout, fmt, x);
+    char buf[8192] = { 0 };
+    sprintf(buf, fmt, x);
+    //chain_pipe.push_to_all(buf);
 }
 
 void out_str (const char *fmt, const char str[])
 {
-	fprintf (stdout,fmt, str);
+    fprintf(stdout, fmt, str);
+    char buf[8192] = { 0 };
+    sprintf(buf, fmt, str);
+    //chain_pipe.push_to_all(buf);
 }
 
 void out_str3 (const char *fmt, const char s1[], const char s2[], const char s3[])
 {
-	fprintf (stdout,fmt, s1, s2, s3);
+    fprintf(stdout, fmt, s1, s2, s3);
+    char buf[8192*3] = { 0 };
+    sprintf(buf, fmt, s1,s2,s3);
+    //chain_pipe.push_to_all(buf);
 }
 
 void out_str_dec (const char *fmt, const char str[], int n)
 {
-	fprintf (stdout,fmt, str, n);
+    fprintf(stdout, fmt, str, n);
+    char buf[8192] = { 0 };
+    sprintf(buf, fmt, str, n);
+    //chain_pipe.push_to_all(buf);
 }
 
 void outc (int c)
 {
-	fputc (c, stdout);
+    fputc(c, stdout);
+    char buf[10] = { 0 };
+    sprintf(buf, "%c", c);
+    //chain_pipe.push_to_all(buf);
 }
 
 void outn (const char *str)
 {
 	fputs (str,stdout);
-    fputc('\n',stdout);
+    fputc('\n', stdout);
+    //chain_pipe.push_to_all(str);
+    //chain_pipe.push_to_all(String());
 }
 
 /** Print "m4_define( [[def]], [[val]])m4_dnl\n".
@@ -659,7 +661,10 @@ void outn (const char *str)
 void out_m4_define (const char* def, const char* val)
 {
     const char * fmt = "m4_define( [[%s]], [[%s]])m4_dnl\n";
-    fprintf(stdout, fmt, def, val?val:"");
+    fprintf(stdout, fmt, def, val ? val : "");
+    char buf[8192] = { 0 };
+    sprintf(buf, fmt, def, val);
+    //chain_pipe.push_to_all(buf);
 }
 
 
@@ -815,8 +820,8 @@ void skelout (void)
                 do_copy = do_copy && tablesext;
 			}
 			else if (cmd_match (CMD_TABLES_YYDMAP)) {
-				if (tablesext && yydmap_buf.elts)
-					outn ((char *) (yydmap_buf.elts));
+				if (tablesext && !yydmap_buf.empty())
+					outn ((char *) (yydmap_buf.getText().c_str()));
 			}
             else if (cmd_match (CMD_DEFINE_YYTABLES)) {
                 out_str("#define YYTABLES_NAME \"%s\"\n",
@@ -865,8 +870,7 @@ void skelout (void)
  * element_n.  Formats the output with spaces and carriage returns.
  */
 
-void transition_struct_out (element_v, element_n)
-     int element_v, element_n;
+void transition_struct_out (int element_v, int element_n)
 {
 
 	/* short circuit any output */
