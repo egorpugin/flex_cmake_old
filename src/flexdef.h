@@ -39,7 +39,6 @@
 #include <config.h>
 #endif
 
-#ifdef STDC_HEADERS
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -47,7 +46,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
-#endif
+
 #ifdef HAVE_ASSERT_H
 #include <assert.h>
 #else
@@ -69,16 +68,8 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
-#endif
-#ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
-#else
-#define bool int
-#define true 1
-#define false 0
-#endif
 #ifdef HAVE_REGEX_H
 #include <regex.h>
 #else
