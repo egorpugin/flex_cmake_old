@@ -107,14 +107,6 @@ using regmatch_t = std::cmatch;
 #define DEFAULT_CSIZE 128
 #endif
 
-#ifndef PROTO
-#if defined(__STDC__)
-#define PROTO(proto) proto
-#else
-#define PROTO(proto) ()
-#endif
-#endif
-
 /* Maximum line length we'll have to deal with. */
 #define MAXLINE 2048
 
@@ -420,9 +412,11 @@ extern int trace_hex;
 
 extern int datapos, dataline, linenum;
 extern FILE *skelfile, *yyin, *backing_up_file;
+extern FILE *output_file;
 extern const char *skel[];
 extern int skel_ind;
-extern char *infilename, *outfilename, *headerfilename;
+extern char *infilename, *headerfilename;
+extern std::string outfilename;
 extern int did_outfilename;
 extern char *prefix, *yyclass, *extra_type;
 extern int do_stdinit, use_stdout;
@@ -1076,13 +1070,6 @@ extern int yylex(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <deque>
-#include <future>
-#include <mutex>
-#include <thread>
-
-#include "executor.h"
-
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "context.h"
@@ -1114,77 +1101,10 @@ using String = std::string;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-
-class Pipe
-{
-public:
-    void push_to_one(const String &s)
-    {
-        push(s);
-        cv.notify_one();
-    }
-    void push_to_all(const String &s)
-    {
-        push(s);
-        cv.notify_all();
-    }
-
-    String pop()
-    {
-        std::unique_lock<std::mutex> lock(m);
-        while (q.empty() && !stopped)
-            cv.wait(lock);
-
-        String s;
-        if (q.empty() || stopped)
-            return s;
-        s.front();
-        q.pop_front();
-        return s;
-    }
-
-    String get(int i)
-    {
-        std::unique_lock<std::mutex> lock(m);
-        while (q.size() <= i && !stopped)
-            cv.wait(lock);
-
-        String s;
-        if (q.size() <= i || stopped)
-            return s;
-        s = *(q.rbegin() + i);
-        return s;
-    }
-
-    bool is_stopped() const { return stopped; }
-    bool is_stopped(int i) const { return is_stopped() && q.size() < i; }
-    void stop()
-    {
-        stopped = true;
-        cv.notify_all();
-    }
-
-private:
-    std::deque<String> q;
-    std::mutex m;
-    std::condition_variable cv;
-    bool stopped = false;
-
-    void push(const String &s)
-    {
-        std::lock_guard<std::mutex> lk(m);
-        q.push_back(s);
-    }
-};
-
-extern Pipe chain_pipe;
+extern Context processed_file;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-inline void sleep(int s)
-{
-    std::this_thread::sleep_for(std::chrono::seconds(s));
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1234,32 +1154,6 @@ int reverse_case(int c);
 /* return false if [c1-c2] is ambiguous for a caseless scanner. */
 bool range_covers_case (int c1, int c2);
 
-/*
- *  From "filter.c"
- */
-
-/** A single stdio filter to execute.
- *  The filter may be external, such as "sed", or it
- *  may be internal, as a function call.
- */
-struct filter {
-    int    (*filter_func)(struct filter*); /**< internal filter function */
-    void * extra;         /**< extra data passed to filter_func */
-	int     argc;         /**< arg count */
-	const char ** argv;   /**< arg vector, \0-terminated */
-    struct filter * next; /**< next filter or NULL */
-};
-
-/* output filter chain */
-extern struct filter * output_chain;
-extern struct filter *filter_create_ext (struct filter * chain, const char *cmd, ...);
-struct filter *filter_create_int(struct filter *chain,
-				  int (*filter_func) (struct filter *),
-                  void *extra);
-extern bool filter_apply_chain(struct filter * chain);
-extern int filter_truncate(struct filter * chain, int max_len);
-extern int filter_tee_header(struct filter *chain);
-extern int filter_fix_linedirs(struct filter *chain);
 
 
 

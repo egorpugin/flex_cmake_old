@@ -3116,7 +3116,7 @@ void yyfree YYFARGS1( void *,ptr)
 ]])
 
 %if-tables-serialization definitions
-m4preproc_include(`tables_shared.c')
+m4preproc_include(`tables_shared.cpp')
 
 static int yytbl_read8 (void *v, struct yytbl_reader * rd)
 {

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <list>
 #include <memory>
 #include <string>
 #include <stack>
@@ -12,7 +13,7 @@ class Context
 public:
     using Text = std::string;
 
-private:
+public:
     struct Line
     {
         Text text;
@@ -30,11 +31,12 @@ private:
         }
     };
 
-public:
-    using Lines = std::vector<Line>;
+    using Lines = std::list<Line>;
 
 public:
     Context(const Text &indent = "    ", const Text &newline = "\n");
+
+    void initFromString(const std::string &s);
 
     void addLine(const Text &s = Text());
     void addNoNewLine(const Text &s);
@@ -57,7 +59,14 @@ public:
     void trimEnd(size_t n);
 
     Text getText() const;
+
+    void setLines(const Lines &lines);
     Lines getLines() const;
+    Lines &getLinesRef() { return lines; }
+    void mergeBeforeAndAfterLines();
+
+    void splitLines();
+    void setMaxEmptyLines(int n);
 
     Context &before()
     {

@@ -2,6 +2,8 @@
 
 #include "context.h"
 
+#include <unordered_map>
+
 Context::Lines &operator+=(Context::Lines &s1, const Context::Lines &s2)
 {
     s1.insert(s1.end(), s2.begin(), s2.end());
@@ -17,6 +19,30 @@ Context::Lines operator+(const Context::Lines &s1, const Context::Lines &s2)
 Context::Context(const Text &indent, const Text &newline)
     : indent(indent), newline(newline)
 {
+}
+
+void Context::initFromString(const std::string &s)
+{
+    int p = 0;
+    while (1)
+    {
+        int p2 = s.find('\n', p);
+        if (p2 == s.npos)
+            break;
+        auto line = s.substr(p, p2 - p);
+        int space = 0;
+        for (auto i = line.rbegin(); i != line.rend(); ++i)
+        {
+            if (isspace(*i))
+                space++;
+            else
+                break;
+        }
+        if (space)
+            line.resize(line.size() - space);
+        lines.push_back({ line });
+        p = p2 + 1;
+    }
 }
 
 void Context::addText(const Text &s)
@@ -144,6 +170,103 @@ Context::Lines Context::getLines() const
     if (after_)
         lines += after_->getLines();
     return lines;
+}
+
+void Context::setLines(const Lines &lines)
+{
+    before_.reset();
+    after_.reset();
+    this->lines = lines;
+}
+
+void Context::mergeBeforeAndAfterLines()
+{
+    if (before_)
+    {
+        before_->mergeBeforeAndAfterLines();
+        lines.insert(lines.begin(), before_->getLinesRef().begin(), before_->getLinesRef().end());
+        before_.reset();
+    }
+    if (after_)
+    {
+        after_->mergeBeforeAndAfterLines();
+        lines.insert(lines.end(), after_->getLinesRef().begin(), after_->getLinesRef().end());
+        after_.reset();
+    }
+}
+
+void Context::setMaxEmptyLines(int n)
+{
+    // remove all empty lines at begin
+    while (1)
+    {
+        auto line = lines.begin();
+        bool empty = true;
+        for (auto &c : line->text)
+        {
+            if (!isspace(c))
+            {
+                empty = false;
+                break;
+            }
+        }
+        if (empty)
+            lines.erase(line);
+        else
+            break;
+    }
+
+    int el = 0;
+    for (auto line = lines.begin(); line != lines.end(); ++line)
+    {
+        bool empty = true;
+        for (auto &c : line->text)
+        {
+            if (!isspace(c))
+            {
+                empty = false;
+                break;
+            }
+        }
+        if (empty)
+            el++;
+        else
+            el = 0;
+        if (el > n)
+        {
+            line = lines.erase(line);
+            --line;
+        }
+    }
+}
+
+void Context::splitLines()
+{
+    for (auto line = lines.begin(); line != lines.end(); ++line)
+    {
+        auto &text = line->text;
+        auto p = text.find('\n');
+        if (p == text.npos)
+            continue;
+
+        int old_pos = 0;
+        Lines ls;
+        while (1)
+        {
+            ls.push_back(Line{text.substr(old_pos, p - old_pos)});
+            p++;
+            old_pos = p;
+            p = text.find('\n', p);
+            if (p == text.npos)
+            {
+                ls.push_back(Line{ text.substr(old_pos) });
+                break;
+            }
+        }
+        lines.insert(line, ls.begin(), ls.end());
+        line = lines.erase(line);
+        line--;
+    }
 }
 
 void Context::emptyLines(int n)

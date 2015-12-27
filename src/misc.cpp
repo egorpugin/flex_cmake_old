@@ -586,13 +586,13 @@ int otoi (unsigned char str[])
 
 void out (const char *str)
 {
-    fputs(str, stdout);
+    fputs(str, output_file);
     //chain_pipe.push_to_all(str);
 }
 
 void out_dec (const char *fmt, int n)
 {
-    fprintf(stdout, fmt, n);
+    fprintf(output_file, fmt, n);
     char buf[8192] = { 0 };
     sprintf(buf, fmt, n);
     //chain_pipe.push_to_all(buf);
@@ -600,7 +600,7 @@ void out_dec (const char *fmt, int n)
 
 void out_dec2 (const char *fmt, int n1, int n2)
 {
-    fprintf(stdout, fmt, n1, n2);
+    fprintf(output_file, fmt, n1, n2);
     char buf[8192] = { 0 };
     sprintf(buf, fmt, n1, n2);
     //chain_pipe.push_to_all(buf);
@@ -608,7 +608,7 @@ void out_dec2 (const char *fmt, int n1, int n2)
 
 void out_hex (const char *fmt, unsigned int x)
 {
-    fprintf(stdout, fmt, x);
+    fprintf(output_file, fmt, x);
     char buf[8192] = { 0 };
     sprintf(buf, fmt, x);
     //chain_pipe.push_to_all(buf);
@@ -616,7 +616,7 @@ void out_hex (const char *fmt, unsigned int x)
 
 void out_str (const char *fmt, const char str[])
 {
-    fprintf(stdout, fmt, str);
+    fprintf(output_file, fmt, str);
     char buf[8192] = { 0 };
     sprintf(buf, fmt, str);
     //chain_pipe.push_to_all(buf);
@@ -624,7 +624,7 @@ void out_str (const char *fmt, const char str[])
 
 void out_str3 (const char *fmt, const char s1[], const char s2[], const char s3[])
 {
-    fprintf(stdout, fmt, s1, s2, s3);
+    fprintf(output_file, fmt, s1, s2, s3);
     char buf[8192*3] = { 0 };
     sprintf(buf, fmt, s1,s2,s3);
     //chain_pipe.push_to_all(buf);
@@ -632,7 +632,7 @@ void out_str3 (const char *fmt, const char s1[], const char s2[], const char s3[
 
 void out_str_dec (const char *fmt, const char str[], int n)
 {
-    fprintf(stdout, fmt, str, n);
+    fprintf(output_file, fmt, str, n);
     char buf[8192] = { 0 };
     sprintf(buf, fmt, str, n);
     //chain_pipe.push_to_all(buf);
@@ -640,7 +640,7 @@ void out_str_dec (const char *fmt, const char str[], int n)
 
 void outc (int c)
 {
-    fputc(c, stdout);
+    fputc(c, output_file);
     char buf[10] = { 0 };
     sprintf(buf, "%c", c);
     //chain_pipe.push_to_all(buf);
@@ -648,8 +648,8 @@ void outc (int c)
 
 void outn (const char *str)
 {
-	fputs (str,stdout);
-    fputc('\n', stdout);
+	fputs (str, output_file);
+    fputc('\n', output_file);
     //chain_pipe.push_to_all(str);
     //chain_pipe.push_to_all(String());
 }
@@ -661,7 +661,7 @@ void outn (const char *str)
 void out_m4_define (const char* def, const char* val)
 {
     const char * fmt = "m4_define( [[%s]], [[%s]])m4_dnl\n";
-    fprintf(stdout, fmt, def, val ? val : "");
+    fprintf(output_file, fmt, def, val ? val : "");
     char buf[8192] = { 0 };
     sprintf(buf, fmt, def, val);
     //chain_pipe.push_to_all(buf);

@@ -37,6 +37,8 @@
 #include "options.h"
 #include "tables.h"
 
+#include "simple_m4.h"
+
 static char flex_version[] = FLEX_VERSION;
 
 /* declare functions that have forward references */
@@ -64,7 +66,8 @@ int     skel_ind = 0;
 char   *action_array;
 int     action_size, defs1_offset, prolog_offset, action_offset,
 	action_index;
-char   *infilename = NULL, *outfilename = NULL, *headerfilename = NULL;
+char   *infilename = NULL, *headerfilename = NULL;
+std::string outfilename;
 int     did_outfilename;
 char   *prefix, *yyclass, *extra_type = NULL;
 int     do_stdinit, use_stdout;
@@ -125,18 +128,18 @@ static const char tablesfile_template[] = "lex.%s.tables";
 extern FILE* yyout;
 
 static char outfile_path[MAXLINE];
-static int outfile_created = 0;
 static char *skelname = NULL;
-static int _stdout_closed = 0; /* flag to prevent double-fclose() on stdout. */
 const char *escaped_qstart = "[[]]M4_YY_NOOP[M4_YY_NOOP[M4_YY_NOOP[[]]";
 const char *escaped_qend   = "[[]]M4_YY_NOOP]M4_YY_NOOP]M4_YY_NOOP[[]]";
 
 /* For debugging. The max number of filters to apply to skeleton. */
-static int preproc_level = 1000;
+static int preproc_level = 100;
 
-int flex_main PROTO ((int argc, char *argv[]));
+Context processed_file;
 
-int flex_main (int argc, char *argv[])
+FILE *output_file;
+
+int flex_main(int argc, char *argv[])
 {
 	int     i, exit_status, child_status;
 
@@ -150,22 +153,6 @@ int flex_main (int argc, char *argv[])
 	exit_status = setjmp (flex_main_jmp_buf);
     if (exit_status)
     {
-        chain_pipe.stop();
-        getExecutor().stop();
-
-        if (stdout && !_stdout_closed && !ferror(stdout)){
-            fflush(stdout);
-            fclose(stdout);
-        }
-        /*while (wait(&child_status) > 0){
-            if (!WIFEXITED (child_status)
-                || WEXITSTATUS (child_status) != 0){
-                // report an error of a child
-                if( exit_status <= 1 )
-                    exit_status = 2;
-
-            }
-        }*/
         return exit_status - 1;
     }
 
@@ -190,7 +177,164 @@ int flex_main (int argc, char *argv[])
 	/* Generate the C state transition tables from the DFA. */
 	make_tables ();
 
-    // do m4, write to output
+    // rest of processsing
+    Context header_file;
+    do
+    {
+        auto p = ftell(output_file);
+        fseek(output_file, 0, SEEK_SET);
+
+        std::string content(p, 0);
+        fread(&content[0], p, 1, output_file);
+        fclose(output_file);
+
+        if (use_stdout)
+        {
+            if (unlink(outfilename.c_str()))
+                lerr(_("error deleting output file %s"),
+                    outfilename);
+        }
+
+        // init context
+        if (preproc_level == 0)
+            break;
+        processed_file.initFromString(content);
+
+        // create header
+        if (preproc_level == 1)
+            break;
+        {            
+            if (headerfilename)
+            {
+                header_file.before().addLine("m4_changecom`'m4_dnl");
+                header_file.before().addLine("m4_changequote`'m4_dnl");
+                header_file.before().addLine("m4_changequote([[,]])[[]]m4_dnl");
+                header_file.before().addLine("m4_define([[M4_YY_NOOP]])[[]]m4_dnl");
+                header_file.before().addLine("m4_define( [[M4_YY_IN_HEADER]],[[]])m4_dnl");
+                header_file.before().addLine("#ifndef " + String(prefix) + "HEADER_H");
+                header_file.before().addLine("#define " + String(prefix) + "HEADER_H 1");
+                header_file.before().addLine("#define " + String(prefix) + "IN_HEADER 1");
+                header_file.before().addLine();
+                header_file.before().addLine("m4_define( [[M4_YY_OUTFILE_NAME]],[[" +
+                    (headerfilename ? String(headerfilename) : "<stdout>") + "]])m4_dnl");
+
+                header_file += processed_file;
+
+                header_file.after().addLine();
+                header_file.after().addLine("#line 4000 \"M4_YY_OUTFILE_NAME\"\n");
+                header_file.after().addLine("#undef " + String(prefix) + "IN_HEADER\n");
+                header_file.after().addLine("#endif /* " + String(prefix) + "HEADER_H */\n");
+                header_file.after().addLine("m4_undefine( [[M4_YY_IN_HEADER]])m4_dnl\n");
+            }
+
+            // write after src
+            processed_file.before().addLine("m4_changecom`'m4_dnl");
+            processed_file.before().addLine("m4_changequote`'m4_dnl");
+            processed_file.before().addLine("m4_changequote([[,]])[[]]m4_dnl");
+            processed_file.before().addLine("m4_define([[M4_YY_NOOP]])[[]]m4_dnl");
+            processed_file.before().addLine("m4_define( [[M4_YY_OUTFILE_NAME]],[[" +
+                (!outfilename.empty() ? outfilename : "<stdout>") + "]])m4_dnl");
+        }
+
+        processed_file.mergeBeforeAndAfterLines();
+        header_file.mergeBeforeAndAfterLines();
+
+        // run m4
+        if (preproc_level == 2)
+            break;
+        m4(processed_file.getLinesRef());
+        m4(header_file.getLinesRef());
+
+        // shorten empty lines
+        if (preproc_level == 3)
+            break;
+        processed_file.splitLines();
+        header_file.splitLines();
+        processed_file.setMaxEmptyLines(1);
+        header_file.setMaxEmptyLines(1);
+
+        // fix #line directives
+        if (preproc_level == 4)
+            break;
+        {
+            regex_t regex_blank_line("^[[:space:]]*$", std::regex_constants::extended);
+            regex_t regex_linedir(R"r(^#line ([[:digit:]]+) "(.*)")r", std::regex_constants::extended);
+
+            auto fix_lines = [&regex_blank_line, &regex_linedir](auto &ctx)
+            {
+                int     lineno = 1;
+                bool    in_gen = true;	// in generated code
+                bool    last_was_blank = false;
+
+                for (auto &line : ctx.getLinesRef())
+                {
+                    String &buf = line.text;
+                    regmatch_t m;
+
+                    // Check for #line directive.
+                    if (buf[0] == '#' && std::regex_match(buf.c_str(), m, regex_linedir))
+                    {
+                        // extract the line number and filename
+                        String fname = m[2].str();
+                        String sfile = !outfilename.empty() ? outfilename.c_str() : "<stdout>";
+                        String hfile = headerfilename ? headerfilename : "<stdout>";
+
+                        if (fname == sfile || fname == hfile)
+                        {
+                            // Adjust the line directives.
+                            in_gen = true;
+                            line = "#line " + std::to_string(lineno + 1) + " \"" + fname + "\"";
+                        }
+                        else
+                        {
+                            // it's a #line directive for code we didn't write
+                            in_gen = false;
+                        }
+                        last_was_blank = false;
+                    }
+                    // squeeze blank lines from generated code
+                    else if (in_gen && std::regex_match(buf.c_str(), regex_blank_line))
+                    {
+                        if (last_was_blank)
+                            continue;
+                        else
+                            last_was_blank = true;
+                    }
+                    else
+                    {
+                        // it's a line of normal, non-empty code.
+                        last_was_blank = false;
+                    }
+                    lineno++;
+                }
+            };
+
+            fix_lines(processed_file);
+            fix_lines(header_file);
+        }
+    } while (0);
+
+    auto print_lines = [](FILE *f, const auto &ctx)
+    {
+        for (auto &line : ctx.getLines())
+            fprintf(f, "%s\n", line.text.c_str());
+    };
+
+    // write files
+    output_file = fopen(outfilename.c_str(), "wb");
+    if (!output_file)
+        lerr(_("could not create %s"), outfilename.c_str());
+    print_lines(output_file, processed_file);
+    fclose(output_file);
+
+    if (headerfilename)
+    {
+        output_file = fopen(headerfilename, "wb");
+        if (!output_file)
+            lerr(_("could not create %s"), headerfilename);
+        print_lines(output_file, header_file);
+        fclose(output_file);
+    }
 
 	/* Note, flexend does not return.  It exits with its argument
 	 * as status.
@@ -220,7 +364,6 @@ int main (int argc, char *argv[])
 void check_options (void)
 {
 	int     i;
-    const char * m4 = NULL;
 
 	if (lex_compat) {
 		if (C_plus_plus)
@@ -237,14 +380,6 @@ void check_options (void)
 		do_yylineno = true;
 		use_read = false;
 	}
-
-
-#if 0
-	/* This makes no sense whatsoever. I'm removing it. */
-	if (do_yylineno)
-		/* This should really be "maintain_backup_tables = true" */
-		reject_really_used = true;
-#endif
 
 	if (csize == unspecified) {
 		if ((fulltbl || fullspd) && !useecs)
@@ -325,11 +460,10 @@ void check_options (void)
     if (extra_type)
         buf_m4_define( &m4defs_buf, "M4_EXTRA_TYPE_DEFS", extra_type);
 
-	if (!use_stdout) {
-		FILE   *prev_stdout;
-
+    //if (!use_stdout)
+    {
 		if (!did_outfilename) {
-			char   *suffix;
+			const char   *suffix;
 
 			if (C_plus_plus)
 				suffix = "cc";
@@ -342,72 +476,17 @@ void check_options (void)
 			outfilename = outfile_path;
 		}
 
-		prev_stdout = freopen (outfilename, "w+", stdout);
+        if (outfilename.empty())
+            outfilename = "lex.yy.c";
 
-		if (prev_stdout == NULL)
-			lerr (_("could not create %s"), outfilename);
+        output_file = fopen (outfilename.c_str(), "wb+");
 
-		outfile_created = 1;
+		if (output_file == NULL)
+			lerr (_("could not create %s"), outfilename.c_str());
 	}
 
-
-    /* Setup the filter chain. */
-    output_chain = filter_create_int(NULL, filter_tee_header, headerfilename);
-    if ( !(m4 = getenv("M4"))) {
-	    const char *slash;
-		m4 = M4;
-		if (slash = strrchr(M4, '/')) {
-			m4 = slash+1;
-			/* break up $PATH */
-			const char *path = getenv("PATH");
-			if (!path) {
-				m4 = M4;
-			} else {
-				do {
-					char m4_path[PATH_MAX];
-					int length = strlen(path);
-					struct stat sbuf;
-
-					const char *endOfDir = strchr(path, ':');
-					if (!endOfDir)
-						endOfDir = path+length;
-
-					if ((endOfDir-path+2) >= sizeof(m4_path)) {
-					    path = endOfDir+1;
-						continue;
-					}
-
-					strncpy(m4_path, path, sizeof(m4_path));
-					m4_path[endOfDir-path] = '/';
-					m4_path[endOfDir-path+1] = '\0';
-					strncat(m4_path, m4, sizeof(m4_path));
-					if (stat(m4_path, &sbuf) == 0
-                        //&&
-						//(S_ISREG(sbuf.st_mode)) && sbuf.st_mode & S_IXUSR
-                        ) {
-						m4 = strdup(m4_path);
-						break;
-					}
-					path = endOfDir+1;
-				} while (path[0]);
-				if (!path[0])
-				    m4 = M4;
-			}
-		}
-	}
-    filter_create_ext(output_chain, m4, "-P", 0);
-    filter_create_int(output_chain, filter_fix_linedirs, NULL);
-
-    /* For debugging, only run the requested number of filters. */
-    if (preproc_level > 0) {
-        filter_truncate(output_chain, preproc_level);
-        filter_apply_chain(output_chain);
-
-        //sleep(100000);
-    }
-    yyout = stdout;
-
-
+    yyout = output_file;
+    
 	/* always generate the tablesverify flag. */
 	buf_m4_define (&m4defs_buf, "M4_YY_TABLES_VERIFY", tablesverify ? "1" : "0");
 	if (tablesext)
@@ -432,7 +511,7 @@ void check_options (void)
 			snprintf (pname, nbytes, tablesfile_template, prefix);
 		}
 
-		if ((tablesout = fopen (tablesfilename, "w")) == NULL)
+		if ((tablesout = fopen (tablesfilename, "wb")) == NULL)
 			lerr (_("could not create %s"), tablesfilename);
 		free(pname);
 		tablesfilename = 0;
@@ -448,7 +527,7 @@ void check_options (void)
 			flexerror (_("could not write tables header"));
 	}
 
-	if (skelname && (skelfile = fopen (skelname, "r")) == NULL)
+	if (skelname && (skelfile = fopen (skelname, "rb")) == NULL)
 		lerr (_("can't open skeleton file %s"), skelname);
 
 	if (reentrant) {
@@ -466,7 +545,7 @@ void check_options (void)
     buf_m4_define(&m4defs_buf, "M4_YY_PREFIX", prefix);
 
 	if (did_outfilename)
-		line_directive_out (stdout, 0);
+		line_directive_out (output_file, 0);
 
 	if (do_yylineno)
 		buf_m4_define (&m4defs_buf, "M4_YY_USE_LINENO", NULL);
@@ -502,7 +581,7 @@ void check_options (void)
         outn((char*) top_buf.getText().c_str());
 
     /* Dump the m4 definitions. */
-    buf_print_strings(&m4defs_buf, stdout);
+    buf_print_strings(&m4defs_buf, output_file);
 
     /* Place a bogus line directive, it will be fixed in the filter. */
     outn("#line 0 \"M4_YY_OUTFILE_NAME\"\n");
@@ -538,203 +617,18 @@ void flexend (int exit_status)
 			lerr (_("error closing skeleton file %s"),
 				skelname);
 	}
+    
 
-#if 0
-		fprintf (header_out,
-			 "#ifdef YY_HEADER_EXPORT_START_CONDITIONS\n");
-		fprintf (header_out,
-			 "/* Beware! Start conditions are not prefixed. */\n");
-
-		/* Special case for "INITIAL" */
-		fprintf (header_out,
-			 "#undef INITIAL\n#define INITIAL 0\n");
-		for (i = 2; i <= lastsc; i++)
-			fprintf (header_out, "#define %s %d\n", scname[i], i - 1);
-		fprintf (header_out,
-			 "#endif /* YY_HEADER_EXPORT_START_CONDITIONS */\n\n");
-
-		/* Kill ALL flex-related macros. This is so the user
-		 * can #include more than one generated header file. */
-		fprintf (header_out, "#ifndef YY_HEADER_NO_UNDEFS\n");
-		fprintf (header_out,
-			 "/* Undefine all internal macros, etc., that do no belong in the header. */\n\n");
-
-        {
-            const char * undef_list[] = {
-
-                "BEGIN",
-                "ECHO",
-                "EOB_ACT_CONTINUE_SCAN",
-                "EOB_ACT_END_OF_FILE",
-                "EOB_ACT_LAST_MATCH",
-                "FLEX_SCANNER",
-                "REJECT",
-                "YYFARGS0",
-                "YYFARGS1",
-                "YYFARGS2",
-                "YYFARGS3",
-                "YYLMAX",
-                "YYSTATE",
-                "YY_AT_BOL",
-                "YY_BREAK",
-                "YY_BUFFER_EOF_PENDING",
-                "YY_BUFFER_NEW",
-                "YY_BUFFER_NORMAL",
-                "YY_BUF_SIZE",
-                "M4_YY_CALL_LAST_ARG",
-                "M4_YY_CALL_ONLY_ARG",
-                "YY_CURRENT_BUFFER",
-                "YY_DECL",
-                "M4_YY_DECL_LAST_ARG",
-                "M4_YY_DEF_LAST_ARG",
-                "M4_YY_DEF_ONLY_ARG",
-                "YY_DO_BEFORE_ACTION",
-                "YY_END_OF_BUFFER",
-                "YY_END_OF_BUFFER_CHAR",
-                "YY_EXIT_FAILURE",
-                "YY_EXTRA_TYPE",
-                "YY_FATAL_ERROR",
-                "YY_FLEX_DEFINED_ECHO",
-                "YY_FLEX_LEX_COMPAT",
-                "YY_FLEX_MAJOR_VERSION",
-                "YY_FLEX_MINOR_VERSION",
-                "YY_FLEX_SUBMINOR_VERSION",
-                "YY_FLUSH_BUFFER",
-                "YY_G",
-                "YY_INPUT",
-                "YY_INTERACTIVE",
-                "YY_INT_ALIGNED",
-                "YY_LAST_ARG",
-                "YY_LESS_LINENO",
-                "YY_LEX_ARGS",
-                "YY_LEX_DECLARATION",
-                "YY_LEX_PROTO",
-                "YY_MAIN",
-                "YY_MORE_ADJ",
-                "YY_NEED_STRLEN",
-                "YY_NEW_FILE",
-                "YY_NULL",
-                "YY_NUM_RULES",
-                "YY_ONLY_ARG",
-                "YY_PARAMS",
-                "YY_PROTO",
-                "M4_YY_PROTO_LAST_ARG",
-                "M4_YY_PROTO_ONLY_ARG void",
-                "YY_READ_BUF_SIZE",
-                "YY_REENTRANT",
-                "YY_RESTORE_YY_MORE_OFFSET",
-                "YY_RULE_SETUP",
-                "YY_SC_TO_UI",
-                "YY_SKIP_YYWRAP",
-                "YY_START",
-                "YY_START_STACK_INCR",
-                "YY_STATE_EOF",
-                "YY_STDINIT",
-                "YY_TRAILING_HEAD_MASK",
-                "YY_TRAILING_MASK",
-                "YY_USER_ACTION",
-                "YY_USE_CONST",
-                "YY_USE_PROTOS",
-                "unput",
-                "yyTABLES_NAME",
-                "yy_create_buffer",
-                "yy_delete_buffer",
-                "yy_flex_debug",
-                "yy_flush_buffer",
-                "yy_init_buffer",
-                "yy_load_buffer_state",
-                "yy_new_buffer",
-                "yy_scan_buffer",
-                "yy_scan_bytes",
-                "yy_scan_string",
-                "yy_set_bol",
-                "yy_set_interactive",
-                "yy_switch_to_buffer",
-				"yypush_buffer_state",
-				"yypop_buffer_state",
-				"yyensure_buffer_stack",
-                "yyalloc",
-                "yyconst",
-                "yyextra",
-                "yyfree",
-                "yyget_debug",
-                "yyget_extra",
-                "yyget_in",
-                "yyget_leng",
-                "yyget_lineno",
-                "yyget_lloc",
-                "yyget_lval",
-                "yyget_out",
-                "yyget_text",
-                "yyin",
-                "yyleng",
-                "yyless",
-                "yylex",
-                "yylex_destroy",
-                "yylex_init",
-                "yylex_init_extra",
-                "yylineno",
-                "yylloc",
-                "yylval",
-                "yymore",
-                "yyout",
-                "yyrealloc",
-                "yyrestart",
-                "yyset_debug",
-                "yyset_extra",
-                "yyset_in",
-                "yyset_lineno",
-                "yyset_lloc",
-                "yyset_lval",
-                "yyset_out",
-                "yytables_destroy",
-                "yytables_fload",
-                "yyterminate",
-                "yytext",
-                "yytext_ptr",
-                "yywrap",
-
-                /* must be null-terminated */
-                NULL};
-
-
-                for (i=0; undef_list[i] != NULL; i++)
-                    fprintf (header_out, "#undef %s\n", undef_list[i]);
-        }
-
-		/* undef any of the auto-generated symbols. */
-		for (i = 0; i < defs_buf.nelts; i++) {
-
-			/* don't undef start conditions */
-			if (sclookup (((char **) defs_buf.elts)[i]) > 0)
-				continue;
-			fprintf (header_out, "#undef %s\n",
-				 ((char **) defs_buf.elts)[i]);
-		}
-
-		fprintf (header_out,
-			 "#endif /* !YY_HEADER_NO_UNDEFS */\n");
-		fprintf (header_out, "\n");
-		fprintf (header_out, "#undef %sIN_HEADER\n", prefix);
-		fprintf (header_out, "#endif /* %sHEADER_H */\n", prefix);
-
-		if (ferror (header_out))
-			lerr (_("error creating header file %s"),
-				headerfilename);
-		fflush (header_out);
-		fclose (header_out);
-#endif
-
-	if (exit_status != 0 && outfile_created) {
-		if (ferror (stdout))
+	if (exit_status != 0) {
+		if (ferror (output_file))
 			lerr (_("error writing output file %s"),
 				outfilename);
 
-		else if ((_stdout_closed = 1) && fclose (stdout))
+		else if (fclose (output_file))
 			lerr (_("error closing output file %s"),
 				outfilename);
 
-		else if (unlink (outfilename))
+		else if (unlink (outfilename.c_str()))
 			lerr (_("error deleting output file %s"),
 				outfilename);
 	}
@@ -1130,6 +1024,8 @@ void flexinit (int argc, char **argv)
 
         case OPT_PREPROC_LEVEL:
             preproc_level = strtol(arg,NULL,0);
+            if (preproc_level < 0)
+                preproc_level = 0;
             break;
 
 		case OPT_MAIN:
@@ -1518,7 +1414,7 @@ void readin (void)
 	}
 
 	if (backing_up_report) {
-		backing_up_file = fopen (backing_name, "w");
+		backing_up_file = fopen (backing_name, "wb");
 		if (backing_up_file == NULL)
 			lerr (_
 				("could not create backing-up info file %s"),

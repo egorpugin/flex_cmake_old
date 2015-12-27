@@ -1871,7 +1871,7 @@ void make_tables (void)
 
 	out (&action_array[defs1_offset]);
 
-	line_directive_out (stdout, 0);
+	line_directive_out (output_file, 0);
 
 	skelout ();		/* %% [5.0] - break point in skel */
 
@@ -1940,7 +1940,7 @@ void make_tables (void)
 	/* Copy prolog to output file. */
 	out (&action_array[prolog_offset]);
 
-	line_directive_out (stdout, 0);
+	line_directive_out (output_file, 0);
 
 	skelout ();		/* %% [8.0] - break point in skel */
 
@@ -2075,7 +2075,7 @@ void make_tables (void)
 	gen_bu_action ();
 	out (&action_array[action_offset]);
 
-	line_directive_out (stdout, 0);
+	line_directive_out (output_file, 0);
 
 	/* generate cases for any missing EOF rules */
 	for (i = 1; i <= lastsc; ++i)
@@ -2163,7 +2163,7 @@ void make_tables (void)
 
 	/* Copy remainder of input to output. */
 
-	line_directive_out (stdout, 1);
+	line_directive_out (output_file, 1);
 
 	if (sectnum == 3) {
 		OUT_BEGIN_CODE ();
