@@ -93,10 +93,15 @@ extern const char *escaped_qstart, *escaped_qend;
 	if ( getenv("POSIXLY_CORRECT") ) \
 		posix_compat = true;
 
+#ifdef WIN32
+#include <io.h>
+#define isatty _isatty
+#endif
 %}
 
 %option caseless nodefault noreject stack noyy_top_state
 %option nostdinit
+%option nounistd
 
 %x SECT2 SECT2PROLOG SECT3 CODEBLOCK PICKUPDEF SC CARETISBOL NUM QUOTE
 %x FIRSTCCL CCL ACTION RECOVER COMMENT ACTION_STRING PERCENT_BRACE_ACTION
@@ -629,7 +634,14 @@ M4QEND      "]]"
                    */
                 &&  (cclval = ccllookup( (unsigned char *) nmstr )) != 0 )
 				{
-				if ( input() != ']' )
+                char c =
+#ifdef __cplusplus
+                yyinput()
+#else
+                input()
+#endif
+                ;
+				if ( c != ']' )
 					synerr( _( "bad character class" ) );
 
 				yylval = cclval;

@@ -201,6 +201,8 @@ void Context::setMaxEmptyLines(int n)
     while (1)
     {
         auto line = lines.begin();
+        if (line == lines.end())
+            break;
         bool empty = true;
         for (auto &c : line->text)
         {

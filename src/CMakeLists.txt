@@ -10,6 +10,10 @@ bison_target(parse
     "${CMAKE_CURRENT_BINARY_DIR}/parse.cpp"
     DEFINES_FILE "${CMAKE_CURRENT_BINARY_DIR}/parse.h"
 )
+flex_target(scan
+    "${CMAKE_CURRENT_SOURCE_DIR}/scan.l"
+    "${CMAKE_CURRENT_BINARY_DIR}/stage1scan.cpp"
+)
 
 set(context_src
     context.cpp
@@ -35,7 +39,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp
     DEPENDS prepare_skel flex.skl
 )
 
-set(flex_src
+set(common_flex_src
     buf.cpp
     ccl.cpp
     config.h
@@ -51,7 +55,6 @@ set(flex_src
     nfa.cpp
     options.cpp
     options.h
-    scan.cpp
     scanflags.cpp
     scanopt.cpp
     scanopt.h
@@ -73,5 +76,23 @@ set(flex_src
     ${BISON_parse_OUTPUTS}
 )
 
+add_library(common ${common_flex_src})
+
+set(stage1flex_src
+    ${FLEX_scan_OUTPUTS}
+)
+
+add_executable(stage1flex ${stage1flex_src})
+target_link_libraries(stage1flex simple_m4 common)
+
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scan.cpp
+    COMMAND stage1flex -o "${CMAKE_CURRENT_BINARY_DIR}/scan.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/scan.l"
+    DEPENDS stage1flex scan.l
+)
+
+set(flex_src
+    "${CMAKE_CURRENT_BINARY_DIR}/scan.cpp"
+)
+
 add_executable(flex ${flex_src})
-target_link_libraries(flex simple_m4)
+target_link_libraries(flex simple_m4 common)

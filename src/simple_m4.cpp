@@ -6,6 +6,7 @@
 #include <set>
 #include <stack>
 #include <sstream>
+#include <string.h>
 
 #define DEFAULT_OPEN_QUOTE "`"
 #define DEFAULT_CLOSE_QUOTE "'"

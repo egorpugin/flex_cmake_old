@@ -35,12 +35,6 @@
 #ifndef TABLES_H
 #define TABLES_H
 
-#ifdef __cplusplus
-/* *INDENT-OFF* */
-extern  "C" {
-/* *INDENT-ON* */
-#endif
-
 /* Tables serialization API declarations. */
 #include "tables_shared.h"
 struct yytbl_writer {
@@ -74,12 +68,6 @@ int     yytbl_data_fwrite (struct yytbl_writer *wr, struct yytbl_data *td);
 void    yytbl_data_compress (struct yytbl_data *tbl);
 struct yytbl_data *mkftbl (void);
 
-
-#ifdef __cplusplus
-/* *INDENT-OFF* */
-}
-/* *INDENT-ON* */
-#endif
 #endif
 
 /* vim:set expandtab cindent tabstop=4 softtabstop=4 shiftwidth=4 textwidth=0: */

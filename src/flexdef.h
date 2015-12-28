@@ -81,12 +81,15 @@
 #endif
 #ifdef HAVE_REGEX_H
 #include <regex.h>
-#elif defined(HAVE_REGEX)
+#else
 #include <regex>
 using regex_t = std::regex;
 using regmatch_t = std::cmatch;
 #endif
+
 #include "flexint.h"
+
+#include <string>
 
 /* We use gettext. So, when we write strings which should be translated, we mark them with _() */
 #ifdef ENABLE_NLS
@@ -1009,7 +1012,11 @@ extern int flexscan(void);
 extern void set_input_file(char *);
 
 /* Wrapup a file in the lexical analyzer. */
+#ifdef __cplusplus
+extern "C" int yywrap(void);
+#else
 extern int yywrap(void);
+#endif
 
 
 /* from file sym.c */
