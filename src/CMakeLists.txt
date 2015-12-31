@@ -77,13 +77,14 @@ set(common_flex_src
 )
 
 add_library(common ${common_flex_src})
+target_link_libraries(common simple_m4)
 
 set(stage1flex_src
     ${FLEX_scan_OUTPUTS}
 )
 
 add_executable(stage1flex ${stage1flex_src})
-target_link_libraries(stage1flex simple_m4 common)
+target_link_libraries(stage1flex common)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scan.cpp
     COMMAND stage1flex -o "${CMAKE_CURRENT_BINARY_DIR}/scan.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/scan.l"
@@ -95,4 +96,4 @@ set(flex_src
 )
 
 add_executable(flex ${flex_src})
-target_link_libraries(flex simple_m4 common)
+target_link_libraries(flex common)
