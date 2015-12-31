@@ -545,27 +545,8 @@ void M4::processParameter()
         if (s)
             text = text.substr(s);
     };
-    auto end = [this]
-    {
-        auto &text = param;
-        int s = 0;
-        for (auto r = text.rbegin(); r != text.rend(); ++r)
-        {
-            char c = *r;
-            if (isspace(c))
-                s++;
-            else
-                break;
-        }
-        if (s)
-            text.resize(text.size() - s);
-    };
 
-    //if (!param.quoted)
-    {
-        begin();
-        //end();
-    }
+    begin();
     
     macros.top().macro_params.push_back(param);
     param = decltype(param)();

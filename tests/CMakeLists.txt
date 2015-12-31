@@ -2,6 +2,19 @@
 # flex
 #
 
+if (WIN32)
+add_definitions(-DYY_NO_UNISTD_H=1)
+add_definitions(-Disatty=_isatty)
+endif()
+
+add_definitions(-DDEFINE_ME)
+
+include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+set(dir ${CMAKE_CURRENT_BINARY_DIR})
+set(SOLUTION_FOLDER Tests)
+
 ########################################
 
 macro(test_project_group target)
@@ -54,18 +67,16 @@ endfunction(add_flex_test)
 
 ########################################
 
-#ifdef WIN32
-add_definitions(-DYY_NO_UNISTD_H=1)
-add_definitions(-Disatty=_isatty)
-#endif
+function(add_bison_target name)
+    bison_target(${name} "${name}_parser.y"
+        "${CMAKE_CURRENT_BINARY_DIR}/${name}_parser.c"
+        COMPILE_FLAGS "--name-prefix=\"test\""
+        DEFINES_FILE "${CMAKE_CURRENT_BINARY_DIR}/${name}_parser.h"
+    )
+    set(BISON_${name}_OUTPUTS ${BISON_${name}_OUTPUTS} PARENT_SCOPE)
+endfunction(add_bison_target)
 
-add_definitions(-DDEFINE_ME)
-
-include_directories(${CMAKE_SOURCE_DIR}/src)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-set(dir ${CMAKE_CURRENT_BINARY_DIR})
-set(SOLUTION_FOLDER Tests)
+########################################
 
 add_executable(simple_m4_test simple_m4_test.cpp)
 target_link_libraries(simple_m4_test simple_m4)
@@ -81,21 +92,14 @@ set(flex_tests_simple
 	array_r.l
 	basic_nr.l
 	basic_r.l
-	bison_nr.l
-	bison_yylloc.l
-	bison_yylval.l
 	c_cxx_nr.lll
 	c_cxx_r.lll
 	ccl.l
 	debug_nr.l
 	debug_r.l
 	extended.l
-	header_nr_scanner.l
-	header_r_scanner.l
 	mem_nr.l
 	mem_r.l
-	multiple_scanners_nr.l
-	multiple_scanners_r.l
 	noansi_nr.l
 	noansi_r.l
 	posix.l
@@ -108,14 +112,39 @@ set(flex_tests_simple
 	yyextra.l
 )
 
-add_flex_test("cxx_multiple_scanners_1.ll;cxx_multiple_scanners_2.ll" cpp cxx_multiple_scanners_main.cc)
-
 foreach(T ${flex_tests_simple})
     add_flex_test(${T} c)
 endforeach()
 
+add_flex_test(cxx_basic.ll cc)
+add_flex_test("cxx_multiple_scanners_1.ll;cxx_multiple_scanners_2.ll" cc cxx_multiple_scanners_main.cc)
+add_flex_test(header_nr_scanner.l c header_nr_main.c)
+add_flex_test(header_r_scanner.l c header_r_main.c)
+add_flex_test("multiple_scanners_nr_1.l;multiple_scanners_nr_2.l" c multiple_scanners_nr_main.c)
+add_flex_test("multiple_scanners_r_1.l;multiple_scanners_r_2.l" c multiple_scanners_r_main.c)
 add_flex_test(top.l c top_main.c)
-add_flex_test(cxx_basic.ll cpp)
+
+add_bison_target(bison_nr)
+add_flex_test(bison_nr_scanner.l c
+    bison_nr_main.c
+    ${BISON_bison_nr_OUTPUTS}
+    bison_nr_parser.y
+)
+
+add_bison_target(bison_yylloc)
+add_flex_test(bison_yylloc_scanner.l c
+    bison_yylloc_main.c
+    ${BISON_bison_yylloc_OUTPUTS}
+    bison_yylloc_parser.y
+)
+
+add_bison_target(bison_yylval)
+add_flex_test(bison_yylval_scanner.l c
+    bison_yylval_main.c
+    ${BISON_bison_yylval_OUTPUTS}
+    bison_yylval_parser.y
+)
+
 
 
 

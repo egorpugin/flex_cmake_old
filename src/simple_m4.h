@@ -108,7 +108,7 @@ private:
     void skipToNewLine();
     void readToCommaOrRBracket(const MacroParams &params);
     std::string readToClosingQuote(const MacroParams &params);
-    std::string M4::processDollar(const MacroParams &params);
+    std::string processDollar(const MacroParams &params);
     bool isQuoted(const std::string &s);
     bool removeQuotes(std::string &s);
     bool isEmpty(const std::string &s);

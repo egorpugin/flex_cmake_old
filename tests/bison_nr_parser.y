@@ -33,6 +33,8 @@
 #include "bison_nr_parser.h"
 #include "bison_nr_scanner.h"
 
+#define yylex testlex
+
 #define YYERROR_VERBOSE 1
 /* #define YYPARSE_PARAM scanner */
 /* #define YYLEX_PARAM   scanner */
