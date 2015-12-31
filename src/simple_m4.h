@@ -11,7 +11,9 @@ namespace simple_m4
 enum class State
 {
     None,
-    Macro,
+    GatherMacroParameters,
+    MacroCall,
+    NoMacroCalls,
 };
 
 enum class MacroType
@@ -28,18 +30,37 @@ enum class MacroType
     include,
 };
 
-struct MacroParam
-{
-    std::string text;
-    bool quoted;
-};
-
+using MacroParam = std::string;
 using MacroParams = std::vector<MacroParam>;
 
 struct Macro
 {
     MacroType type;
     MacroParams macro_params;
+};
+
+enum class TokenType
+{
+    eos,
+    eol,
+    word,
+    digit_word,
+    open_quote,
+    closing_quote,
+    integer,
+    comment,
+    character,
+    open_brace,
+    closing_brace,
+    comma,
+    dollar,
+};
+
+struct M4Token
+{
+    TokenType type;
+    std::string word;
+    int length;
 };
 
 using M4Functions = std::map<std::string, MacroType>;
@@ -60,6 +81,10 @@ public:
     {
         definitions[key] = value;
     }
+    std::string getDefinition(const std::string &key)
+    {
+        return definitions[key];
+    }
 
 private:
     State state = State::None;
@@ -70,8 +95,27 @@ private:
     int n_quotes;
     std::stack<Macro> macros;
     MacroParam param;
-    MacroType lastMacro;
     M4Functions functions;
+    int n_brackets;
+
+    const char *p; // current input symbol
+    M4Token token;
+    std::string quouted_string;
+
+    M4Token getNextToken();
+    M4Token getNextToken1();
+    void backtrackToken();
+    void skipToNewLine();
+    void readToCommaOrRBracket(const MacroParams &params);
+    std::string readToClosingQuote(const MacroParams &params);
+    std::string M4::processDollar(const MacroParams &params);
+    bool isQuoted(const std::string &s);
+    bool removeQuotes(std::string &s);
+    bool isEmpty(const std::string &s);
+
+    std::string processWord();
+    void processParameter();
+    std::string processMacro(const MacroParams &params);
 };
 
 std::string read_file(const std::string &filename);

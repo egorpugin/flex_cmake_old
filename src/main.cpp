@@ -133,7 +133,7 @@ const char *escaped_qstart = "[[]]M4_YY_NOOP[M4_YY_NOOP[M4_YY_NOOP[[]]";
 const char *escaped_qend   = "[[]]M4_YY_NOOP]M4_YY_NOOP]M4_YY_NOOP[[]]";
 
 /* For debugging. The max number of filters to apply to skeleton. */
-static int preproc_level = 100;
+static int preproc_level = 1000;
 
 Context processed_file;
 
@@ -620,7 +620,10 @@ void flexend (int exit_status)
     
 
 	if (exit_status != 0) {
-		if (ferror (output_file))
+        if (!output_file)
+            lerr(_("error writing output file %s"),
+                outfilename);
+		else if (ferror (output_file))
 			lerr (_("error writing output file %s"),
 				outfilename);
 

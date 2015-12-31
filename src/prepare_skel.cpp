@@ -39,6 +39,7 @@ try
         line.text = processor.processLine(line.text);
 
     ctx.splitLines();
+    //ctx.setMaxEmptyLines(1);
 
     for (auto &line : ctx.getLinesRef())
     {
