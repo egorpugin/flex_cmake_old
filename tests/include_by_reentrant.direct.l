@@ -29,6 +29,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "config.h"
+
+int error = 0;
 %}
 
 %option 8bit prefix="test"
@@ -54,6 +56,7 @@
     if((fp=fopen(yytext,"r"))==NULL) {
         fprintf(stderr,"*** Error: Could not open include file \"%s\".\n",
             yytext);
+        error = 1;
         yyterminate();
     }
     yylex_init(&scanner);
@@ -66,6 +69,7 @@
     }
 .|\n  {
     fprintf(stderr,"Invalid input \"%s\".\n", yytext);
+    error = 1;
     yyterminate();
    }
 }
@@ -96,6 +100,9 @@ main ( argc, argv )
     yyset_out( stdout, scanner);
     yylex(scanner);
     yylex_destroy(scanner);
-    printf("TEST RETURNING OK.\n");
+    if (!error)
+        printf("TEST RETURNING OK.\n");
+    else
+        exit(-1);
     return 0;
 }

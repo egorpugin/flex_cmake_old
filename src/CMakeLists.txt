@@ -77,7 +77,7 @@ set(common_flex_src
 )
 
 add_library(common ${common_flex_src})
-target_link_libraries(common simple_m4)
+target_link_libraries(common simple_m4 ${winsock_lib})
 
 set(stage1flex_src
     ${FLEX_scan_OUTPUTS}

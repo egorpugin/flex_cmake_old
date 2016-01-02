@@ -36,27 +36,9 @@
 #include "flexdef.h"
 #include "tables.h"
 
-static uint32_t htonl(uint32_t l)
-{
-    uint32_t res = 0;
-
-    res |= (l & 0xFF000000) >> 24;
-    res |= (l & 0x00FF0000) >> 8;
-    res |= (l & 0x0000FF00) << 8;
-    res |= (l & 0x000000FF) << 24;
-
-    return res;
-}
-
-static uint16_t htons(uint16_t s)
-{
-    uint16_t res = 0;
-
-    res |= (s & 0xFF00) >> 8;
-    res |= (s & 0x00FF) << 8;
-
-    return res;
-}
+#ifdef WIN32
+#include <WinSock2.h>
+#endif
 
 /** Convert size_t to t_flag.
  *  @param n in {1,2,4}

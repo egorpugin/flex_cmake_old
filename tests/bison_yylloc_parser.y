@@ -36,8 +36,6 @@
 #include "bison_yylloc_parser.h"
 #include "bison_yylloc_scanner.h"
 
-#define yylex testlex
-
 int yyerror(YYLTYPE *location, void* scanner, const char* msg);
 
 #define YYERROR_VERBOSE 1

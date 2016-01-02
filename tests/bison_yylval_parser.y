@@ -35,8 +35,6 @@
 #include "bison_yylval_parser.h"
 #include "bison_yylval_scanner.h"
 
-#define yylex testlex
-
 #define YYERROR_VERBOSE 1
 
 int yyerror(void* scanner, const char* msg);
