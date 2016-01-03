@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/egorpugin/flex.svg?branch=master)](https://travis-ci.org/egorpugin/flex)
+[![Build status](https://ci.appveyor.com/api/projects/status/tv3yvadqin8m1xm1?svg=true)](https://ci.appveyor.com/project/egorpugin/flex)
+
 This is flex, the fast lexical analyzer generator.
 
 flex is a tool for generating scanners: programs which recognize

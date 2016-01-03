@@ -34,12 +34,28 @@ macro(test_project_group target)
 endmacro(test_project_group)
 
 ########################################
+# MACRO test_depends
+########################################
+
+macro(test_depends test1 test2)
+    set_tests_properties(${test1} PROPERTIES DEPENDS ${test2})
+endmacro(test_depends)
+
+########################################
 # MACRO test_simple_m4
 ########################################
 
 macro(test_simple_m4 s e)
+    add_test(NAME simple_m4${build_suffix}
+        COMMAND ${CMAKE_COMMAND}
+            --build ${CMAKE_BINARY_DIR}
+            --target simple_m4_test
+            --config $<CONFIGURATION>
+    )
+
     foreach(T RANGE ${s} ${e})
         add_test(NAME simple_m4_${T} COMMAND simple_m4_test ${T})
+        test_depends(simple_m4_${T} simple_m4${build_suffix})
     endforeach()
 endmacro(test_simple_m4)
 
@@ -185,8 +201,7 @@ endfunction(add_test_flex_build_run_with_custom_input)
 function(add_bison_target name)
     bison_target(${name} "${name}_parser.y"
         "${CMAKE_CURRENT_BINARY_DIR}/${name}_parser.c"
-        COMPILE_FLAGS "-d -p test"
-        DEFINES_FILE "${CMAKE_CURRENT_BINARY_DIR}/${name}_parser.h"
+        COMPILE_FLAGS "-d -p test --defines=${CMAKE_CURRENT_BINARY_DIR}/${name}_parser.h"
     )
     set(BISON_${name}_OUTPUTS ${BISON_${name}_OUTPUTS} PARENT_SCOPE)
 endfunction(add_bison_target)
@@ -233,70 +248,6 @@ test_project_group(simple_m4_test)
 ################################################################################
 # TESTS
 ################################################################################
-
-
-foreach(kind ser ver)
-    foreach(threading r nr)
-        foreach(opt -Ce -Cf -CF -Cm -Cem -Cae -Caef -CaeF -Cam -Caem)
-            set(name_opt ${opt})
-            if (${opt} STREQUAL -CF OR
-                ${opt} STREQUAL -CaeF)
-                set(name_opt ${name_opt}_)
-            endif()
-
-            set(name tableopts_${kind}_${threading}_${name_opt})
-            string(REPLACE "-" "" name ${name})
-            set(l_file ${CMAKE_CURRENT_SOURCE_DIR}/tableopts.l4)
-            set(c_file ${CMAKE_CURRENT_BINARY_DIR}/${name}.c)
-            
-            set(libs)
-            set(tables)
-            set(tables_def)
-            if (${kind} STREQUAL ser OR ${kind} STREQUAL ver)
-                set(tables --tables-file=${CMAKE_CURRENT_BINARY_DIR}/${name}.tables) # need quotes?
-                set(tables_def -DTEST_HAS_TABLES_EXTERNAL)
-                set(libs ${winsock_lib})
-            endif()
-
-            set(verify)
-            if (${kind} STREQUAL ver)
-                set(verify --tables-verify)
-            endif()
-
-            set(reentrant)
-            set(reentrant_def)
-            if (${threading} STREQUAL r)
-                set(reentrant --reentrant)
-                set(reentrant_def -DTEST_IS_REENTRANT)
-            endif()
-
-            string(REPLACE "-" "_" prefix ${opt})
-
-            add_test_flex_raw(${name} ${c_file} ${l_file} "${verify};${reentrant};${tables};${opt};-P;${prefix};-L")
-            add_test_build_raw(${name} "${c_file};${l_file}" "${reentrant_def};${tables_def}" "" "${libs}")
-            
-            if (${kind} STREQUAL opt)
-                add_test_run_with_input(${name} tableopts.txt)
-            else()
-                add_test(NAME ${name}${run_suffix}
-                    COMMAND ${CMAKE_COMMAND}
-                        -DEXE=$<TARGET_FILE:${name}>
-                        -DARGS=${CMAKE_CURRENT_BINARY_DIR}/${name}.tables
-                        -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/tableopts.txt
-                        -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
-                )
-            endif()
-
-            return()
-        endforeach()
-    endforeach()
-endforeach()
-
-
-
-
-
-return()
 
 ########################################
 # TESTS simple m4
@@ -433,8 +384,12 @@ add_test_compare(lineno_trailing.l c)
     
 # pthread
 if (NOT MSVC)
-    add_test_flex_build(pthread.l c)
-    add_test_run(pthread "${CMAKE_CURRENT_SOURCE_DIR}" pthread_1.txt pthread_2.txt pthread_3.txt pthread_4.txt pthread_5.txt)
+    add_test_flex_raw(pthreadf
+        ${CMAKE_CURRENT_BINARY_DIR}/pthread.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/pthread.l "")
+    add_test_build_raw(pthreadf "${CMAKE_CURRENT_BINARY_DIR}/pthread.c;${CMAKE_CURRENT_SOURCE_DIR}/pthread.l"
+        "-DHAVE_PTHREAD_H" "" "pthread")
+    add_test_run(pthreadf "${CMAKE_CURRENT_SOURCE_DIR}" pthread_1.txt pthread_2.txt pthread_3.txt pthread_4.txt pthread_5.txt)
 endif()
 
 ########################################
@@ -478,6 +433,7 @@ foreach(kind opt ser ver)
 
             add_test_flex_raw(${name} ${c_file} ${l_file} "${verify};${reentrant};${tables};${opt};-P;${prefix}")
             add_test_build_raw(${name} "${c_file};${l_file}" "${reentrant_def};${tables_def}" "" "${libs}")
+            test_depends(${name}${build_suffix} ${name}${generate_suffix})
             
             if (${kind} STREQUAL opt)
                 add_test_run_with_input(${name} tableopts.txt)
@@ -489,6 +445,7 @@ foreach(kind opt ser ver)
                         -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/tableopts.txt
                         -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
                 )
+                test_depends(${name}${run_suffix} ${name}${build_suffix})
             endif()
         endforeach()
     endforeach()

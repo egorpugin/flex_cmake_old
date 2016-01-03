@@ -24,4 +24,6 @@ stamp-*
 m4/
 build-aux/
 
+# new
 /win*
+/build*

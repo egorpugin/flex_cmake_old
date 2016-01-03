@@ -1,0 +1,32 @@
+language: cpp
+
+notifications:
+  email: false
+  
+sudo: required
+dist: trusty
+
+os:
+  - linux
+  - osx
+
+branches:
+  only:
+    - master
+    
+before_install:
+  - if [[ $TRAVIS_OS_NAME == linux   ]]; then LINUX=true; fi
+  - if [[ $TRAVIS_OS_NAME == osx     ]]; then OSX=true; fi
+
+install:
+  - wget --no-check-certificate http://www.cmake.org/files/v3.3/cmake-3.3.1-Linux-x86_64.sh
+  - sudo sh cmake-3.3.1-Linux-x86_64.sh --skip-license --prefix=/usr
+  - if [[ $LINUX ]]; then sudo apt-get update; fi
+  - if [[ $LINUX ]]; sudo apt-get install -y bison flex; fi
+
+script:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make -j2
+  - ctest -j2

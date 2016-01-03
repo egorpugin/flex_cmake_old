@@ -11,7 +11,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 bison_target(parse
     "parse.y"
     "${CMAKE_CURRENT_BINARY_DIR}/parse.cpp"
-    DEFINES_FILE "${CMAKE_CURRENT_BINARY_DIR}/parse.h"
+    COMPILE_FLAGS "--defines=${CMAKE_CURRENT_BINARY_DIR}/parse.h"
 )
 flex_target(scan
     "${CMAKE_CURRENT_SOURCE_DIR}/scan.l"

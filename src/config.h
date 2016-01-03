@@ -79,7 +79,9 @@
 #define HAVE_MEMSET 1
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
-//#define HAVE_NETINET_IN_H 1
+#ifndef WIN32
+#define HAVE_NETINET_IN_H 1
+#endif
 
 /* Define to 1 if you have the `pow' function. */
 #define HAVE_POW 1
@@ -143,7 +145,9 @@
 //#define HAVE_SYS_WAIT_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-//#define HAVE_UNISTD_H 0
+#ifndef WIN32
+#define HAVE_UNISTD_H 1
+#endif
 
 /* Define to 1 if you have the `vfork' function. */
 #define HAVE_VFORK 1
