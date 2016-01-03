@@ -74,7 +74,7 @@ function(add_test_run test_name directory)
         COMMAND ${test_name} ${ARGN}
         WORKING_DIRECTORY ${directory}
     )
-    set_tests_properties(${test_name}${run_suffix} PROPERTIES DEPENDS ${test_name}${build_suffix})
+    test_depends(${test_name}${run_suffix} ${test_name}${build_suffix})
 endfunction(add_test_run)
 
 ########################################
@@ -88,7 +88,7 @@ function(add_test_run_with_input test_name input_file)
             -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/${input_file}
             -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
     )
-    set_tests_properties(${test_name}${run_suffix} PROPERTIES DEPENDS ${test_name}${build_suffix})
+    test_depends(${test_name}${run_suffix} ${test_name}${build_suffix})
 endfunction(add_test_run_with_input)
 
 ########################################
@@ -136,7 +136,7 @@ function(add_test_build_raw test_name test_files definitions compile_options lin
             --target ${test_name}
             --config $<CONFIGURATION>
     )
-    set_tests_properties(${test_name}${build_suffix} PROPERTIES DEPENDS ${test_name}${generate_suffix})
+    test_depends(${test_name}${build_suffix} ${test_name}${generate_suffix})
 endfunction(add_test_build_raw)
 
 ########################################
