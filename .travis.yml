@@ -33,8 +33,7 @@ before_install:
 install:
   - if [[ $LINUX ]]; then wget --no-check-certificate http://www.cmake.org/files/v3.3/cmake-3.3.1-Linux-x86_64.sh; fi
   - if [[ $LINUX ]]; then sudo sh cmake-3.3.1-Linux-x86_64.sh --skip-license --prefix=/usr; fi
-  - if [[ $LINUX && "$CXX" = "g++"     ]]; then export CXX="g++-5" CC="gcc-5"; fi
-  
+  - if [[ $LINUX && "$CXX" = "g++" ]]; then export CXX="g++-5" CC="gcc-5"; fi
   
   #- if [[ $OSX   && "$CXX" = "clang++" ]]; then export CXX="clang++-3.7" CC="clang-3.7"; fibefore_install:
   
