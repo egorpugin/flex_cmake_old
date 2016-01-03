@@ -8,7 +8,7 @@ dist: trusty
 
 os:
   - linux
-  #- osx
+  - osx
 
 branches:
   only:
@@ -38,7 +38,7 @@ install:
   #- if [[ $OSX   && "$CXX" = "clang++" ]]; then export CXX="clang++-3.7" CC="clang-3.7"; fibefore_install:
   
   - if [[ $OSX ]]; then brew install cmake flex bison; fi
-  - if [[ $OSX ]]; then brew install llvm --with-clang; fi
+  #- if [[ $OSX ]]; then brew install llvm --with-clang; fi
   - if [[ $OSX ]]; then clang --version; fi
 
 script:
