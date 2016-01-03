@@ -13,7 +13,7 @@ os:
 branches:
   only:
     - master
-    
+
 addons:
   apt:
     sources:
@@ -23,7 +23,7 @@ addons:
     - g++-5
     - flex
     - bison
-    
+
 before_install:
   - if [[ $TRAVIS_OS_NAME == linux   ]]; then LINUX=true; fi
   - if [[ $TRAVIS_OS_NAME == osx     ]]; then OSX=true; fi
