@@ -259,11 +259,6 @@ test_project_group(simple_m4_test)
 # TESTS
 ################################################################################
 
-
-add_test_flex_build_run_with_default_input(alloc_extra.l c)
-
-return()
-
 ########################################
 # TESTS simple m4
 ########################################
