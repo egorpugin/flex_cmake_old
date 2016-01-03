@@ -8,7 +8,7 @@ dist: trusty
 
 os:
   - linux
-  - osx
+  #- osx
 
 branches:
   only:
@@ -31,13 +31,14 @@ before_install:
   - if [[ $OSX ]]; then brew update; fi
 
 install:
-  - wget --no-check-certificate http://www.cmake.org/files/v3.3/cmake-3.3.1-Linux-x86_64.sh
-  - sudo sh cmake-3.3.1-Linux-x86_64.sh --skip-license --prefix=/usr
-  #- if [[ $LINUX ]]; then sudo apt-get update; fi
-  #- if [[ $LINUX ]]; then sudo apt-get install -y bison flex; fi
-  - if [[ $LINUX && "$CXX" = "g++"     ]]; then export CXX="g++-5"       CC="gcc-5";     fi
+  - if [[ $LINUX ]]; then wget --no-check-certificate http://www.cmake.org/files/v3.3/cmake-3.3.1-Linux-x86_64.sh; fi
+  - if [[ $LINUX ]]; then sudo sh cmake-3.3.1-Linux-x86_64.sh --skip-license --prefix=/usr; fi
+  - if [[ $LINUX && "$CXX" = "g++"     ]]; then export CXX="g++-5" CC="gcc-5"; fi
+  
+  
   #- if [[ $OSX   && "$CXX" = "clang++" ]]; then export CXX="clang++-3.7" CC="clang-3.7"; fibefore_install:
   
+  - if [[ $OSX ]]; then brew install cmake flex bison; fi
   - if [[ $OSX ]]; then brew install llvm --with-clang; fi
   - if [[ $OSX ]]; then clang --version; fi
 
