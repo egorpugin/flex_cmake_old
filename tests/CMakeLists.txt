@@ -98,10 +98,10 @@ function(add_test_flex name lang out_source_filename)
 endfunction(add_test_flex)
 
 ########################################
-# FUNCTION add_test_flex_build_raw
+# FUNCTION add_test_build_raw
 ########################################
 
-function(add_test_flex_build_raw test_name test_files definitions compile_options link_libraries)
+function(add_test_build_raw test_name test_files definitions compile_options link_libraries)
     # add test target
     add_executable(${test_name} ${test_files})
     target_link_libraries(${test_name} ${link_libraries})
@@ -121,7 +121,7 @@ function(add_test_flex_build_raw test_name test_files definitions compile_option
             --config $<CONFIGURATION>
     )
     set_tests_properties(${test_name}${build_suffix} PROPERTIES DEPENDS ${test_name}${generate_suffix})
-endfunction(add_test_flex_build_raw)
+endfunction(add_test_build_raw)
 
 ########################################
 # FUNCTION add_test_flex_build
@@ -142,7 +142,7 @@ function(add_test_flex_build name lang)
         set(test_files "${N};${test_files};${out}")
     endforeach()
     
-    add_test_flex_build_raw(${test_name} "${test_files};${ARGN}" "" "" "")
+    add_test_build_raw(${test_name} "${test_files};${ARGN}" "" "" "")
 endfunction(add_test_flex_build)
 
 ########################################
@@ -192,6 +192,35 @@ function(add_bison_target name)
 endfunction(add_bison_target)
 
 ########################################
+# FUNCTION add_test_compare
+########################################
+
+function(add_test_compare name lang)
+    add_test_flex_build(${name} ${lang} ${ARGN})
+
+    add_test(NAME ${test_name}${run_suffix}_1
+        COMMAND ${CMAKE_COMMAND}
+            -DEXE=$<TARGET_FILE:${test_name}>
+            -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.txt
+            -DOUT=${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.1
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
+    )
+    add_test(NAME ${test_name}${run_suffix}_2
+        COMMAND ${CMAKE_COMMAND}
+            -DEXE=$<TARGET_FILE:${test_name}>
+            -DARGS=1
+            -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.txt
+            -DOUT=${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.2
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
+    )
+    add_test(NAME ${test_name}${run_suffix}_compare
+        COMMAND ${CMAKE_COMMAND} -E compare_files
+            ${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.1
+            ${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.2
+    )
+endfunction(add_test_compare)
+
+########################################
 # EXECUTABLE simple_m4_test
 ########################################
 
@@ -206,10 +235,64 @@ test_project_group(simple_m4_test)
 ################################################################################
 
 
-# one
-add_test_flex_build_run_with_default_input(lineno_nr.l c)
-add_test_flex_build_run_with_default_input(lineno_r.l c)
-add_test_flex_build_run_with_default_input(lineno_trailing.l c)
+foreach(kind ser ver)
+    foreach(threading r nr)
+        foreach(opt -Ce -Cf -CF -Cm -Cem -Cae -Caef -CaeF -Cam -Caem)
+            set(name_opt ${opt})
+            if (${opt} STREQUAL -CF OR
+                ${opt} STREQUAL -CaeF)
+                set(name_opt ${name_opt}_)
+            endif()
+
+            set(name tableopts_${kind}_${threading}_${name_opt})
+            string(REPLACE "-" "" name ${name})
+            set(l_file ${CMAKE_CURRENT_SOURCE_DIR}/tableopts.l4)
+            set(c_file ${CMAKE_CURRENT_BINARY_DIR}/${name}.c)
+            
+            set(libs)
+            set(tables)
+            set(tables_def)
+            if (${kind} STREQUAL ser OR ${kind} STREQUAL ver)
+                set(tables --tables-file=${CMAKE_CURRENT_BINARY_DIR}/${name}.tables) # need quotes?
+                set(tables_def -DTEST_HAS_TABLES_EXTERNAL)
+                set(libs ${winsock_lib})
+            endif()
+
+            set(verify)
+            if (${kind} STREQUAL ver)
+                set(verify --tables-verify)
+            endif()
+
+            set(reentrant)
+            set(reentrant_def)
+            if (${threading} STREQUAL r)
+                set(reentrant --reentrant)
+                set(reentrant_def -DTEST_IS_REENTRANT)
+            endif()
+
+            string(REPLACE "-" "_" prefix ${opt})
+
+            add_test_flex_raw(${name} ${c_file} ${l_file} "${verify};${reentrant};${tables};${opt};-P;${prefix};-L")
+            add_test_build_raw(${name} "${c_file};${l_file}" "${reentrant_def};${tables_def}" "" "${libs}")
+            
+            if (${kind} STREQUAL opt)
+                add_test_run_with_input(${name} tableopts.txt)
+            else()
+                add_test(NAME ${name}${run_suffix}
+                    COMMAND ${CMAKE_COMMAND}
+                        -DEXE=$<TARGET_FILE:${name}>
+                        -DARGS=${CMAKE_CURRENT_BINARY_DIR}/${name}.tables
+                        -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/tableopts.txt
+                        -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
+                )
+            endif()
+
+            return()
+        endforeach()
+    endforeach()
+endforeach()
+
+
 
 
 
@@ -294,27 +377,27 @@ add_test_run_with_input(bison_yylval_scanner bison_yylval.txt)
 add_test_flex_raw(reject_nr
     ${CMAKE_CURRENT_BINARY_DIR}/reject_nr.c
     ${CMAKE_CURRENT_SOURCE_DIR}/reject.l4 "")
-add_test_flex_build_raw(reject_nr "${CMAKE_CURRENT_BINARY_DIR}/reject_nr.c;${CMAKE_CURRENT_SOURCE_DIR}/reject.l4" "" "" "")
+add_test_build_raw(reject_nr "${CMAKE_CURRENT_BINARY_DIR}/reject_nr.c;${CMAKE_CURRENT_SOURCE_DIR}/reject.l4" "" "" "")
 add_test_run_with_input(reject_nr reject.txt)
 
 add_test_flex_raw(reject_r
     ${CMAKE_CURRENT_BINARY_DIR}/reject_r.c
     ${CMAKE_CURRENT_SOURCE_DIR}/reject.l4 "--reentrant")
-add_test_flex_build_raw(reject_r "${CMAKE_CURRENT_BINARY_DIR}/reject_r.c;${CMAKE_CURRENT_SOURCE_DIR}/reject.l4" "-DTEST_IS_REENTRANT" "" "")
+add_test_build_raw(reject_r "${CMAKE_CURRENT_BINARY_DIR}/reject_r.c;${CMAKE_CURRENT_SOURCE_DIR}/reject.l4" "-DTEST_IS_REENTRANT" "" "")
 add_test_run_with_input(reject_r reject.txt)
 
 # table
 add_test_flex_raw(reject_ser
     ${CMAKE_CURRENT_BINARY_DIR}/reject_ser.c
     ${CMAKE_CURRENT_SOURCE_DIR}/reject.l4 "--tables-file=reject_ser.tables")
-add_test_flex_build_raw(reject_ser "${CMAKE_CURRENT_BINARY_DIR}/reject_ser.c;${CMAKE_CURRENT_SOURCE_DIR}/reject.l4"
+add_test_build_raw(reject_ser "${CMAKE_CURRENT_BINARY_DIR}/reject_ser.c;${CMAKE_CURRENT_SOURCE_DIR}/reject.l4"
     "-DTEST_HAS_TABLES_EXTERNAL" "" ${winsock_lib})
 add_test_run(reject_ser "" ${CMAKE_CURRENT_BINARY_DIR}/reject_ser.tables ${CMAKE_CURRENT_SOURCE_DIR}/reject.txt)
 
 add_test_flex_raw(reject_ver
     ${CMAKE_CURRENT_BINARY_DIR}/reject_ver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/reject.l4 "--tables-verify;--tables-file=reject_ver.tables")
-add_test_flex_build_raw(reject_ver "${CMAKE_CURRENT_BINARY_DIR}/reject_ver.c;${CMAKE_CURRENT_SOURCE_DIR}/reject.l4"
+add_test_build_raw(reject_ver "${CMAKE_CURRENT_BINARY_DIR}/reject_ver.c;${CMAKE_CURRENT_SOURCE_DIR}/reject.l4"
     "-DTEST_HAS_TABLES_EXTERNAL" "" ${winsock_lib})
 add_test_run(reject_ver "" ${CMAKE_CURRENT_BINARY_DIR}/reject_ver.tables ${CMAKE_CURRENT_SOURCE_DIR}/reject.txt)
 
@@ -344,16 +427,14 @@ add_test_flex_build(cxx_yywrap.ll cc)
 add_test_run(cxx_yywrap "${CMAKE_CURRENT_SOURCE_DIR}" cxx_yywrap.txt cxx_yywrap.txt cxx_yywrap.txt)
 
 # one
-add_test_flex_build_run_with_default_input(lineno_nr.l c)
-add_test_flex_build_run_with_default_input(lineno_r.l c)
-add_test_flex_build_run_with_default_input(lineno_trailing.l c)
+add_test_compare(lineno_nr.l c)
+add_test_compare(lineno_r.l c)
+add_test_compare(lineno_trailing.l c)
     
 # pthread
 if (NOT MSVC)
-    #PTHREAD_LOG_COMPILER=$(srcdir)/testwrapper.sh
-    #AM_PTHREAD_LOG_FLAGS=-i $(srcdir)/pthread_1.txt -i $(srcdir)/pthread_2.txt -i $(srcdir)/pthread_3.txt -i $(srcdir)/pthread_4.txt -i $(srcdir)/pthread_5.txt
-
-    add_test_flex_build_run_with_default_input(pthread.l c)
+    add_test_flex_build(pthread.l c)
+    add_test_run(pthread "${CMAKE_CURRENT_SOURCE_DIR}" pthread_1.txt pthread_2.txt pthread_3.txt pthread_4.txt pthread_5.txt)
 endif()
 
 ########################################
@@ -362,8 +443,8 @@ foreach(kind opt ser ver)
     foreach(threading r nr)
         foreach(opt -Ca -Ce -Cf -CF -Cm -Cem -Cae -Caef -CaeF -Cam -Caem)
             set(name_opt ${opt})
-            if (opt STREQUAL -CF OR
-                opt STREQUAL -CaeF)
+            if (${opt} STREQUAL -CF OR
+                ${opt} STREQUAL -CaeF)
                 set(name_opt ${name_opt}_)
             endif()
 
@@ -375,26 +456,40 @@ foreach(kind opt ser ver)
             set(libs)
             set(tables)
             set(tables_def)
-            if (kind STREQUAL ser OR kind STREQUAL ver)
+            if (${kind} STREQUAL ser OR ${kind} STREQUAL ver)
                 set(tables --tables-file=${CMAKE_CURRENT_BINARY_DIR}/${name}.tables) # need quotes?
                 set(tables_def -DTEST_HAS_TABLES_EXTERNAL)
                 set(libs ${winsock_lib})
             endif()
 
             set(verify)
-            if (kind STREQUAL ver)
+            if (${kind} STREQUAL ver)
                 set(verify --tables-verify)
             endif()
 
             set(reentrant)
             set(reentrant_def)
-            if (threading STREQUAL r)
+            if (${threading} STREQUAL r)
                 set(reentrant --reentrant)
                 set(reentrant_def -DTEST_IS_REENTRANT)
             endif()
 
-            add_test_flex_raw(${name} ${c_file} ${l_file} "${verify};${reentrant};${tables}")
-            add_test_flex_build_raw(${name} "${c_file};${l_file}" "${reentrant_def};${tables_def}" "" "${libs}")
+            string(REPLACE "-" "_" prefix ${opt})
+
+            add_test_flex_raw(${name} ${c_file} ${l_file} "${verify};${reentrant};${tables};${opt};-P;${prefix}")
+            add_test_build_raw(${name} "${c_file};${l_file}" "${reentrant_def};${tables_def}" "" "${libs}")
+            
+            if (${kind} STREQUAL opt)
+                add_test_run_with_input(${name} tableopts.txt)
+            else()
+                add_test(NAME ${name}${run_suffix}
+                    COMMAND ${CMAKE_COMMAND}
+                        -DEXE=$<TARGET_FILE:${name}>
+                        -DARGS=${CMAKE_CURRENT_BINARY_DIR}/${name}.tables
+                        -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/tableopts.txt
+                        -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
+                )
+            endif()
         endforeach()
     endforeach()
 endforeach()

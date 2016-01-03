@@ -90,7 +90,7 @@ public:
 
     bool empty() const
     {
-        bool e = true;
+        bool e = false;
         if (before_)
             e |= before_->empty();
         e |= lines.empty();
