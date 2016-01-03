@@ -391,14 +391,14 @@ add_test_flex_raw(reject_ser
     ${CMAKE_CURRENT_BINARY_DIR}/reject_ser.c
     ${CMAKE_CURRENT_SOURCE_DIR}/reject.l4 "--tables-file=reject_ser.tables")
 add_test_build_raw(reject_ser "${CMAKE_CURRENT_BINARY_DIR}/reject_ser.c;${CMAKE_CURRENT_SOURCE_DIR}/reject.l4"
-    "-DTEST_HAS_TABLES_EXTERNAL" "" ${winsock_lib})
+    "-DTEST_HAS_TABLES_EXTERNAL" "" "${winsock_lib}")
 add_test_run(reject_ser "" ${CMAKE_CURRENT_BINARY_DIR}/reject_ser.tables ${CMAKE_CURRENT_SOURCE_DIR}/reject.txt)
 
 add_test_flex_raw(reject_ver
     ${CMAKE_CURRENT_BINARY_DIR}/reject_ver.c
     ${CMAKE_CURRENT_SOURCE_DIR}/reject.l4 "--tables-verify;--tables-file=reject_ver.tables")
 add_test_build_raw(reject_ver "${CMAKE_CURRENT_BINARY_DIR}/reject_ver.c;${CMAKE_CURRENT_SOURCE_DIR}/reject.l4"
-    "-DTEST_HAS_TABLES_EXTERNAL" "" ${winsock_lib})
+    "-DTEST_HAS_TABLES_EXTERNAL" "" "${winsock_lib}")
 add_test_run(reject_ver "" ${CMAKE_CURRENT_BINARY_DIR}/reject_ver.tables ${CMAKE_CURRENT_SOURCE_DIR}/reject.txt)
 
 ########################################
