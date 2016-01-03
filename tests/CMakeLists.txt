@@ -243,6 +243,8 @@ function(add_test_compare name lang)
             ${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.1
             ${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.2
     )
+    test_depends(${test_name}${run_suffix}_compare ${test_name}${run_suffix}_1)
+    test_depends(${test_name}${run_suffix}_compare ${test_name}${run_suffix}_2)
 endfunction(add_test_compare)
 
 ########################################
