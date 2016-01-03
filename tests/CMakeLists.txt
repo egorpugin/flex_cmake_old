@@ -230,6 +230,8 @@ function(add_test_compare name lang)
             -DOUT=${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.1
             -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
     )
+    test_depends(${test_name}${run_suffix}_1 ${test_name}${build_suffix})
+
     add_test(NAME ${test_name}${run_suffix}_2
         COMMAND ${CMAKE_COMMAND}
             -DEXE=$<TARGET_FILE:${test_name}>
@@ -238,6 +240,8 @@ function(add_test_compare name lang)
             -DOUT=${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.2
             -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
     )
+    test_depends(${test_name}${run_suffix}_2 ${test_name}${build_suffix})
+
     add_test(NAME ${test_name}${run_suffix}_compare
         COMMAND ${CMAKE_COMMAND} -E compare_files
             ${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.1
