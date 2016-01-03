@@ -107,9 +107,9 @@ endfunction(add_test_flex_raw)
 # FUNCTION add_test_flex
 ########################################
 
-function(add_test_flex name lang out_source_filename)
+function(add_test_flex name file lang out_source_filename)
     set(generated_file ${CMAKE_CURRENT_BINARY_DIR}/${name}.${lang})
-    add_test_flex_raw(${name} ${generated_file} ${CMAKE_CURRENT_SOURCE_DIR}/${name} "")
+    add_test_flex_raw(${name} ${generated_file} ${CMAKE_CURRENT_SOURCE_DIR}/${file} "")
     set(${out_source_filename} ${generated_file} PARENT_SCOPE)
 endfunction(add_test_flex)
 
@@ -153,12 +153,22 @@ function(add_test_flex_build name lang)
 
     set(test_files)
     foreach(N ${name})
-        # generate test
-        add_test_flex(${N} ${lang} out)
+        string(REGEX MATCH "^(.*)\\.[^.]*$" dummy ${N})
+        set(N2 ${CMAKE_MATCH_1})
+
+        add_test_flex(${N2} ${N} ${lang} out)
         set(test_files "${N};${test_files};${out}")
     endforeach()
     
     add_test_build_raw(${test_name} "${test_files};${ARGN}" "" "" "")
+
+    # dependencies
+    foreach(N ${name})
+        string(REGEX MATCH "^(.*)\\.[^.]*$" dummy ${N})
+        set(N ${CMAKE_MATCH_1})
+
+        test_depends(${test_name}${build_suffix} ${N}${generate_suffix})
+    endforeach()
 endfunction(add_test_flex_build)
 
 ########################################
@@ -248,6 +258,11 @@ test_project_group(simple_m4_test)
 ################################################################################
 # TESTS
 ################################################################################
+
+
+add_test_flex_build_run_with_default_input(alloc_extra.l c)
+
+return()
 
 ########################################
 # TESTS simple m4
