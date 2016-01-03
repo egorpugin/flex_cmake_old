@@ -29,6 +29,7 @@ before_install:
   - if [[ $TRAVIS_OS_NAME == osx     ]]; then OSX=true; fi
   
   - if [[ $OSX ]]; then brew update; fi
+  #- if [[ $OSX ]]; then brew outdated <package-name> || brew upgrade <package-name>; fi
 
 install:
   - if [[ $LINUX ]]; then wget --no-check-certificate http://www.cmake.org/files/v3.3/cmake-3.3.1-Linux-x86_64.sh; fi
@@ -37,7 +38,7 @@ install:
   
   #- if [[ $OSX   && "$CXX" = "clang++" ]]; then export CXX="clang++-3.7" CC="clang-3.7"; fibefore_install:
   
-  - if [[ $OSX ]]; then brew install cmake flex bison; fi
+  #- if [[ $OSX ]]; then brew install cmake flex bison; fi
   #- if [[ $OSX ]]; then brew install llvm --with-clang; fi
   - if [[ $OSX ]]; then clang --version; fi
 
