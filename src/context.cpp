@@ -52,6 +52,11 @@ void Context::addText(const Text &s)
     lines.back() += s;
 }
 
+void Context::addText(const char* str, int n)
+{
+    addText(Text(str, str + n));
+}
+
 void Context::addNoNewLine(const Text &s)
 {
     lines.push_back(Line{ s, n_indents });

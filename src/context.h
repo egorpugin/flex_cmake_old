@@ -41,7 +41,9 @@ public:
     void addLine(const Text &s = Text());
     void addNoNewLine(const Text &s);
     void addLineNoSpace(const Text &s);
+
     void addText(const Text &s);
+    void addText(const char* str, int n);
 
     void decreaseIndent();
     void increaseIndent();

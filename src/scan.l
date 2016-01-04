@@ -268,24 +268,24 @@ M4QEND      "]]"
                     /* TODO: Matched. */
                     yy_pop_state();
                 }else
-                    buf_strnappend(&top_buf, yytext, yyleng);
+                    top_buf.addText(yytext, yyleng);
             }
 
     "{"     {
                 brace_depth++;
-                buf_strnappend(&top_buf, yytext, yyleng);
+                top_buf.addText(yytext, yyleng);
             }
 
     {NL}    {
                 ++linenum;
-                buf_strnappend(&top_buf, yytext, yyleng);
+                top_buf.addText(yytext, yyleng);
             }
 
-    {M4QSTART}  buf_strnappend(&top_buf, escaped_qstart, strlen(escaped_qstart));
-    {M4QEND}    buf_strnappend(&top_buf, escaped_qend, strlen(escaped_qend));
+    {M4QSTART}  top_buf.addText(escaped_qstart, strlen(escaped_qstart));
+    {M4QEND}    top_buf.addText(escaped_qend, strlen(escaped_qend));
 
     [^{}\r\n]  {
-                buf_strnappend(&top_buf, yytext, yyleng);
+                top_buf.addText(yytext, yyleng);
                }
 
     <<EOF>>     {

@@ -44,7 +44,6 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp
 )
 
 set(common_flex_src
-    buf.cpp
     ccl.cpp
     dfa.cpp
     ecs.cpp
