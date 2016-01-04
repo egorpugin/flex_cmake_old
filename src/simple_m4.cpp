@@ -328,12 +328,6 @@ bool M4::isEmpty(const std::string &s)
 
 std::string M4::processLine(const std::string &text, const MacroParams &params)
 {
-    if (text.find("YY_CURRENT_BUFFER_LVALUE =") != text.npos)
-    {
-        int a = 5;
-        a++;
-    }
-
     auto _prev_p = p;
     auto old_token = token;
 
@@ -557,11 +551,6 @@ std::string M4::processWord()
     std::string result;
     auto word = token.word;
 
-    if (word == "yy_create_buffer")
-    {
-        int a = 5;
-        a++;
-    }
     auto m = functions.find(word);
     if (m == functions.end())
     {
@@ -639,17 +628,7 @@ bool m4(Context::Lines &lines)
 {
     simple_m4::M4 processor;
     processor.setFunctions(simple_m4::main_functions);
-    int i = 0;
     for (auto &line : lines)
-    {
-        i++;
-        if (i == 126)
-        {
-            int a = 5;
-            a++;
-        }
-        auto r = processor.processLine(line.text);
-        line.text = r;
-    }
+        line.text = processor.processLine(line.text);
     return true;
 }
