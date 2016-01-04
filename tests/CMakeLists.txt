@@ -216,6 +216,7 @@ function(add_bison_target name)
     bison_target(${name} "${name}_parser.y"
         "${CMAKE_CURRENT_BINARY_DIR}/${name}_parser.c"
         COMPILE_FLAGS "-d -p test --defines=${CMAKE_CURRENT_BINARY_DIR}/${name}_parser.h"
+        DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/${name}_parser.h
     )
     set(BISON_${name}_OUTPUTS ${BISON_${name}_OUTPUTS} PARENT_SCOPE)
 endfunction(add_bison_target)
