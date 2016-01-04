@@ -39,6 +39,7 @@ endmacro(test_project_group)
 
 macro(test_depends test1 test2)
     set_tests_properties(${test1} PROPERTIES DEPENDS ${test2})
+    #message("${test1} PROPERTIES DEPENDS ${test2}")
 endmacro(test_depends)
 
 ########################################
@@ -136,7 +137,17 @@ function(add_test_build_raw test_name test_files definitions compile_options lin
             --target ${test_name}
             --config $<CONFIGURATION>
     )
-    test_depends(${test_name}${build_suffix} ${test_name}${generate_suffix})
+
+    unset(NO_TEST_DEP)
+    foreach(opt ${ARGN})
+        if ("${opt}" STREQUAL "NO_TEST_DEP")
+            set(NO_TEST_DEP 1)
+        endif()
+    endforeach()
+
+    if (NOT NO_TEST_DEP)
+        test_depends(${test_name}${build_suffix} ${test_name}${generate_suffix})
+    endif()
 endfunction(add_test_build_raw)
 
 ########################################
@@ -153,7 +164,7 @@ function(add_test_flex_build test_name files lang)
         set(test_files "${N};${test_files};${out}")
     endforeach()
     
-    add_test_build_raw(${test_name} "${test_files};${ARGN}" "" "" "")
+    add_test_build_raw(${test_name} "${test_files};${ARGN}" "" "" "" NO_TEST_DEP)
 
     # dependencies
     foreach(N ${files})
