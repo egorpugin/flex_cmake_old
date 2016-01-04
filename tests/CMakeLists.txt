@@ -250,16 +250,12 @@ endfunction(add_test_compare)
 
 add_executable(simple_m4_test simple_m4_test.cpp)
 target_link_libraries(simple_m4_test simple_m4)
+set_target_properties(simple_m4_test PROPERTIES EXCLUDE_FROM_ALL True)
+set_target_properties(simple_m4_test PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD True)
 
 ################################################################################
 # TESTS
 ################################################################################
-
-
-
-
-#return()
-
 
 ########################################
 # TESTS simple m4
