@@ -17,7 +17,7 @@ before_build:
 build_script:
   - mkdir build
   - cd build
-  - cmake .. -G "%generator%"
+  - cmake .. -G "%generator%" || cmake .. -G "Visual Studio 14 2015" || cmake .. -G "Visual Studio 14 2015 Win64" || cd .. && cmake -H. -Bwin32
   #- cmake .. -G "%generator%"
   - msbuild flex.sln /p:Platform=%vcplatform% /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
   - ctest
