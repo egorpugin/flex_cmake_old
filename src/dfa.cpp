@@ -522,9 +522,7 @@ void ntod (void)
 					    sizeof (flex_int32_t));
 		yynxt_curr = 0;
 
-		buf_prints (&yydmap_buf,
-			    "\t{YYTD_ID_NXT, (void**)&yy_nxt, sizeof(%s)},\n",
-			    long_align ? "flex_int32_t" : "flex_int16_t");
+        yydmap_buf.addLine(String() + "\t{YYTD_ID_NXT, (void**)&yy_nxt, sizeof(" + (long_align ? "flex_int32_t" : "flex_int16_t") + ")},");
 
 		/* Unless -Ca, declare it "short" because it's a real
 		 * long-shot that that won't be large enough.

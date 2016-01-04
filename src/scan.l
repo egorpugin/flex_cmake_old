@@ -51,9 +51,9 @@ extern const char *escaped_qstart, *escaped_qend;
 #define ACTION_M4_IFDEF(def, should_define) \
     do{ \
         if ( should_define ) \
-            buf_m4_define( &m4defs_buf, def, NULL);\
+            m4defs_buf.m4define(def); \
         else \
-            buf_m4_undefine( &m4defs_buf, def);\
+            m4defs_buf.m4undefine(def); \
     } while(0)
 
 #define MARK_END_OF_PROLOG mark_prolog();
@@ -158,7 +158,11 @@ M4QEND      "]]"
     ^"%top"[[:blank:]]*"{"[[:blank:]]*{NL}    {
                 brace_start_line = linenum;
                 ++linenum;
-                buf_linedir( &top_buf, infilename?infilename:"<stdin>", linenum);
+                {
+                    std::string fn = infilename ? infilename : "<stdin>";
+                    replace_all(fn, "\\", "\\\\");
+                    top_buf.addLine("#line " + std::to_string(linenum) + " \"" + fn + "\"");
+                }
                 brace_depth = 1;
                 yy_push_state(CODEBLOCK_MATCH_BRACE);
             }

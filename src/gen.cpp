@@ -133,9 +133,8 @@ static struct yytbl_data *mkeoltbl (void)
 	for (i = 1; i <= num_rules; i++)
 		tdata[i] = rule_has_nl[i] ? 1 : 0;
 
-	buf_prints (&yydmap_buf,
-		    "\t{YYTD_ID_RULE_CAN_MATCH_EOL, (void**)&yy_rule_can_match_eol, sizeof(%s)},\n",
-		    "flex_int32_t");
+    yydmap_buf.addLine("\t{YYTD_ID_RULE_CAN_MATCH_EOL, (void**)&yy_rule_can_match_eol, sizeof(flex_int32_t)},");
+
 	return tbl;
 }
 
@@ -225,10 +224,9 @@ static struct yytbl_data *mkctbl (void)
 	flex_int32_t *tdata = 0, curr = 0;
 	int     end_of_buffer_action = num_rules + 1;
 
-	buf_prints (&yydmap_buf,
-		    "\t{YYTD_ID_TRANSITION, (void**)&yy_transition, sizeof(%s)},\n",
-		    ((tblend + numecs + 1) >= INT16_MAX
-		     || long_align) ? "flex_int32_t" : "flex_int16_t");
+    yydmap_buf.addLine(String() + "\t{YYTD_ID_TRANSITION, (void**)&yy_transition, sizeof(" + 
+        (((tblend + numecs + 1) >= INT16_MAX
+        || long_align) ? "flex_int32_t" : "flex_int16_t") + ")},");
 
 	tbl = (decltype(tbl))calloc(1, sizeof (struct yytbl_data));
 	yytbl_data_init (tbl, YYTD_ID_TRANSITION);
@@ -338,10 +336,8 @@ static struct yytbl_data *mkssltbl (void)
 	for (i = 0; i <= lastsc * 2; ++i)
 		tdata[i] = base[i];
 
-	buf_prints (&yydmap_buf,
-		    "\t{YYTD_ID_START_STATE_LIST, (void**)&yy_start_state_list, sizeof(%s)},\n",
-		    "struct yy_trans_info*");
-
+    yydmap_buf.addLine("\t{YYTD_ID_START_STATE_LIST, (void**)&yy_start_state_list, sizeof(struct yy_trans_info*)},");
+    
 	return tbl;
 }
 
@@ -470,9 +466,7 @@ struct yytbl_data *mkecstbl (void)
 		tdata[i] = ecgroup[i];
 	}
 
-	buf_prints (&yydmap_buf,
-		    "\t{YYTD_ID_EC, (void**)&yy_ec, sizeof(%s)},\n",
-		    "YY_CHAR");
+    yydmap_buf.addLine("\t{YYTD_ID_EC, (void**)&yy_ec, sizeof(YY_CHAR)},");
 
 	return tbl;
 }
@@ -683,9 +677,8 @@ struct yytbl_data *mkftbl (void)
 				 i, anum);
 	}
 
-	buf_prints (&yydmap_buf,
-		    "\t{YYTD_ID_ACCEPT, (void**)&yy_accept, sizeof(%s)},\n",
-		    long_align ? "flex_int32_t" : "flex_int16_t");
+    yydmap_buf.addLine(String() + "\t{YYTD_ID_ACCEPT, (void**)&yy_accept, sizeof(" + (long_align ? "flex_int32_t" : "flex_int16_t") + ")},");
+
 	return tbl;
 }
 
@@ -1103,9 +1096,7 @@ void gentabs (void)
 			     get_int16_decl (), "yy_acclist", MAX (numas,
 								   1) + 1);
         
-        buf_prints (&yydmap_buf,
-                "\t{YYTD_ID_ACCLIST, (void**)&yy_acclist, sizeof(%s)},\n",
-                long_align ? "flex_int32_t" : "flex_int16_t");
+        yydmap_buf.addLine(String() + "\t{YYTD_ID_ACCLIST, (void**)&yy_acclist, sizeof(" + (long_align ? "flex_int32_t" : "flex_int16_t") + ")},");
 
         yyacclist_tbl = (decltype(yyacclist_tbl))calloc(1,sizeof(struct yytbl_data));
         yytbl_data_init (yyacclist_tbl, YYTD_ID_ACCLIST);
@@ -1212,9 +1203,7 @@ void gentabs (void)
 	out_str_dec (long_align ? get_int32_decl () : get_int16_decl (),
 		     "yy_accept", k);
 
-	buf_prints (&yydmap_buf,
-		    "\t{YYTD_ID_ACCEPT, (void**)&yy_accept, sizeof(%s)},\n",
-		    long_align ? "flex_int32_t" : "flex_int16_t");
+    yydmap_buf.addLine(String() + "\t{YYTD_ID_ACCEPT, (void**)&yy_accept, sizeof(" + (long_align ? "flex_int32_t" : "flex_int16_t") + ")},");
 
 	yyacc_tbl = (decltype(yyacc_tbl))calloc(1, sizeof (struct yytbl_data));
 	yytbl_data_init (yyacc_tbl, YYTD_ID_ACCEPT);
@@ -1285,9 +1274,8 @@ void gentabs (void)
 			       stderr);
 
 		out_str_dec (get_yy_char_decl (), "yy_meta", numecs + 1);
-		buf_prints (&yydmap_buf,
-			    "\t{YYTD_ID_META, (void**)&yy_meta, sizeof(%s)},\n",
-			    "YY_CHAR");
+
+        yydmap_buf.addLine("\t{YYTD_ID_META, (void**)&yy_meta, sizeof(YY_CHAR)},");
 
 		for (i = 1; i <= numecs; ++i) {
 			if (trace)
@@ -1317,10 +1305,10 @@ void gentabs (void)
 		     get_uint32_decl () : get_uint16_decl (),
 		     "yy_base", total_states + 1);
 
-	buf_prints (&yydmap_buf,
-		    "\t{YYTD_ID_BASE, (void**)&yy_base, sizeof(%s)},\n",
-		    (tblend >= INT16_MAX
-		     || long_align) ? "flex_uint32_t" : "flex_uint16_t");
+    yydmap_buf.addLine(String() + "\t{YYTD_ID_BASE, (void**)&yy_base, sizeof(" +
+        ((tblend >= INT16_MAX
+        || long_align) ? "flex_uint32_t" : "flex_uint16_t") + ")},");
+
 	yybase_tbl = (decltype(yybase_tbl))calloc (1, sizeof (struct yytbl_data));
 	yytbl_data_init (yybase_tbl, YYTD_ID_BASE);
 	yybase_tbl->td_lolen = total_states + 1;
@@ -1374,10 +1362,9 @@ void gentabs (void)
 		     get_int32_decl () : get_int16_decl (),
 		     "yy_def", total_states + 1);
 
-	buf_prints (&yydmap_buf,
-		    "\t{YYTD_ID_DEF, (void**)&yy_def, sizeof(%s)},\n",
-		    (total_states >= INT16_MAX
-		     || long_align) ? "flex_int32_t" : "flex_int16_t");
+    yydmap_buf.addLine(String() + "\t{YYTD_ID_DEF, (void**)&yy_def, sizeof(" +
+        ((total_states >= INT16_MAX
+            || long_align) ? "flex_int32_t" : "flex_int16_t") + ")},");
 
 	yydef_tbl = (decltype(yydef_tbl))calloc(1, sizeof (struct yytbl_data));
 	yytbl_data_init (yydef_tbl, YYTD_ID_DEF);
@@ -1406,11 +1393,10 @@ void gentabs (void)
 		     get_uint32_decl () : get_uint16_decl (), "yy_nxt",
 		     tblend + 1);
 
-	buf_prints (&yydmap_buf,
-		    "\t{YYTD_ID_NXT, (void**)&yy_nxt, sizeof(%s)},\n",
-		    (total_states >= INT16_MAX
-		     || long_align) ? "flex_uint32_t" : "flex_uint16_t");
-
+    yydmap_buf.addLine(String() + "\t{YYTD_ID_NXT, (void**)&yy_nxt, sizeof(" + 
+        ((total_states >= INT16_MAX
+        || long_align) ? "flex_uint32_t" : "flex_uint16_t") + ")},");
+    
 	yynxt_tbl = (decltype(yynxt_tbl))calloc (1, sizeof (struct yytbl_data));
 	yytbl_data_init (yynxt_tbl, YYTD_ID_NXT);
 	yynxt_tbl->td_lolen = tblend + 1;
@@ -1443,10 +1429,9 @@ void gentabs (void)
 		     get_int32_decl () : get_int16_decl (), "yy_chk",
 		     tblend + 1);
 
-	buf_prints (&yydmap_buf,
-		    "\t{YYTD_ID_CHK, (void**)&yy_chk, sizeof(%s)},\n",
-		    (total_states >= INT16_MAX
-		     || long_align) ? "flex_int32_t" : "flex_int16_t");
+    yydmap_buf.addLine(String() + "\t{YYTD_ID_CHK, (void**)&yy_chk, sizeof(" +
+        ((total_states >= INT16_MAX
+            || long_align) ? "flex_int32_t" : "flex_int16_t") + ")},");
 
 	yychk_tbl = (decltype(yychk_tbl))calloc (1, sizeof (struct yytbl_data));
 	yytbl_data_init (yychk_tbl, YYTD_ID_CHK);
@@ -1700,10 +1685,10 @@ void make_tables (void)
 		/* Begin generating yy_NUL_trans */
 		out_str_dec (get_state_decl (), "yy_NUL_trans",
 			     lastdfa + 1);
-		buf_prints (&yydmap_buf,
-			    "\t{YYTD_ID_NUL_TRANS, (void**)&yy_NUL_trans, sizeof(%s)},\n",
-			    (fullspd) ? "struct yy_trans_info*" :
-			    "flex_int32_t");
+
+        yydmap_buf.addLine(String() + "\t{YYTD_ID_NUL_TRANS, (void**)&yy_NUL_trans, sizeof(" + 
+            ((fullspd) ? "struct yy_trans_info*" :
+            "flex_int32_t") + ")},\n");
 
 		yynultrans_tbl = (decltype(yynultrans_tbl))calloc(1, sizeof (struct yytbl_data));
 		yytbl_data_init (yynultrans_tbl, YYTD_ID_NUL_TRANS);

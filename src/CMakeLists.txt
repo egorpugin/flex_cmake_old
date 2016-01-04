@@ -50,7 +50,6 @@ set(common_flex_src
     ecs.cpp
     flexdef.h
     flexint.h
-    FlexLexer.h
     gen.cpp
     gettext.h
     main.cpp
@@ -73,6 +72,8 @@ set(common_flex_src
     ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp
 
     ${CMAKE_BINARY_DIR}/config.h
+
+    FlexLexer.h
 
     parse.y
     flex.skl

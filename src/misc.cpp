@@ -108,7 +108,7 @@ void action_define (const char *defname, int value)
 
 	/* track #defines so we can undef them when we're done. */
 	cpy = xstrdup(defname);
-	buf_append (&defs_buf, cpy);
+    defs_buf.addText(cpy);
 }
 
 
@@ -383,7 +383,6 @@ void line_directive_out (FILE *output_file, int do_infile)
 	 */
 	if (output_file) {
         fputs(directive, output_file);
-        //chain_pipe.push_to_all(directive);
 	}
 	else
 		add_action (directive);

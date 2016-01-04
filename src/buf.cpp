@@ -52,168 +52,18 @@ Buf yydmap_buf;		/**< string buffer to hold yydmap elements */
 Buf m4defs_buf;          /**< m4 definitions. List of strings. */
 Buf top_buf;             /**< contains %top code. String buffer. */
 
-Buf *buf_print_strings(Buf * buf, FILE* out)
-{
-    if(!buf || !out)
-        return buf;
-
-    auto s = buf->getText();
-    fprintf(out, "%s", s.c_str());
-    //chain_pipe.push_to_all(s);
-    return buf;
-}
-
-/* Append a "%s" formatted string to a string buffer */
-Buf *buf_prints (Buf *buf, const char *fmt, const char *s)
-{
-	char   *t;
-    size_t tsz;
-
-	tsz = strlen(fmt) + strlen(s) + 1;
-	t = (char*)malloc(tsz);
-	if (!t)
-	    flexfatal (_("Allocation of buffer to print string failed"));
-	snprintf (t, tsz, fmt, s);
-	buf = buf_strappend (buf, t);
-	free(t);
-	return buf;
-}
-
-/** Append a line directive to the string buffer.
- * @param buf A string buffer.
- * @param filename file name
- * @param lineno line number
- * @return buf
- */
-Buf *buf_linedir (Buf *buf, const char* filename, int lineno)
-{
-    char *dst, *t;
-    const char *src;
-
-    t = (char*)malloc(strlen("#line \"\"\n")          +   /* constant parts */
-                    2 * strlen (filename)            +   /* filename with possibly all backslashes escaped */
-                    (int) (1 + log10 (abs (lineno))) +   /* line number */
-                    1);                                  /* NUL */
-    if (!t)
-      flexfatal (_("Allocation of buffer for line directive failed"));
-    for (dst = t + sprintf (t, "#line %d \"", lineno), src = filename; *src; *dst++ = *src++)
-      if (*src == '\\')   /* escape backslashes */
-        *dst++ = '\\';
-    *dst++ = '"';
-    *dst++ = '\n';
-    *dst   = '\0';
-    buf = buf_strappend (buf, t);
-    free(t);
-    return buf;
-}
 
 
-/** Append the contents of @a src to @a dest.
- * @param @a dest the destination buffer
- * @param @a dest the source buffer
- * @return @a dest
- */
-Buf *buf_concat(Buf* dest, const Buf* src)
-{
-    *dest += *src;
-    return dest;
-}
 
-
-/* Appends n characters in str to buf. */
 Buf *buf_strnappend (Buf *buf, const char *str, int n)
 {
-    String s(str, str + n);
-	buf_append (buf, s.c_str());
+    buf->addText(String(str, str + n));
 	return buf;
 }
 
-/* Appends characters in str to buf. */
 Buf *buf_strappend (Buf *buf, const char *str)
 {
-	return buf_append(buf, str);
-}
-
-/* appends "#define str def\n" */
-Buf *buf_strdefine (Buf *buf, const char *str, const char *def)
-{
-	buf_strappend (buf, "#define ");
-	buf_strappend (buf, " ");
-	buf_strappend (buf, str);
-	buf_strappend (buf, " ");
-	buf_strappend (buf, def);
-	buf_strappend (buf, "\n");
-	return buf;
-}
-
-/** Pushes "m4_define( [[def]], [[val]])m4_dnl" to end of buffer.
- * @param buf A buffer as a list of strings.
- * @param def The m4 symbol to define.
- * @param val The definition; may be NULL.
- * @return buf
- */
-Buf *buf_m4_define (Buf *buf, const char* def, const char* val)
-{
-    const char * fmt = "m4_define( [[%s]], [[%s]])m4_dnl\n";
-    char * str;
-    size_t strsz;
-
-    val = val?val:"";
-    strsz = strlen(fmt) + strlen(def) + strlen(val) + 2;
-    str = (char*)malloc(strsz);
-    if (!str)
-        flexfatal (_("Allocation of buffer for m4 def failed"));
-
-    snprintf(str, strsz, fmt, def, val);
-    buf_append(buf, str);
-    return buf;
-}
-
-/** Pushes "m4_undefine([[def]])m4_dnl" to end of buffer.
- * @param buf A buffer as a list of strings.
- * @param def The m4 symbol to undefine.
- * @return buf
- */
-Buf *buf_m4_undefine (Buf *buf, const char* def)
-{
-    const char * fmt = "m4_undefine( [[%s]])m4_dnl\n";
-    char * str;
-    size_t strsz;
-
-    strsz = strlen(fmt) + strlen(def) + 2;
-    str = (char*)malloc(strsz);
-    if (!str)
-        flexfatal (_("Allocation of buffer for m4 undef failed"));
-
-    snprintf(str, strsz, fmt, def);
-    buf_append(buf, str);
-    return buf;
-}
-
-/* create buf with 0 elements, each of size elem_size. */
-void buf_init (Buf *buf, size_t elem_size)
-{
-}
-
-/* frees memory */
-void buf_destroy (Buf *buf)
-{
-}
-
-
-/* appends ptr[] to buf, grow if necessary.
- * n_elem is number of elements in ptr[], NOT bytes.
- * returns buf.
- * We grow by mod(512) boundaries.
- */
-
-Buf *buf_append (Buf *buf, const char *ptr)
-{
-    if (!buf || !ptr)
-        return buf;
-
-    buf->addText(ptr);
-
+    buf->addText(str);
 	return buf;
 }
 
