@@ -32,6 +32,8 @@
 /*  PURPOSE. */
 
 #include "flexdef.h"
+
+#include "context.h"
 #include "tables.h"
 
 #define CMD_IF_TABLES_SER    "%if-tables-serialization"

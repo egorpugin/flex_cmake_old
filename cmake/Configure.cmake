@@ -41,8 +41,6 @@ include(TestBigEndian)
 set(include_files_list
     netinet/in.h
     pthread.h
-    sys/stat.h
-    sys/wait.h
     unistd.h
 )
 check_includes(include_files_list)

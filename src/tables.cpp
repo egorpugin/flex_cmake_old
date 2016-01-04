@@ -31,10 +31,13 @@
  *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  *  PURPOSE.
  */
-
 
 #include "flexdef.h"
 #include "tables.h"
+
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 
 #ifdef WIN32
 #include <WinSock2.h>

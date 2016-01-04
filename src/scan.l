@@ -33,7 +33,15 @@
 /*  PURPOSE. */
 
 #include "flexdef.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "parse.h"
+
+#include "context.h"
+
 extern bool tablesverify, tablesext;
 extern int trlcontxt; /* Set in  parse.y for each rule. */
 extern const char *escaped_qstart, *escaped_qend;
