@@ -4,8 +4,6 @@
 
 ################################################################################
 
-project(tests C CXX)
-
 if (WIN32)
     add_definitions(-DYY_NO_UNISTD_H=1)
     add_definitions(-Disatty=_isatty)
@@ -50,7 +48,7 @@ endmacro(test_depends)
 macro(test_simple_m4 s e)
     add_test(NAME simple_m4${build_suffix}
         COMMAND ${CMAKE_COMMAND}
-            --build ${CMAKE_CURRENT_BINARY_DIR}
+            --build ${CMAKE_BINARY_DIR}
             --target simple_m4_test
             --config $<CONFIGURATION>
     )
@@ -134,7 +132,7 @@ function(add_test_build_raw test_name test_files definitions compile_options lin
     # build test
     add_test(NAME ${test_name}${build_suffix}
         COMMAND ${CMAKE_COMMAND}
-            --build ${CMAKE_CURRENT_BINARY_DIR}
+            --build ${CMAKE_BINARY_DIR}
             --target ${test_name}
             --config $<CONFIGURATION>
     )
