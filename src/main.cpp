@@ -115,7 +115,6 @@ FILE   *backing_up_file;
 int     end_of_buffer_state;
 char  **input_files;
 int     num_input_files;
-jmp_buf flex_main_jmp_buf;
 bool   *rule_has_nl, *ccl_has_nl;
 int     nlch = '\n';
 bool    ansi_func_defs, ansi_func_protos;
@@ -153,19 +152,6 @@ FILE *output_file;
 int flex_main(int argc, char *argv[])
 {
 	int     i, exit_status, child_status;
-
-	/* Set a longjmp target. Yes, I know it's a hack, but it gets worse: The
-	 * return value of setjmp, if non-zero, is the desired exit code PLUS ONE.
-	 * For example, if you want 'main' to return with code '2', then call
-	 * longjmp() with an argument of 3. This is because it is invalid to
-	 * specify a value of 0 to longjmp. FLEX_EXIT(n) should be used instead of
-	 * exit(n);
-	 */
-	exit_status = setjmp (flex_main_jmp_buf);
-    if (exit_status)
-    {
-        return exit_status - 1;
-    }
 
 	flexinit (argc, argv);
 
@@ -853,6 +839,11 @@ void flexend (int exit_status)
 	}
 
 	FLEX_EXIT (exit_status);
+}
+
+void flex_exit(int code)
+{
+    exit(code);
 }
 
 

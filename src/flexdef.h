@@ -39,7 +39,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <setjmp.h>
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
@@ -47,6 +46,8 @@
 #include "flexint.h"
 
 #include <string>
+
+using String = std::string;
 
 /* We use gettext. So, when we write strings which should be translated, we mark them with _() */
 #ifdef ENABLE_NLS
@@ -1025,37 +1026,12 @@ extern int yylex(void);
 
 
 
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-using String = std::string;
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-
-
 /* For blocking out code from the header file. */
 #define OUT_BEGIN_CODE() outn("m4_ifdef( [[M4_YY_IN_HEADER]],,[[")
 #define OUT_END_CODE()   outn("]])")
 
-/* For setjmp/longjmp (instead of calling exit(2)). Linkage in main.c */
-extern jmp_buf flex_main_jmp_buf;
-
-#define FLEX_EXIT(status) longjmp(flex_main_jmp_buf,(status)+1)
+void flex_exit(int code);
+#define FLEX_EXIT(status) flex_exit(status)
 
 /* Removes all \n and \r chars from tail of str. returns str. */
 extern char *chomp (char *str);
