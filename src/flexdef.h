@@ -32,12 +32,11 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
-#ifndef FLEXDEF_H
-#define FLEXDEF_H 1
+#pragma once
 
-#ifdef HAVE_CONFIG_H
+
 #include <config.h>
-#endif
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,15 +46,12 @@
 #include <string.h>
 #include <math.h>
 
-#ifdef HAVE_ASSERT_H
-#include <assert.h>
-#else
-#define assert(Pred)
-#endif
 
-#ifdef HAVE_LIMITS_H
+#include <assert.h>
+
+
 #include <limits.h>
-#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -71,14 +67,9 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
+
 #include <stdbool.h>
-#ifdef HAVE_REGEX_H
-#include <regex.h>
-#else
-#include <regex>
-using regex_t = std::regex;
-using regmatch_t = std::cmatch;
-#endif
+
 
 #include "flexint.h"
 
@@ -86,9 +77,7 @@ using regmatch_t = std::cmatch;
 
 /* We use gettext. So, when we write strings which should be translated, we mark them with _() */
 #ifdef ENABLE_NLS
-#ifdef HAVE_LOCALE_H
 #include <locale.h>
-#endif /* HAVE_LOCALE_H */
 #include "gettext.h"
 #define _(String) gettext (String)
 #else
@@ -639,9 +628,6 @@ extern int sectnum, nummt, hshcol, dfaeql, numeps, eps2, num_reallocs;
 extern int tmpuses, totnst, peakpairs, numuniq, numdup, hshsave;
 extern int num_backing_up, bol_needed;
 
-#ifndef HAVE_REALLOCARRAY
-void *reallocarray(void *, size_t, size_t);
-#endif
 
 void   *allocate_array(int, size_t);
 void   *reallocate_array(void *, int, size_t);
@@ -1183,5 +1169,3 @@ extern void sf_pop(void);
 
 extern bool    tablesext, tablesverify;
 
-
-#endif /* not defined FLEXDEF_H */

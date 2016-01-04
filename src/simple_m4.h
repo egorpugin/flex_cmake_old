@@ -20,6 +20,7 @@ enum class MacroType
 {
     None,
     UserDefined,
+
     dnl,
     changecom,
     changequote,

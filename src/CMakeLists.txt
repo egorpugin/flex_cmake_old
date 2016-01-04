@@ -46,7 +46,6 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp
 set(common_flex_src
     buf.cpp
     ccl.cpp
-    config.h
     dfa.cpp
     ecs.cpp
     flexdef.h
@@ -72,6 +71,8 @@ set(common_flex_src
     yylex.cpp
     
     ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp
+
+    ${CMAKE_BINARY_DIR}/config.h
 
     parse.y
     flex.skl

@@ -37,6 +37,10 @@
 #include "options.h"
 #include "tables.h"
 
+#include <regex>
+using regex_t = std::regex;
+using regmatch_t = std::cmatch;
+
 #include "simple_m4.h"
 
 static char flex_version[] = FLEX_VERSION;
@@ -348,12 +352,10 @@ int flex_main(int argc, char *argv[])
 int main (int argc, char *argv[])
 {
 #if ENABLE_NLS
-#if HAVE_LOCALE_H
-	setlocale (LC_MESSAGES, "");
-        setlocale (LC_CTYPE, "");
+    setlocale(LC_MESSAGES, "");
+    setlocale(LC_CTYPE, "");
 	textdomain (PACKAGE);
 	bindtextdomain (PACKAGE, LOCALEDIR);
-#endif
 #endif
 
 	return flex_main (argc, argv);
