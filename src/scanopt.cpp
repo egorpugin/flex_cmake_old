@@ -42,9 +42,9 @@
 #ifdef HAVE_STRCASECMP
 #define STRCASECMP(a,b) strcasecmp(a,b)
 #else
-static int STRCASECMP PROTO ((const char *, const char *));
+static int STRCASECMP(const char *, const char *);
 
-static int STRCASECMP (const char *a, const char *b)
+static int STRCASECMP(const char *a, const char *b)
 {
 	while (tolower ((unsigned char)*a++) == tolower ((unsigned char)*b++)) ;
 	return b - a;

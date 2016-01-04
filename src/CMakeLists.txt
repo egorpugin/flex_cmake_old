@@ -2,6 +2,22 @@
 # flex
 #
 
+########################################
+
+set(BSRC ${CMAKE_BINARY_DIR})
+
+set(_CPP ".*\\.cpp")
+set(CPP "${_CPP}$")
+
+set(_H ".*\\.h")
+set(H "${_H}$")
+
+set(H_CPP "(${H}|${CPP})")
+
+source_group("Generated Files" "${BSRC}/${H_CPP}")
+
+########################################
+
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 

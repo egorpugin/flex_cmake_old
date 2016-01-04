@@ -30,7 +30,7 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
+
 #ifndef SCANOPT_H
 #define SCANOPT_H
 
@@ -44,12 +44,8 @@
 #endif
 #endif
 
-#ifdef __cplusplus
 extern  "C" {
-#endif
-#ifndef PROTO
-#define PROTO(args) args
-#endif
+
 /* Error codes. */ enum scanopt_err_t {
 		SCANOPT_ERR_OPT_UNRECOGNIZED = -1,	/* Unrecognized option. */
 		SCANOPT_ERR_OPT_AMBIGUOUS = -2,	/* It matched more than one option name. */
@@ -125,8 +121,6 @@ extern  "C" {
 		       (scanopt_t * scanner, char **optarg,
 			int *optindex);
 
-#ifdef __cplusplus
 }
-#endif
 #endif
 /* vim:set tabstop=8 softtabstop=4 shiftwidth=4: */
