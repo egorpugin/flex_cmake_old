@@ -4,6 +4,8 @@
 
 ################################################################################
 
+project(tests C CXX)
+
 if (WIN32)
     add_definitions(-DYY_NO_UNISTD_H=1)
     add_definitions(-Disatty=_isatty)
@@ -48,7 +50,7 @@ endmacro(test_depends)
 macro(test_simple_m4 s e)
     add_test(NAME simple_m4${build_suffix}
         COMMAND ${CMAKE_COMMAND}
-            --build ${CMAKE_BINARY_DIR}
+            --build ${CMAKE_CURRENT_BINARY_DIR}
             --target simple_m4_test
             --config $<CONFIGURATION>
     )
@@ -132,7 +134,7 @@ function(add_test_build_raw test_name test_files definitions compile_options lin
     # build test
     add_test(NAME ${test_name}${build_suffix}
         COMMAND ${CMAKE_COMMAND}
-            --build ${CMAKE_BINARY_DIR}
+            --build ${CMAKE_CURRENT_BINARY_DIR}
             --target ${test_name}
             --config $<CONFIGURATION>
     )
@@ -143,16 +145,9 @@ endfunction(add_test_build_raw)
 # FUNCTION add_test_flex_build
 ########################################
 
-function(add_test_flex_build name lang)
-    list(GET name 0 test_name)
-
-    string(REGEX MATCH "^(.*)\\.[^.]*$" dummy ${test_name})
-    set(test_name ${CMAKE_MATCH_1})
-
-    set(test_name ${test_name} PARENT_SCOPE)
-
+function(add_test_flex_build test_name files lang)
     set(test_files)
-    foreach(N ${name})
+    foreach(N ${files})
         string(REGEX MATCH "^(.*)\\.[^.]*$" dummy ${N})
         set(N2 ${CMAKE_MATCH_1})
 
@@ -163,7 +158,7 @@ function(add_test_flex_build name lang)
     add_test_build_raw(${test_name} "${test_files};${ARGN}" "" "" "")
 
     # dependencies
-    foreach(N ${name})
+    foreach(N ${files})
         string(REGEX MATCH "^(.*)\\.[^.]*$" dummy ${N})
         set(N ${CMAKE_MATCH_1})
 
@@ -175,14 +170,14 @@ endfunction(add_test_flex_build)
 # FUNCTION add_test_flex_build_run_with_default_input
 ########################################
 
-function(add_test_flex_build_run_with_default_input name lang)
-    add_test_flex_build(${name} ${lang} ${ARGN})
+function(add_test_flex_build_run_with_default_input name files lang)
+    add_test_flex_build(${name} ${files} ${lang} ${ARGN})
 
     # run test
-    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.txt)
-        add_test_run_with_input(${test_name} ${test_name}.txt)
+    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${name}.txt)
+        add_test_run_with_input(${name} ${name}.txt)
     else()
-        message(FATAL_ERROR "input file is missing: ${test_name}.txt")
+        message(FATAL_ERROR "input file is missing: ${name}.txt")
     endif()
 endfunction(add_test_flex_build_run_with_default_input)
 
@@ -190,18 +185,18 @@ endfunction(add_test_flex_build_run_with_default_input)
 # FUNCTION add_test_flex_build_run
 ########################################
 
-function(add_test_flex_build_run name lang)
-    add_test_flex_build("${name}" ${lang} ${ARGN})
-    add_test_run(${test_name} "")
+function(add_test_flex_build_run name files lang)
+    add_test_flex_build("${name}" "${files}" ${lang} ${ARGN})
+    add_test_run(${name} "")
 endfunction(add_test_flex_build_run)
 
 ########################################
 # FUNCTION add_test_flex_build_run_with_custom_input
 ########################################
 
-function(add_test_flex_build_run_with_custom_input name lang build_files input_file)
-    add_test_flex_build("${name}" ${lang} "${build_files}")
-    add_test_run_with_input(${test_name} ${input_file})
+function(add_test_flex_build_run_with_custom_input name files lang build_files input_file)
+    add_test_flex_build("${name}" "${files}" ${lang} "${build_files}")
+    add_test_run_with_input(${name} ${input_file})
 endfunction(add_test_flex_build_run_with_custom_input)
 
 ########################################
@@ -220,35 +215,35 @@ endfunction(add_bison_target)
 # FUNCTION add_test_compare
 ########################################
 
-function(add_test_compare name lang)
-    add_test_flex_build(${name} ${lang} ${ARGN})
+function(add_test_compare name files lang)
+    add_test_flex_build(${name} ${files} ${lang} ${ARGN})
 
-    add_test(NAME ${test_name}${run_suffix}_1
+    add_test(NAME ${name}${run_suffix}_1
         COMMAND ${CMAKE_COMMAND}
-            -DEXE=$<TARGET_FILE:${test_name}>
-            -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.txt
-            -DOUT=${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.1
+            -DEXE=$<TARGET_FILE:${name}>
+            -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/${name}.txt
+            -DOUT=${CMAKE_CURRENT_BINARY_DIR}/${name}.txt.1
             -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
     )
-    test_depends(${test_name}${run_suffix}_1 ${test_name}${build_suffix})
+    test_depends(${name}${run_suffix}_1 ${name}${build_suffix})
 
-    add_test(NAME ${test_name}${run_suffix}_2
+    add_test(NAME ${name}${run_suffix}_2
         COMMAND ${CMAKE_COMMAND}
-            -DEXE=$<TARGET_FILE:${test_name}>
+            -DEXE=$<TARGET_FILE:${name}>
             -DARGS=1
-            -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/${test_name}.txt
-            -DOUT=${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.2
+            -DTXT=${CMAKE_CURRENT_SOURCE_DIR}/${name}.txt
+            -DOUT=${CMAKE_CURRENT_BINARY_DIR}/${name}.txt.2
             -P ${CMAKE_CURRENT_SOURCE_DIR}/test.cmake
     )
-    test_depends(${test_name}${run_suffix}_2 ${test_name}${build_suffix})
+    test_depends(${name}${run_suffix}_2 ${name}${build_suffix})
 
-    add_test(NAME ${test_name}${run_suffix}_compare
+    add_test(NAME ${name}${run_suffix}_compare
         COMMAND ${CMAKE_COMMAND} -E compare_files
-            ${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.1
-            ${CMAKE_CURRENT_BINARY_DIR}/${test_name}.txt.2
+            ${CMAKE_CURRENT_BINARY_DIR}/${name}.txt.1
+            ${CMAKE_CURRENT_BINARY_DIR}/${name}.txt.2
     )
-    test_depends(${test_name}${run_suffix}_compare ${test_name}${run_suffix}_1)
-    test_depends(${test_name}${run_suffix}_compare ${test_name}${run_suffix}_2)
+    test_depends(${name}${run_suffix}_compare ${name}${run_suffix}_1)
+    test_depends(${name}${run_suffix}_compare ${name}${run_suffix}_2)
 endfunction(add_test_compare)
 
 ########################################
@@ -257,13 +252,16 @@ endfunction(add_test_compare)
 
 add_executable(simple_m4_test simple_m4_test.cpp)
 target_link_libraries(simple_m4_test simple_m4)
-set_target_properties(simple_m4_test PROPERTIES EXCLUDE_FROM_ALL True)
-set_target_properties(simple_m4_test PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD True)
-test_project_group(simple_m4_test)
 
 ################################################################################
 # TESTS
 ################################################################################
+
+
+
+
+#return()
+
 
 ########################################
 # TESTS simple m4
@@ -298,45 +296,46 @@ set(flex_tests_simple
 )
 
 foreach(T ${flex_tests_simple})
-    add_test_flex_build_run_with_default_input(${T} c)
+    get_filename_component(N ${T} NAME_WE)
+    add_test_flex_build_run_with_default_input(${N} ${T} c)
 endforeach()
 
-add_test_flex_build_run(posix.l c)
-add_test_flex_build_run(posixly_correct.l c)
-add_test_flex_build_run(string_nr.l c)
-add_test_flex_build_run(string_r.l c)
+add_test_flex_build_run(posix posix.l c)
+add_test_flex_build_run(posixly_correct posixly_correct.l c)
+add_test_flex_build_run(string_nr string_nr.l c)
+add_test_flex_build_run(string_r string_r.l c)
 
-add_test_flex_build_run_with_default_input(cxx_basic.ll cc)
-add_test_flex_build_run_with_custom_input("cxx_multiple_scanners_1.ll;cxx_multiple_scanners_2.ll" cc cxx_multiple_scanners_main.cc cxx_multiple_scanners.txt)
-add_test_flex_build_run_with_custom_input(header_nr_scanner.l c header_nr_main.c header_nr.txt)
-add_test_flex_build_run_with_custom_input(header_r_scanner.l c header_r_main.c header_nr.txt)
-add_test_flex_build_run("multiple_scanners_nr_1.l;multiple_scanners_nr_2.l" c multiple_scanners_nr_main.c)
-add_test_flex_build_run("multiple_scanners_r_1.l;multiple_scanners_r_2.l" c multiple_scanners_r_main.c)
-add_test_flex_build_run_with_default_input(top.l c top_main.c)
+add_test_flex_build_run_with_default_input(cxx_basic cxx_basic.ll cc)
+add_test_flex_build_run_with_custom_input(cxx_multiple_scanners "cxx_multiple_scanners_1.ll;cxx_multiple_scanners_2.ll" cc cxx_multiple_scanners_main.cc cxx_multiple_scanners.txt)
+add_test_flex_build_run_with_custom_input(header_nr header_nr_scanner.l c header_nr_main.c header_nr.txt)
+add_test_flex_build_run_with_custom_input(header_r header_r_scanner.l c header_r_main.c header_nr.txt)
+add_test_flex_build_run(multiple_scanners_nr "multiple_scanners_nr_1.l;multiple_scanners_nr_2.l" c multiple_scanners_nr_main.c)
+add_test_flex_build_run(multiple_scanners_r "multiple_scanners_r_1.l;multiple_scanners_r_2.l" c multiple_scanners_r_main.c)
+add_test_flex_build_run_with_default_input(top top.l c top_main.c)
 
 add_bison_target(bison_nr)
-add_test_flex_build(bison_nr_scanner.l c
+add_test_flex_build(bison_nr bison_nr_scanner.l c
     bison_nr_main.c
     ${BISON_bison_nr_OUTPUTS}
     bison_nr_parser.y
 )
-add_test_run_with_input(bison_nr_scanner bison_nr.txt)
+add_test_run_with_input(bison_nr bison_nr.txt)
 
 add_bison_target(bison_yylloc)
-add_test_flex_build(bison_yylloc_scanner.l c
+add_test_flex_build(bison_yylloc bison_yylloc_scanner.l c
     bison_yylloc_main.c
     ${BISON_bison_yylloc_OUTPUTS}
     bison_yylloc_parser.y
 )
-add_test_run_with_input(bison_yylloc_scanner bison_yylloc.txt)
+add_test_run_with_input(bison_yylloc bison_yylloc.txt)
 
 add_bison_target(bison_yylval)
-add_test_flex_build(bison_yylval_scanner.l c
+add_test_flex_build(bison_yylval bison_yylval_scanner.l c
     bison_yylval_main.c
     ${BISON_bison_yylval_OUTPUTS}
     bison_yylval_parser.y
 )
-add_test_run_with_input(bison_yylval_scanner bison_yylval.txt)
+add_test_run_with_input(bison_yylval bison_yylval.txt)
 
 ########################################
 
@@ -371,32 +370,32 @@ add_test_run(reject_ver "" ${CMAKE_CURRENT_BINARY_DIR}/reject_ver.tables ${CMAKE
 ########################################
 
 # direct
-add_test_flex_build(include_by_buffer.direct.l c)
-add_test_run(include_by_buffer.direct ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include_by_buffer.direct.txt)
+add_test_flex_build(include_by_buffer include_by_buffer.l c)
+add_test_run(include_by_buffer ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include_by_buffer.txt)
 
-add_test_flex_build(include_by_push.direct.l c)
-add_test_run(include_by_push.direct ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include_by_push.direct.txt)
+add_test_flex_build(include_by_push include_by_push.l c)
+add_test_run(include_by_push ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include_by_push.txt)
 
-add_test_flex_build(include_by_reentrant.direct.l c)
-add_test_run(include_by_reentrant.direct ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include_by_reentrant.direct.txt)
+add_test_flex_build(include_by_reentrant include_by_reentrant.l c)
+add_test_run(include_by_reentrant ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include_by_reentrant.txt)
 
-add_test_flex_build(rescan_nr.direct.l c)
-add_test_run(rescan_nr.direct "" ${CMAKE_CURRENT_SOURCE_DIR}/rescan_nr.direct.txt)
+add_test_flex_build(rescan_nr rescan_nr.l c)
+add_test_run(rescan_nr "" ${CMAKE_CURRENT_SOURCE_DIR}/rescan_nr.txt)
 
-add_test_flex_build(rescan_r.direct.l c)
-add_test_run(rescan_r.direct "" ${CMAKE_CURRENT_SOURCE_DIR}/rescan_r.direct.txt)
+add_test_flex_build(rescan_r rescan_r.l c)
+add_test_run(rescan_r "" ${CMAKE_CURRENT_SOURCE_DIR}/rescan_r.txt)
 
 # options_cn
 add_test(NAME options_cn COMMAND ${CMAKE_COMMAND} -DEXE=$<TARGET_FILE:flex> -P ${CMAKE_CURRENT_SOURCE_DIR}/options.cmake)
 
 # i3
-add_test_flex_build(cxx_yywrap.ll cc)
+add_test_flex_build(cxx_yywrap cxx_yywrap.ll cc)
 add_test_run(cxx_yywrap "${CMAKE_CURRENT_SOURCE_DIR}" cxx_yywrap.txt cxx_yywrap.txt cxx_yywrap.txt)
 
 # one
-add_test_compare(lineno_nr.l c)
-add_test_compare(lineno_r.l c)
-add_test_compare(lineno_trailing.l c)
+add_test_compare(lineno_nr lineno_nr.l c)
+add_test_compare(lineno_r lineno_r.l c)
+add_test_compare(lineno_trailing lineno_trailing.l c)
     
 # pthread
 if (NOT MSVC)
@@ -449,7 +448,6 @@ foreach(kind opt ser ver)
 
             add_test_flex_raw(${name} ${c_file} ${l_file} "${verify};${reentrant};${tables};${opt};-P;${prefix}")
             add_test_build_raw(${name} "${c_file};${l_file}" "${reentrant_def};${tables_def}" "" "${libs}")
-            test_depends(${name}${build_suffix} ${name}${generate_suffix})
             
             if (${kind} STREQUAL opt)
                 add_test_run_with_input(${name} tableopts.txt)

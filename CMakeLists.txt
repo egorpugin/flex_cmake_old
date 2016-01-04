@@ -9,6 +9,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake Targets")
 
 project(flex C CXX)
+
 enable_testing()
 
 find_package(BISON REQUIRED 3.0)
@@ -28,4 +29,4 @@ if (WIN32)
 endif()
 
 add_subdirectory(src)
-add_subdirectory(tests)
+add_subdirectory(tests EXCLUDE_FROM_ALL)

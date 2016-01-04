@@ -5,7 +5,7 @@ platform:
   - Win64
 
 configuration:
-  - Debug
+  - Release
 
 before_build:
   - if %platform%==Win32 set generator=Visual Studio 14
@@ -16,6 +16,7 @@ before_build:
 build_script:
   - mkdir build
   - cd build
-  - cmake .. -G "%generator%"
+  - cmake ..
+  #- cmake .. -G "%generator%"
   - msbuild flex.sln /p:Platform=%vcplatform% /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
   - ctest
