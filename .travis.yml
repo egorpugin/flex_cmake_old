@@ -45,4 +45,4 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake .. && make -j2 && ctest -j 2
+  - cmake .. && make -j2 && ctest
