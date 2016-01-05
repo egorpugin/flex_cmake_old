@@ -58,6 +58,7 @@
 
 extern std::ifstream skelfile;
 
+
 /* Append "#define defname value\n" to the running buffer. */
 void action_define (const char *defname, int value)
 {
@@ -491,7 +492,8 @@ unsigned char myesc (unsigned char array[])
 			c = array[sptr];
 			array[sptr] = '\0';
 
-			esc_char = otoi (array + 1);
+            auto o = std::stoi((const char *)array + 1, 0, 8);
+			esc_char = o;
 
 			array[sptr] = c;
 
@@ -524,18 +526,6 @@ unsigned char myesc (unsigned char array[])
 		return array[1];
 	}
 }
-
-
-/* otoi - convert an octal digit string to an integer value */
-
-int otoi (unsigned char str[])
-{
-	unsigned int result;
-
-	(void) sscanf ((char *) str, "%o", &result);
-	return result;
-}
-
 
 
 

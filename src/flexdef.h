@@ -855,9 +855,6 @@ extern int myctoi(const char *);
 /* Return character corresponding to escape sequence. */
 extern unsigned char myesc(unsigned char[]);
 
-/* Convert an octal digit string to an integer value. */
-extern int otoi(unsigned char[]);
-
 /* Output a (possibly-formatted) string to the generated scanner. */
 extern void out_str_dec(const char *, const char *, int);
 
