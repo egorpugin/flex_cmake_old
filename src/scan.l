@@ -159,7 +159,7 @@ M4QEND      "]]"
 	^"%x"{NAME}?	return XSCDECL;
 	^"%{".*{NL}	{
 			++linenum;
-			line_directive_out(NULL, 1);
+			line_directive_out(false, true);
 			indented_code = false;
 			BEGIN(CODEBLOCK);
 			}
@@ -183,7 +183,7 @@ M4QEND      "]]"
 			sectnum = 2;
 			bracelevel = 0;
 			mark_defs1();
-			line_directive_out(NULL, 1);
+			line_directive_out(false, true);
 			BEGIN(SECT2PROLOG);
 			return SECTEND;
 			}
@@ -987,10 +987,10 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 
 
 <SECT3>{
-    {M4QSTART}  fwrite (escaped_qstart, 1, strlen(escaped_qstart), yyout);
-    {M4QEND}    fwrite (escaped_qend, 1, strlen(escaped_qend), yyout);
-	[^\[\]\n]*(\n?) ECHO;
-	(.|\n)      ECHO;
+    {M4QSTART}  processed_file << escaped_qstart;
+    {M4QEND}    processed_file << escaped_qend;
+	[^\[\]\n]*(\n?) processed_file << yytext;
+	(.|\n)      processed_file << yytext;
 	<<EOF>>		sectnum = 0; yyterminate();
 }
 

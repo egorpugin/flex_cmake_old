@@ -370,8 +370,7 @@ extern int trace_hex;
  */
 
 extern int datapos, dataline, linenum;
-extern FILE *skelfile, *yyin, *backing_up_file;
-extern FILE *output_file;
+extern FILE *backing_up_file;
 extern const char *skel[];
 extern int skel_ind;
 extern char *infilename, *headerfilename;
@@ -707,8 +706,6 @@ extern void mkechar(int, int[], int[]);
 
 /* from file gen.c */
 
-extern void do_indent(void);	/* indent to the current level */
-
 /* Generate the code to keep backing-up information. */
 extern void gen_backing_up(void);
 
@@ -837,7 +834,7 @@ extern void lerr_fatal(const char *, ...)
 ;
 
 /* Spit out a "#line" statement. */
-extern void line_directive_out(FILE *, int);
+void line_directive_out(bool print, bool infile);
 
 /* Mark the current position in the action array as the end of the section 1
  * user defs.
@@ -862,16 +859,10 @@ extern unsigned char myesc(unsigned char[]);
 extern int otoi(unsigned char[]);
 
 /* Output a (possibly-formatted) string to the generated scanner. */
-extern void out(const char *);
-extern void out_dec(const char *, int);
-extern void out_dec2(const char *, int, int);
-extern void out_hex(const char *, unsigned int);
-extern void out_str(const char *, const char *);
-extern void out_str3(const char *, const char *, const char *, const char *);
 extern void out_str_dec(const char *, const char *, int);
-extern void outc(int);
-extern void outn(const char *);
-extern void out_m4_define(const char* def, const char* val);
+
+#define outn(x) processed_file << (x) << Context::eol
+#define indent_puts outn
 
 /* Return a printable version of the given character, which might be
  * 8-bit.
@@ -883,9 +874,6 @@ extern void skelout(void);
 
 /* Output a yy_trans_info structure. */
 extern void transition_struct_out(int, int);
-
-/* Only needed when using certain broken versions of bison to build parse.c. */
-extern void *yy_flex_xmalloc(int);
 
 
 /* from file nfa.c */

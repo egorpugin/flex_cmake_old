@@ -31,6 +31,7 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include <fstream>
 
 #include "flexdef.h"
 
@@ -70,7 +71,7 @@ int     yymore_used, reject, real_reject, continued_action, in_rule;
 int     yymore_really_used, reject_really_used;
 int     trace_hex = 0;
 int     datapos, dataline, linenum;
-FILE   *skelfile = NULL;
+std::ifstream skelfile;
 int     skel_ind = 0;
 char   *action_array;
 int     action_size, defs1_offset, prolog_offset, action_offset,
@@ -134,9 +135,6 @@ static const char outfile_template[] = "lex.%s.%s";
 static const char backing_name[] = "lex.backup";
 static const char tablesfile_template[] = "lex.%s.tables";
 
-/* From scan.l */
-extern FILE* yyout;
-
 static char outfile_path[MAXLINE];
 static char *skelname = NULL;
 const char *escaped_qstart = "[[]]M4_YY_NOOP[M4_YY_NOOP[M4_YY_NOOP[[]]";
@@ -145,9 +143,9 @@ const char *escaped_qend   = "[[]]M4_YY_NOOP]M4_YY_NOOP]M4_YY_NOOP[[]]";
 /* For debugging. The max number of filters to apply to skeleton. */
 static int preproc_level = 1000;
 
-Context processed_file;
+Context processed_file; // main buffer
 
-FILE *output_file;
+
 
 int flex_main(int argc, char *argv[])
 {
@@ -178,24 +176,10 @@ int flex_main(int argc, char *argv[])
     Context header_file;
     do
     {
-        auto p = ftell(output_file);
-        fseek(output_file, 0, SEEK_SET);
-
-        std::string content(p, 0);
-        fread(&content[0], p, 1, output_file);
-        fclose(output_file);
-
-        if (use_stdout)
-        {
-            if (unlink(outfilename.c_str()))
-                lerr(_("error deleting output file %s"),
-                    outfilename);
-        }
-
         // init context
         if (preproc_level == 0)
             break;
-        processed_file.initFromString(content);
+        //processed_file.initFromString(content);
 
         // create header
         if (preproc_level == 1)
@@ -318,19 +302,24 @@ int flex_main(int argc, char *argv[])
     };
 
     // write files
-    output_file = fopen(outfilename.c_str(), "wb");
-    if (!output_file)
-        lerr(_("could not create %s"), outfilename.c_str());
-    print_lines(output_file, processed_file);
-    fclose(output_file);
-
-    if (headerfilename)
     {
-        output_file = fopen(headerfilename, "wb");
+        assert(!use_stdout);
+
+        FILE *output_file;
+        output_file = fopen(outfilename.c_str(), "wb");
         if (!output_file)
-            lerr(_("could not create %s"), headerfilename);
-        print_lines(output_file, header_file);
+            lerr(_("could not create %s"), outfilename.c_str());
+        print_lines(output_file, processed_file);
         fclose(output_file);
+
+        if (headerfilename)
+        {
+            output_file = fopen(headerfilename, "wb");
+            if (!output_file)
+                lerr(_("could not create %s"), headerfilename);
+            print_lines(output_file, header_file);
+            fclose(output_file);
+        }
     }
 
 	/* Note, flexend does not return.  It exits with its argument
@@ -455,7 +444,7 @@ void check_options (void)
     if (extra_type)
         m4defs_buf.m4define("M4_EXTRA_TYPE_DEFS", extra_type);
 
-    //if (!use_stdout)
+    if (!use_stdout)
     {
 		if (!did_outfilename) {
 			const char   *suffix;
@@ -473,14 +462,7 @@ void check_options (void)
 
         if (outfilename.empty())
             outfilename = "lex.yy.c";
-
-        output_file = fopen (outfilename.c_str(), "wb+");
-
-		if (output_file == NULL)
-			lerr (_("could not create %s"), outfilename.c_str());
 	}
-
-    yyout = output_file;
     
 	/* always generate the tablesverify flag. */
     m4defs_buf.m4define("M4_YY_TABLES_VERIFY", tablesverify ? "1" : "0");
@@ -523,7 +505,7 @@ void check_options (void)
 			flexerror (_("could not write tables header"));
 	}
 
-	if (skelname && (skelfile = fopen (skelname, "rb")) == NULL)
+	if (skelname && !(skelfile = decltype(skelfile)(skelname)))
 		lerr (_("can't open skeleton file %s"), skelname);
 
     if (reentrant) {
@@ -541,7 +523,7 @@ void check_options (void)
     m4defs_buf.m4define("M4_YY_PREFIX", prefix);
 
 	if (did_outfilename)
-		line_directive_out (output_file, 0);
+		line_directive_out(true, false);
 
     if (do_yylineno)
         m4defs_buf.m4define("M4_YY_USE_LINENO");
@@ -574,7 +556,7 @@ void check_options (void)
         outn((char*) top_buf.getText().c_str());
 
     /* Dump the m4 definitions. */
-    m4defs_buf.printToFile(output_file);
+    processed_file += m4defs_buf;
 
     /* Place a bogus line directive, it will be fixed in the filter. */
     outn("#line 0 \"M4_YY_OUTFILE_NAME\"\n");
@@ -601,34 +583,12 @@ void flexend (int exit_status)
 	if (++called_before)
 		FLEX_EXIT (exit_status);
 
-	if (skelfile != NULL) {
-		if (ferror (skelfile))
+	if (skelfile) {
+		if (skelfile.bad())
 			lerr (_("input error reading skeleton file %s"),
 				skelname);
-
-		else if (fclose (skelfile))
-			lerr (_("error closing skeleton file %s"),
-				skelname);
+        skelfile.close();
 	}
-    
-
-	if (exit_status != 0) {
-        if (!output_file)
-            lerr(_("error writing output file %s"),
-                outfilename);
-		else if (ferror (output_file))
-			lerr (_("error writing output file %s"),
-				outfilename);
-
-		else if (fclose (output_file))
-			lerr (_("error closing output file %s"),
-				outfilename);
-
-		else if (unlink (outfilename.c_str()))
-			lerr (_("error deleting output file %s"),
-				outfilename);
-	}
-
 
 	if (backing_up_report && backing_up_file) {
 		if (num_backing_up == 0)
@@ -1355,7 +1315,7 @@ void readin (void)
 	static char yy_nostdinit[] =
 		"FILE *yyin = NULL, *yyout = NULL;";
 
-	line_directive_out(NULL, 1);
+	line_directive_out(false, true);
 
 	if (yyparse ()) {
 		pinpoint_message (_("fatal parse error"));
@@ -1464,10 +1424,8 @@ void readin (void)
 				   ("variable trailing context rules cannot be used with -f or -F"));
 	}
 
-	if (reject){
-        out_m4_define( "M4_YY_USES_REJECT", NULL);
-		//outn ("\n#define YY_USES_REJECT");
-    }
+	if (reject)
+        processed_file.m4define("M4_YY_USES_REJECT");
 
 	if (!do_yywrap) {
 		if (!C_plus_plus) {
@@ -1559,8 +1517,8 @@ void readin (void)
 			outn ("\treturn 0;");
 			outn ("\t}");
 
-			out_str ("\n#define YY_DECL int %s::yylex()\n",
-				 yyclass);
+            processed_file.addLine();
+            processed_file << "#define YY_DECL int " << yyclass << "::yylex()" << Context::eol;
 		}
 	}
 

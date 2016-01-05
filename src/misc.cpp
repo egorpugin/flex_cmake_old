@@ -31,6 +31,8 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include <fstream>
+#include <iomanip>
 #include <stack>
 
 #include "flexdef.h"
@@ -38,21 +40,23 @@
 #include "context.h"
 #include "tables.h"
 
-#define CMD_IF_TABLES_SER    "%if-tables-serialization"
-#define CMD_TABLES_YYDMAP    "%tables-yydmap"
-#define CMD_DEFINE_YYTABLES  "%define-yytables"
-#define CMD_IF_CPP_ONLY      "%if-c++-only"
-#define CMD_IF_C_ONLY        "%if-c-only"
-#define CMD_IF_C_OR_CPP      "%if-c-or-c++"
-#define CMD_NOT_FOR_HEADER   "%not-for-header"
-#define CMD_OK_FOR_HEADER    "%ok-for-header"
-#define CMD_PUSH             "%push"
-#define CMD_POP              "%pop"
-#define CMD_IF_REENTRANT     "%if-reentrant"
-#define CMD_IF_NOT_REENTRANT "%if-not-reentrant"
-#define CMD_IF_BISON_BRIDGE  "%if-bison-bridge"
-#define CMD_IF_NOT_BISON_BRIDGE  "%if-not-bison-bridge"
-#define CMD_ENDIF            "%endif"
+#define CMD_IF_TABLES_SER       "%if-tables-serialization"
+#define CMD_TABLES_YYDMAP       "%tables-yydmap"
+#define CMD_DEFINE_YYTABLES     "%define-yytables"
+#define CMD_IF_CPP_ONLY         "%if-c++-only"
+#define CMD_IF_C_ONLY           "%if-c-only"
+#define CMD_IF_C_OR_CPP         "%if-c-or-c++"
+#define CMD_NOT_FOR_HEADER      "%not-for-header"
+#define CMD_OK_FOR_HEADER       "%ok-for-header"
+#define CMD_PUSH                "%push"
+#define CMD_POP                 "%pop"
+#define CMD_IF_REENTRANT        "%if-reentrant"
+#define CMD_IF_NOT_REENTRANT    "%if-not-reentrant"
+#define CMD_IF_BISON_BRIDGE     "%if-bison-bridge"
+#define CMD_IF_NOT_BISON_BRIDGE "%if-not-bison-bridge"
+#define CMD_ENDIF               "%endif"
+
+extern std::ifstream skelfile;
 
 /* Append "#define defname value\n" to the running buffer. */
 void action_define (const char *defname, int value)
@@ -233,13 +237,13 @@ void dataflush (void)
 	if (!gentables)
 		return;
 
-	outc ('\n');
+    processed_file << Context::eol;
 
 	if (++dataline >= NUMDATALINES) {
 		/* Put out a blank line so that the table is grouped into
 		 * large blocks that enable the user to find elements easily.
-		 */
-		outc ('\n');
+         */
+        processed_file << Context::eol;
 		dataline = 0;
 	}
 
@@ -309,7 +313,7 @@ void lerr_fatal (const char *msg, ...)
 
 /* line_directive_out - spit out a "#line" statement */
 
-void line_directive_out (FILE *output_file, int do_infile)
+void line_directive_out(bool print, bool do_infile)
 {
 	char    directive[MAXLINE], filename[MAXLINE];
 	char   *s1, *s2, *s3;
@@ -342,14 +346,13 @@ void line_directive_out (FILE *output_file, int do_infile)
 		snprintf (directive, sizeof(directive), line_fmt, 0, filename);
 	}
 
-	/* If output_file is nil then we should put the directive in
+	/* If print is false then we should put the directive in
 	 * the accumulated actions.
 	 */
-	if (output_file) {
-        fputs(directive, output_file);
-	}
+	if (print)
+        processed_file.addLine(directive);
 	else
-		add_action (directive);
+		add_action(directive);
 }
 
 
@@ -387,21 +390,21 @@ void mk2data (int value)
 	if (!gentables)
 		return;
 
-	if (datapos >= NUMDATAITEMS) {
-		outc (',');
+    if (datapos >= NUMDATAITEMS) {
+        processed_file << ',';
 		dataflush ();
 	}
 
 	if (datapos == 0)
-		/* Indent. */
-		out ("    ");
+        /* Indent. */
+        processed_file << "    ";
 
-	else
-		outc (',');
+    else
+        processed_file << ',';
 
 	++datapos;
 
-	out_dec ("%5d", value);
+    processed_file << std::setw(5) << value;
 }
 
 
@@ -416,20 +419,20 @@ void mkdata (int value)
 	if (!gentables)
 		return;
 
-	if (datapos >= NUMDATAITEMS) {
-		outc (',');
+    if (datapos >= NUMDATAITEMS) {
+        processed_file << ',';
 		dataflush ();
 	}
 
 	if (datapos == 0)
 		/* Indent. */
-		out ("    ");
-	else
-		outc (',');
+        processed_file << "    ";
+    else
+        processed_file << ',';
 
 	++datapos;
 
-	out_dec ("%5d", value);
+    processed_file << std::setw(5) << value;
 }
 
 
@@ -534,92 +537,27 @@ int otoi (unsigned char str[])
 }
 
 
-/* out - various flavors of outputing a (possibly formatted) string for the
- *	 generated scanner, keeping track of the line count.
- */
 
-void out (const char *str)
-{
-    fputs(str, output_file);
-    //chain_pipe.push_to_all(str);
-}
 
-void out_dec (const char *fmt, int n)
-{
-    fprintf(output_file, fmt, n);
-    char buf[8192] = { 0 };
-    sprintf(buf, fmt, n);
-    //chain_pipe.push_to_all(buf);
-}
-
-void out_dec2 (const char *fmt, int n1, int n2)
-{
-    fprintf(output_file, fmt, n1, n2);
-    char buf[8192] = { 0 };
-    sprintf(buf, fmt, n1, n2);
-    //chain_pipe.push_to_all(buf);
-}
-
-void out_hex (const char *fmt, unsigned int x)
-{
-    fprintf(output_file, fmt, x);
-    char buf[8192] = { 0 };
-    sprintf(buf, fmt, x);
-    //chain_pipe.push_to_all(buf);
-}
 
 void out_str (const char *fmt, const char str[])
 {
-    fprintf(output_file, fmt, str);
     char buf[8192] = { 0 };
-    sprintf(buf, fmt, str);
-    //chain_pipe.push_to_all(buf);
+    snprintf(buf, 8192, fmt, str);
+    processed_file << buf;
 }
 
-void out_str3 (const char *fmt, const char s1[], const char s2[], const char s3[])
-{
-    fprintf(output_file, fmt, s1, s2, s3);
-    char buf[8192*3] = { 0 };
-    sprintf(buf, fmt, s1,s2,s3);
-    //chain_pipe.push_to_all(buf);
-}
 
-void out_str_dec (const char *fmt, const char str[], int n)
+void out_str_dec(const char *fmt, const char str[], int n)
 {
-    fprintf(output_file, fmt, str, n);
     char buf[8192] = { 0 };
-    sprintf(buf, fmt, str, n);
-    //chain_pipe.push_to_all(buf);
+    snprintf(buf, 8192, fmt, str, n);
+    processed_file << buf;
+
 }
 
-void outc (int c)
-{
-    fputc(c, output_file);
-    char buf[10] = { 0 };
-    sprintf(buf, "%c", c);
-    //chain_pipe.push_to_all(buf);
-}
 
-void outn (const char *str)
-{
-	fputs (str, output_file);
-    fputc('\n', output_file);
-    //chain_pipe.push_to_all(str);
-    //chain_pipe.push_to_all(String());
-}
 
-/** Print "m4_define( [[def]], [[val]])m4_dnl\n".
- * @param def The m4 symbol to define.
- * @param val The definition; may be NULL.
- */
-void out_m4_define (const char* def, const char* val)
-{
-    const char * fmt = "m4_define( [[%s]], [[%s]])m4_dnl\n";
-    fprintf(output_file, fmt, def, val ? val : "");
-    char buf[8192] = { 0 };
-    sprintf(buf, fmt, def, val);
-    //chain_pipe.push_to_all(buf);
-}
 
 
 /* readable_form - return the the human-readable form of a character
@@ -691,9 +629,8 @@ void   *reallocate_array (void *array, int size, size_t element_size)
  */
 void skelout (void)
 {
-	char    buf_storage[MAXLINE];
-	char   *buf = buf_storage;
-	bool   do_copy = true;
+	String buf;
+	bool do_copy = true;
 
     std::stack<bool> sko_stack;
     sko_stack.push(true);
@@ -702,21 +639,31 @@ void skelout (void)
 	/* Loop pulling lines either from the skelfile, if we're using
 	 * one, or from the skel[] array.
 	 */
-	while (skelfile ?
-	       (fgets (buf, MAXLINE, skelfile) != NULL) :
-	       ((buf = (char *) skel[skel_ind++]) != 0)) {
-
-		if (skelfile)
-			chomp (buf);
+	while (1)
+    {
+        if (skelfile.is_open())
+        {
+            if (!std::getline(skelfile, buf))
+                break;
+            while (buf.back() == '\r')
+                buf.resize(buf.size() - 1);
+        }
+        else
+        {
+            auto s = skel[skel_ind++];
+            if (!s)
+                break;
+            buf = s;
+        }
 
 		/* copy from skel array */
 		if (buf[0] == '%') {	/* control line */
 			/* print the control line as a comment. */
 			if (ddebug && buf[1] != '#') {
-				if (buf[strlen (buf) - 1] == '\\')
-					out_str ("/* %s */\\\n", buf);
+				if (buf.back() == '\\')
+					out_str ("/* %s */\\\n", buf.c_str());
 				else
-					out_str ("/* %s */\n", buf);
+					out_str ("/* %s */\n", buf.c_str());
 			}
 
 			/* We've been accused of using cryptic markers in the skel.
@@ -724,7 +671,7 @@ void skelout (void)
              * We might consider a hash if this if-else-if-else
              * chain gets too large.
 			 */
-#define cmd_match(s) (strncmp(buf,(s),strlen(s))==0)
+#define cmd_match(s) (buf.find(s) == 0)
 
 			if (buf[1] == '%') {
 				/* %% is a break point for skelout() */
@@ -735,7 +682,7 @@ void skelout (void)
                 if(ddebug){
                     out_str("/*(state = (%s) */",do_copy?"true":"false");
                 }
-                out_str("%s\n", buf[strlen (buf) - 1] =='\\' ? "\\" : "");
+                out_str("%s\n", buf.back() =='\\' ? "\\" : "");
             }
             else if (cmd_match(CMD_POP)) {
                 do_copy = sko_stack.top();
@@ -743,7 +690,7 @@ void skelout (void)
                 if(ddebug){
                     out_str("/*(state = (%s) */",do_copy?"true":"false");
                 }
-                out_str("%s\n", buf[strlen (buf) - 1] =='\\' ? "\\" : "");
+                out_str("%s\n", buf.back() =='\\' ? "\\" : "");
             }
             else if (cmd_match(CMD_IF_REENTRANT)) {
                 sko_stack.push(do_copy);
@@ -808,7 +755,7 @@ void skelout (void)
 		}
 
 		else if (do_copy) 
-            outn (buf);
+            outn (buf.c_str());
 	}			/* end while */
 }
 
@@ -826,36 +773,18 @@ void transition_struct_out (int element_v, int element_n)
 	if (!gentables)
 		return;
 
-	out_dec2 (" {%4d,%4d },", element_v, element_n);
+    processed_file << " {" << std::setw(4) << element_v << std::setw(4) << element_n << "," << " }," << Context::eol;
 
 	datapos += TRANS_STRUCT_PRINT_LENGTH;
 
-	if (datapos >= 79 - TRANS_STRUCT_PRINT_LENGTH) {
-		outc ('\n');
+    if (datapos >= 79 - TRANS_STRUCT_PRINT_LENGTH) {
+        processed_file << Context::eol;
 
-		if (++dataline % 10 == 0)
-			outc ('\n');
+        if (++dataline % 10 == 0)
+            processed_file << Context::eol;
 
 		datapos = 0;
 	}
-}
-
-
-/* The following is only needed when building flex's parser using certain
- * broken versions of bison.
- *
- * XXX: this is should go soon
- */
-void   *yy_flex_xmalloc (int size)
-{
-	void   *result;
-
-	result = malloc(size);
-	if (!result)
-		flexfatal (_
-			   ("memory allocation failed in yy_flex_xmalloc()"));
-
-	return result;
 }
 
 

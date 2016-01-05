@@ -41,8 +41,6 @@
 
 void	gen_next_state(int);
 void	genecs(void);
-void	indent_put2s(const char *, const char *);
-void	indent_puts(const char *);
 
 
 static int indent_level = 0;	/* each level is 8 spaces */
@@ -98,22 +96,6 @@ static const char *get_yy_char_decl (void)
 		: "static yyconst YY_CHAR * %s = 0;\n";
 }
 
-/* Indent to the current level. */
-
-void do_indent (void)
-{
-	int i = indent_level * 8;
-
-	while (i >= 8) {
-		outc ('\t');
-		i -= 8;
-	}
-
-	while (i > 0) {
-		outc (' ');
-		--i;
-	}
-}
 
 
 /** Make the table for possible eol matches.
@@ -151,13 +133,13 @@ static void geneoltbl (void)
 		     num_rules + 1);
 
 	if (gentables) {
-		for (i = 1; i <= num_rules; i++) {
-			out_dec ("%d, ", rule_has_nl[i] ? 1 : 0);
+        for (i = 1; i <= num_rules; i++) {
+            processed_file << (rule_has_nl[i] ? 1 : 0) << ", " << Context::eol;
 			/* format nicely, 20 numbers per line. */
-			if ((i % 20) == 19)
-				out ("\n    ");
+            if ((i % 20) == 19)
+                processed_file << "\n    ";
 		}
-		out ("    };\n");
+        processed_file << "    };\n";
 	}
 	outn ("]])");
 }
@@ -207,7 +189,7 @@ void gen_bu_action (void)
 
 	indent_puts ("yy_current_state = YY_G(yy_last_accepting_state);");
 	indent_puts ("goto yy_find_action;");
-	outc ('\n');
+    processed_file << Context::eol;
 
 	set_indent (0);
 }
@@ -353,8 +335,11 @@ void genctbl (void)
 	int     end_of_buffer_action = num_rules + 1;
 
 	/* Table of verify for transition and offset to next state. */
-	if (gentables)
-		out_dec ("static yyconst struct yy_trans_info yy_transition[%d] =\n    {\n", tblend + numecs + 1);
+    if (gentables)
+    {
+        processed_file << "static yyconst struct yy_trans_info yy_transition[" << (tblend + numecs + 1) << "] =" << Context::eol;
+        processed_file << "    {" << Context::eol;
+    }
 	else
 		outn ("static yyconst struct yy_trans_info *yy_transition = 0;");
 
@@ -427,16 +412,17 @@ void genctbl (void)
 		outn ("    };\n");
 
 	/* Table of pointers to start states. */
-	if (gentables)
-		out_dec ("static yyconst struct yy_trans_info *yy_start_state_list[%d] =\n", lastsc * 2 + 1);
+    if (gentables)
+        processed_file << "static yyconst struct yy_trans_info *yy_start_state_list[" << (lastsc * 2 + 1) << "] =" << Context::eol;
 	else
 		outn ("static yyconst struct yy_trans_info **yy_start_state_list =0;");
 
-	if (gentables) {
+	if (gentables)
+    {
 		outn ("    {");
 
-		for (i = 0; i <= lastsc * 2; ++i)
-			out_dec ("    &yy_transition[%d],\n", base[i]);
+        for (i = 0; i <= lastsc * 2; ++i)
+            processed_file << "    &yy_transition[" << base[i] << "]," << Context::eol;
 
 		dataend ();
 	}
@@ -722,7 +708,7 @@ void genftbl (void)
 
 void gen_next_compressed_state (char   * char_map)
 {
-	indent_put2s ("YY_CHAR yy_c = %s;", char_map);
+    processed_file << "YY_CHAR yy_c = " << char_map << ";" << Context::eol;
 
 	/* Save the backing-up info \before/ computing the next state
 	 * because we always compute one more state than needed - we
@@ -744,10 +730,10 @@ void gen_next_compressed_state (char   * char_map)
 		 * about erroneously looking up the meta-equivalence
 		 * class twice
 		 */
-		do_indent ();
+		//do_indent ();
 
-		/* lastdfa + 2 is the beginning of the templates */
-		out_dec ("if ( yy_current_state >= %d )\n", lastdfa + 2);
+        /* lastdfa + 2 is the beginning of the templates */
+        processed_file << "if ( yy_current_state >= " << (lastdfa + 2) << " )" << Context::eol;
 
 		++indent_level;
 		indent_puts ("yy_c = yy_meta[(unsigned int) yy_c];");
@@ -776,21 +762,17 @@ void gen_next_match (void)
 		"yy_ec[YY_SC_TO_UI(*++yy_cp)] " : "YY_SC_TO_UI(*++yy_cp)";
 
 	if (fulltbl) {
-		if (gentables)
-			indent_put2s
-				("while ( (yy_current_state = yy_nxt[yy_current_state][ %s ]) > 0 )",
-				 char_map);
-		else
-			indent_put2s
-				("while ( (yy_current_state = yy_nxt[yy_current_state*YY_NXT_LOLEN +  %s ]) > 0 )",
-				 char_map);
+        if (gentables)
+            processed_file << "while ( (yy_current_state = yy_nxt[yy_current_state][ " << char_map << " ]) > 0 )" << Context::eol;
+        else
+            processed_file << "while ( (yy_current_state = yy_nxt[yy_current_state * YY_NXT_LOLEN + " << char_map << " ]) > 0 )" << Context::eol;
 
 		++indent_level;
 
 		if (num_backing_up > 0) {
 			indent_puts ("{");
-			gen_backing_up ();
-			outc ('\n');
+            gen_backing_up();
+            processed_file << Context::eol;
 		}
 
 		indent_puts ("++yy_cp;");
@@ -801,7 +783,7 @@ void gen_next_match (void)
 
 		--indent_level;
 
-		outc ('\n');
+        processed_file << Context::eol;
 		indent_puts ("yy_current_state = -yy_current_state;");
 	}
 
@@ -809,12 +791,11 @@ void gen_next_match (void)
 		indent_puts ("{");
 		indent_puts
 			("yyconst struct yy_trans_info *yy_trans_info;\n");
-		indent_puts ("YY_CHAR yy_c;\n");
-		indent_put2s ("for ( yy_c = %s;", char_map);
-		indent_puts
-			("      (yy_trans_info = &yy_current_state[(unsigned int) yy_c])->");
-		indent_puts ("yy_verify == yy_c;");
-		indent_put2s ("      yy_c = %s )", char_map_2);
+        indent_puts("YY_CHAR yy_c;\n");
+        processed_file << "for ( yy_c = " << char_map << ";" << Context::eol;
+		indent_puts("      (yy_trans_info = &yy_current_state[(unsigned int) yy_c])->");
+        indent_puts("yy_verify == yy_c;");
+        processed_file << "      yy_c = " << char_map_2 << " )" << Context::eol;
 
 		++indent_level;
 
@@ -823,8 +804,8 @@ void gen_next_match (void)
 
 		indent_puts ("yy_current_state += yy_trans_info->yy_nxt;");
 
-		if (num_backing_up > 0) {
-			outc ('\n');
+        if (num_backing_up > 0) {
+            processed_file << Context::eol;
 			gen_backing_up ();
 			indent_puts ("}");
 		}
@@ -847,13 +828,12 @@ void gen_next_match (void)
 		indent_puts ("}");
 		--indent_level;
 
-		do_indent ();
+		//do_indent ();
 
-		if (interactive)
-			out_dec ("while ( yy_base[yy_current_state] != %d );\n", jambase);
-		else
-			out_dec ("while ( yy_current_state != %d );\n",
-				 jamstate);
+        if (interactive)
+            processed_file << "while ( yy_base[yy_current_state] != " << jambase << " );" << Context::eol;
+        else
+            processed_file << "while ( yy_current_state != " << jamstate << " );" << Context::eol;
 
 		if (!reject && !interactive) {
 			/* Do the guaranteed-needed backing up to figure out
@@ -901,21 +881,13 @@ void gen_next_state (int worry_about_NULs)
 	}
 
 	if (fulltbl) {
-		if (gentables)
-			indent_put2s
-				("yy_current_state = yy_nxt[yy_current_state][%s];",
-				 char_map);
-		else
-			indent_put2s
-				("yy_current_state = yy_nxt[yy_current_state*YY_NXT_LOLEN + %s];",
-				 char_map);
+        if (gentables)
+            processed_file << "yy_current_state = yy_nxt[yy_current_state][" << char_map << "];" << Context::eol;
+        else
+            processed_file << "yy_current_state = yy_nxt[yy_current_state * YY_NXT_LOLEN + " << char_map << "];" << Context::eol;
 	}
-
-	else if (fullspd)
-		indent_put2s
-			("yy_current_state += yy_current_state[%s].yy_nxt;",
-			 char_map);
-
+    else if (fullspd)
+        processed_file << "yy_current_state += yy_current_state[" << char_map << "].yy_nxt;" << Context::eol;
 	else
 		gen_next_compressed_state (char_map);
 
@@ -953,7 +925,7 @@ void gen_NUL_trans (void)
 		 */
 		indent_puts ("char *yy_cp = YY_G(yy_c_buf_p);");
 
-	outc ('\n');
+    processed_file << Context::eol;
 
 	if (nultrans) {
 		indent_puts
@@ -962,17 +934,17 @@ void gen_NUL_trans (void)
 	}
 
 	else if (fulltbl) {
-		do_indent ();
-		if (gentables)
-			out_dec ("yy_current_state = yy_nxt[yy_current_state][%d];\n", NUL_ec);
-		else
-			out_dec ("yy_current_state = yy_nxt[yy_current_state*YY_NXT_LOLEN + %d];\n", NUL_ec);
+		//do_indent ();
+        if (gentables)
+            processed_file << "yy_current_state = yy_nxt[yy_current_state][" << NUL_ec << "];" << Context::eol;
+        else
+            processed_file << "yy_current_state = yy_nxt[yy_current_state * YY_NXT_LOLEN + " << NUL_ec << "];" << Context::eol;
 		indent_puts ("yy_is_jam = (yy_current_state <= 0);");
 	}
 
 	else if (fullspd) {
-		do_indent ();
-		out_dec ("int yy_c = %d;\n", NUL_ec);
+        //do_indent();
+        processed_file << "int yy_c = " << NUL_ec << ";" << Context::eol;
 
 		indent_puts
 			("yyconst struct yy_trans_info *yy_trans_info;\n");
@@ -990,9 +962,8 @@ void gen_NUL_trans (void)
 		snprintf (NUL_ec_str, sizeof(NUL_ec_str), "%d", NUL_ec);
 		gen_next_compressed_state (NUL_ec_str);
 
-		do_indent ();
-		out_dec ("yy_is_jam = (yy_current_state == %d);\n",
-			 jamstate);
+        //do_indent();
+        processed_file << "yy_is_jam = (yy_current_state == " << jamstate << ");" << Context::eol;
 
 		if (reject) {
 			/* Only stack this state if it's a transition we
@@ -1011,8 +982,8 @@ void gen_NUL_trans (void)
 	 * compressed tables have *already* done such backing up, so
 	 * we needn't bother with it again.
 	 */
-	if (need_backing_up && (fullspd || fulltbl)) {
-		outc ('\n');
+    if (need_backing_up && (fullspd || fulltbl)) {
+        processed_file << Context::eol;
 		indent_puts ("if ( ! yy_is_jam )");
 		++indent_level;
 		indent_puts ("{");
@@ -1463,27 +1434,7 @@ void gentabs (void)
 }
 
 
-/* Write out a formatted string (with a secondary string argument) at the
- * current indentation level, adding a final newline.
- */
 
-void indent_put2s (const char *fmt, const char *arg)
-{
-	do_indent ();
-	out_str (fmt, arg);
-	outn ("");
-}
-
-
-/* Write out a string at the current indentation level, adding a final
- * newline.
- */
-
-void indent_puts (const char *str)
-{
-	do_indent ();
-	outn (str);
-}
 
 
 /* make_tables - generate transition tables and finishes generating output file
@@ -1547,8 +1498,8 @@ void make_tables (void)
 
 	/* This is where we REALLY begin generating the tables. */
 
-	out_dec ("#define YY_NUM_RULES %d\n", num_rules);
-	out_dec ("#define YY_END_OF_BUFFER %d\n", num_rules + 1);
+    processed_file << "#define YY_NUM_RULES " << num_rules << Context::eol;
+    processed_file << "#define YY_END_OF_BUFFER " << num_rules + 1 << Context::eol;
 
 	if (fullspd) {
 		/* Need to define the transet type as a size large
@@ -1565,7 +1516,7 @@ void make_tables (void)
 		indent_puts ("{");
 
 		/* We require that yy_verify and yy_nxt must be of the same size int. */
-		indent_put2s ("%s yy_verify;", trans_offset_type);
+        processed_file << trans_offset_type << " yy_verify;" << Context::eol;
 
 		/* In cases where its sister yy_verify *is* a "yes, there is
 		 * a transition", yy_nxt is the offset (in records) to the
@@ -1575,7 +1526,7 @@ void make_tables (void)
 		 * for that state.
 		 */
 
-		indent_put2s ("%s yy_nxt;", trans_offset_type);
+        processed_file << trans_offset_type << " yy_nxt;" << Context::eol;
 		indent_puts ("};");
 		--indent_level;
 	}
@@ -1702,9 +1653,8 @@ void make_tables (void)
 					    sizeof (flex_int32_t));
 
 		for (i = 1; i <= lastdfa; ++i) {
-			if (fullspd) {
-				out_dec ("    &yy_transition[%d],\n",
-					 base[i]);
+            if (fullspd) {
+                processed_file << "    &yy_transition[" << base[i] << "]," << Context::eol;
 				yynultrans_data[i] = base[i];
 			}
 			else {
@@ -1722,7 +1672,8 @@ void make_tables (void)
 					   ("Could not write yynultrans_tbl"));
 		}
 
-		if (yynultrans_tbl != NULL) {
+		if (yynultrans_tbl != NULL)
+        {
 			yytbl_data_destroy (yynultrans_tbl);
 			yynultrans_tbl = NULL;
         }
@@ -1730,10 +1681,10 @@ void make_tables (void)
 		/* End generating yy_NUL_trans */
 	}
 
-	if (!C_plus_plus && !reentrant) {
-		indent_puts ("extern int yy_flex_debug;");
-		indent_put2s ("int yy_flex_debug = %s;\n",
-			      ddebug ? "1" : "0");
+	if (!C_plus_plus && !reentrant)
+    {
+        indent_puts("extern int yy_flex_debug;");
+        processed_file << "int yy_flex_debug = " << (ddebug ? "1" : "0") << ";" << Context::eol;
 	}
 
 	if (ddebug) {		/* Spit out table mapping rules to line numbers. */
@@ -1761,10 +1712,8 @@ void make_tables (void)
 				outn ("static int *yy_full_state;");
 			}
 
-			out_hex ("#define YY_TRAILING_MASK 0x%x\n",
-				 (unsigned int) YY_TRAILING_MASK);
-			out_hex ("#define YY_TRAILING_HEAD_MASK 0x%x\n",
-				 (unsigned int) YY_TRAILING_HEAD_MASK);
+            processed_file << "#define YY_TRAILING_MASK 0x" << std::hex << YY_TRAILING_MASK << Context::eol;
+            processed_file << "#define YY_TRAILING_HEAD_MASK 0x" << std::hex << YY_TRAILING_HEAD_MASK << Context::eol;
 		}
 
 		outn ("#define REJECT \\");
@@ -1856,9 +1805,9 @@ void make_tables (void)
 		}
 	}
 
-	out (&action_array[defs1_offset]);
+    processed_file << &action_array[defs1_offset];
 
-	line_directive_out (output_file, 0);
+	line_directive_out(true, false);
 
 	skelout ();		/* %% [5.0] - break point in skel */
 
@@ -1924,10 +1873,10 @@ void make_tables (void)
 
 	skelout ();		/* %% [7.0] - break point in skel */
 
-	/* Copy prolog to output file. */
-	out (&action_array[prolog_offset]);
+    /* Copy prolog to output file. */
+    processed_file << &action_array[prolog_offset];
 
-	line_directive_out (output_file, 0);
+	line_directive_out(true, false);
 
 	skelout ();		/* %% [8.0] - break point in skel */
 
@@ -1964,10 +1913,9 @@ void make_tables (void)
 	++indent_level;
 	indent_puts ("{");
 	indent_puts ("yy_size_t yyl;");
-	do_indent ();
-	out_str ("for ( yyl = %s; yyl < yyleng; ++yyl )\n",
-		 yymore_used ? (yytext_is_array ? "YY_G(yy_prev_more_offset)" :
-				"YY_G(yy_more_len)") : "0");
+    //do_indent ();
+    processed_file << "for ( yyl = " << (yymore_used ? (yytext_is_array ? "YY_G(yy_prev_more_offset)" :
+        "YY_G(yy_more_len)") : "0") << "; yyl < yyleng; ++yyl )" << Context::eol;
 	++indent_level;
 	indent_puts ("if ( yytext[yyl] == '\\n' )");
 	++indent_level;
@@ -1991,8 +1939,8 @@ void make_tables (void)
 			     "fprintf( stderr, \"--scanner backing up\\n\" );");
 		--indent_level;
 
-		do_indent ();
-		out_dec ("else if ( yy_act < %d )\n", num_rules);
+        //do_indent();
+        processed_file << "else if ( yy_act < " << num_rules << " )" << Context::eol;
 		++indent_level;
 
 		if (C_plus_plus) {
@@ -2011,8 +1959,8 @@ void make_tables (void)
 
 		--indent_level;
 
-		do_indent ();
-		out_dec ("else if ( yy_act == %d )\n", num_rules);
+        //do_indent();
+        processed_file << "else if ( yy_act == " << num_rules << " )" << Context::eol;
 		++indent_level;
 
 		if (C_plus_plus) {
@@ -2027,8 +1975,8 @@ void make_tables (void)
 
 		--indent_level;
 
-		do_indent ();
-		out_dec ("else if ( yy_act == %d )\n", num_rules + 1);
+        //do_indent();
+        processed_file << "else if ( yy_act == " << num_rules + 1 << " )" << Context::eol;
 		++indent_level;
 
 		indent_puts (C_plus_plus ?
@@ -2037,7 +1985,7 @@ void make_tables (void)
 
 		--indent_level;
 
-		do_indent ();
+		//do_indent ();
 		outn ("else");
 		++indent_level;
 
@@ -2059,16 +2007,16 @@ void make_tables (void)
 	/* Copy actions to output file. */
 	skelout ();		/* %% [13.0] - break point in skel */
 	++indent_level;
-	gen_bu_action ();
-	out (&action_array[action_offset]);
+    gen_bu_action();
+    processed_file << &action_array[action_offset];
 
-	line_directive_out (output_file, 0);
+	line_directive_out(true, false);
 
 	/* generate cases for any missing EOF rules */
 	for (i = 1; i <= lastsc; ++i)
 		if (!sceof[i]) {
-			do_indent ();
-			out_str ("case YY_STATE_EOF(%s):\n", scname[i]);
+			//do_indent ();
+            processed_file << "case YY_STATE_EOF(" << scname[i] << "):" << Context::eol;
 			did_eof_rule = true;
 		}
 
@@ -2150,7 +2098,7 @@ void make_tables (void)
 
 	/* Copy remainder of input to output. */
 
-	line_directive_out (output_file, 1);
+	line_directive_out(true, true);
 
 	if (sectnum == 3) {
 		OUT_BEGIN_CODE ();
