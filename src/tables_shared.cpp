@@ -34,7 +34,7 @@ dnl   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 dnl   PURPOSE.
 dnl 
 */
-
+
 /* This file is meant to be included in both the skeleton and the actual
  * flex code (hence the name "_shared"). 
  */
@@ -49,22 +49,21 @@ dnl
 #endif
 #endif
 
-
 /** Get the number of integers in this table. This is NOT the
  *  same thing as the number of elements.
  *  @param tbl the table
  *  @return the number of integers in the table
  */
-yyskel_static flex_int32_t yytbl_calc_total_len (const struct yytbl_data *tbl)
+yyskel_static flex_int32_t yytbl_calc_total_len(const struct yytbl_data *tbl)
 {
-	flex_int32_t n;
+    flex_int32_t n;
 
-	/* total number of ints */
-	n = tbl->td_lolen;
-	if (tbl->td_hilen > 0)
-		n *= tbl->td_hilen;
+    /* total number of ints */
+    n = tbl->td_lolen;
+    if (tbl->td_hilen > 0)
+        n *= tbl->td_hilen;
 
-	if (tbl->td_id == YYTD_ID_TRANSITION)
-		n *= 2;
-	return n;
+    if (tbl->td_id == YYTD_ID_TRANSITION)
+        n *= 2;
+    return n;
 }

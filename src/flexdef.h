@@ -36,12 +36,12 @@
 #include <config.h>
 
 #include <assert.h>
+#include <ctype.h>
+#include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <ctype.h>
 #include <string.h>
-#include <math.h>
 
 #include "flexint.h"
 
@@ -51,9 +51,9 @@ using String = std::string;
 
 /* We use gettext. So, when we write strings which should be translated, we mark them with _() */
 #ifdef ENABLE_NLS
-#include <locale.h>
 #include "gettext.h"
-#define _(String) gettext (String)
+#include <locale.h>
+#define _(String) gettext(String)
 #else
 #define _(STRING) STRING
 #endif /* ENABLE_NLS */
@@ -70,15 +70,14 @@ using String = std::string;
 #define MAXLINE 2048
 
 #ifndef MIN
-#define MIN(x,y) ((x) < (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
 #endif
 #ifndef MAX
-#define MAX(x,y) ((x) > (y) ? (x) : (y))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
 #endif
 #ifndef ABS
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 #endif
-
 
 #define unspecified -1
 
@@ -102,17 +101,17 @@ using String = std::string;
 /* Returns true if an nfa state has an epsilon out-transition slot
  * that can be used.  This definition is currently not used.
  */
-#define FREE_EPSILON(state) \
-	(transchar[state] == SYM_EPSILON && \
-	 trans2[state] == NO_TRANSITION && \
-	 finalst[state] != state)
+#define FREE_EPSILON(state)             \
+    (transchar[state] == SYM_EPSILON && \
+     trans2[state] == NO_TRANSITION &&  \
+     finalst[state] != state)
 
 /* Returns true if an nfa state has an epsilon out-transition character
  * and both slots are free
  */
-#define SUPER_FREE_EPSILON(state) \
-	(transchar[state] == SYM_EPSILON && \
-	 trans1[state] == NO_TRANSITION) \
+#define SUPER_FREE_EPSILON(state)       \
+    (transchar[state] == SYM_EPSILON && \
+     trans1[state] == NO_TRANSITION)
 
 /* Maximum number of NFA states that can comprise a DFA state.  It's real
  * big because if there's a lot of rules, the initial state will have a
@@ -120,7 +119,6 @@ using String = std::string;
  */
 #define INITIAL_MAX_DFA_SIZE 750
 #define MAX_DFA_SIZE_INCREMENT 750
-
 
 /* A note on the following masks.  They are used to mark accepting numbers
  * as being special.  As such, they implicitly limit the number of accepting
@@ -141,34 +139,33 @@ using String = std::string;
 /* Maximum number of rules, as outlined in the above note. */
 #define MAX_RULE (YY_TRAILING_MASK - 1)
 
-
 /* NIL must be 0.  If not, its special meaning when making equivalence classes
  * (it marks the representative of a given e.c.) will be unidentifiable.
  */
 #define NIL 0
 
-#define JAM -1			/* to mark a missing DFA transition */
+#define JAM -1 /* to mark a missing DFA transition */
 #define NO_TRANSITION NIL
-#define UNIQUE -1		/* marks a symbol as an e.c. representative */
-#define INFINITE_REPEAT -1		/* for x{5,} constructions */
+#define UNIQUE -1          /* marks a symbol as an e.c. representative */
+#define INFINITE_REPEAT -1 /* for x{5,} constructions */
 
-#define INITIAL_MAX_CCLS 100	/* max number of unique character classes */
+#define INITIAL_MAX_CCLS 100 /* max number of unique character classes */
 #define MAX_CCLS_INCREMENT 100
 
 /* Size of table holding members of character classes. */
 #define INITIAL_MAX_CCL_TBL_SIZE 500
 #define MAX_CCL_TBL_SIZE_INCREMENT 250
 
-#define INITIAL_MAX_RULES 100	/* default maximum number of rules */
+#define INITIAL_MAX_RULES 100 /* default maximum number of rules */
 #define MAX_RULES_INCREMENT 100
 
-#define INITIAL_MNS 2000	/* default maximum number of nfa states */
-#define MNS_INCREMENT 1000	/* amount to bump above by if it's not enough */
+#define INITIAL_MNS 2000   /* default maximum number of nfa states */
+#define MNS_INCREMENT 1000 /* amount to bump above by if it's not enough */
 
-#define INITIAL_MAX_DFAS 1000	/* default maximum number of dfa states */
+#define INITIAL_MAX_DFAS 1000 /* default maximum number of dfa states */
 #define MAX_DFAS_INCREMENT 1000
 
-#define JAMSTATE -32766		/* marks a reference to the state that always jams */
+#define JAMSTATE -32766 /* marks a reference to the state that always jams */
 
 /* Maximum number of NFA states. */
 #define MAXIMUM_MNS 31999
@@ -177,7 +174,7 @@ using String = std::string;
 /* Enough so that if it's subtracted from an NFA state number, the result
  * is guaranteed to be negative.
  */
-#define MARKER_DIFFERENCE (maximum_mns+2)
+#define MARKER_DIFFERENCE (maximum_mns + 2)
 
 /* Maximum number of nxt/chk pairs for non-templates. */
 #define INITIAL_MAX_XPAIRS 2000
@@ -187,13 +184,13 @@ using String = std::string;
 #define INITIAL_MAX_TEMPLATE_XPAIRS 2500
 #define MAX_TEMPLATE_XPAIRS_INCREMENT 2500
 
-#define SYM_EPSILON (CSIZE + 1)	/* to mark transitions on the symbol epsilon */
+#define SYM_EPSILON (CSIZE + 1) /* to mark transitions on the symbol epsilon */
 
-#define INITIAL_MAX_SCS 40	/* maximum number of start conditions */
-#define MAX_SCS_INCREMENT 40	/* amount to bump by if it's not enough */
+#define INITIAL_MAX_SCS 40   /* maximum number of start conditions */
+#define MAX_SCS_INCREMENT 40 /* amount to bump by if it's not enough */
 
-#define ONE_STACK_SIZE 500	/* stack of states with only one out-transition */
-#define SAME_TRANS -1		/* transition is the same as "default" entry for state */
+#define ONE_STACK_SIZE 500 /* stack of states with only one out-transition */
+#define SAME_TRANS -1      /* transition is the same as "default" entry for state */
 
 /* The following percentages are used to tune table compression:
 
@@ -247,7 +244,7 @@ using String = std::string;
  */
 #define PROT_SAVE_SIZE 2000
 
-#define MSP 50			/* maximum number of saved protos (protos on the proto queue) */
+#define MSP 50 /* maximum number of saved protos (protos on the proto queue) */
 
 /* Maximum number of out-transitions a state can have that we'll rummage
  * around through the interior of the internal fast table looking for a
@@ -270,9 +267,7 @@ using String = std::string;
  */
 #define MAX_SHORT 32700
 
-
 /* Declarations for global variables. */
-
 
 /* Variables for flags:
  * printstats - if true (-v), dump statistics
@@ -324,7 +319,7 @@ using String = std::string;
  */
 
 extern int printstats, syntaxerror, eofseen, ddebug, trace, nowarn,
-	spprdflt;
+    spprdflt;
 extern int interactive, lex_compat, posix_compat, do_yylineno;
 extern int useecs, fulltbl, usemecs, fullspd;
 extern int gen_line_dirs, performance_report, backing_up_report;
@@ -386,7 +381,6 @@ extern char *action_array;
 extern int action_size;
 extern int defs1_offset, prolog_offset, action_offset, action_index;
 
-
 /* Variables for stack of states having only one out-transition:
  * onestate - state number
  * onesym - transition symbol
@@ -397,7 +391,6 @@ extern int defs1_offset, prolog_offset, action_offset, action_index;
 
 extern int onestate[ONE_STACK_SIZE], onesym[ONE_STACK_SIZE];
 extern int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
-
 
 /* Variables for nfa machine data:
  * maximum_mns - maximal number of NFA states supported by tables
@@ -459,7 +452,6 @@ extern int current_state_type;
  */
 extern int variable_trailing_context_rules;
 
-
 /* Variables for protos:
  * numtemps - number of templates created
  * numprots - number of protos created
@@ -474,7 +466,6 @@ extern int variable_trailing_context_rules;
 
 extern int numtemps, numprots, protprev[MSP], protnext[MSP], prottbl[MSP];
 extern int protcomst[MSP], firstprot, lastprot, protsave[PROT_SAVE_SIZE];
-
 
 /* Variables for managing equivalence classes:
  * numecs - number of equivalence classes
@@ -500,7 +491,6 @@ extern int numecs, nextecm[CSIZE + 1], ecgroup[CSIZE + 1], nummecs;
  */
 extern int tecfwd[CSIZE + 1], tecbck[CSIZE + 1];
 
-
 /* Variables for start conditions:
  * lastsc - last start condition created
  * current_max_scs - current limit on number of start conditions
@@ -514,7 +504,6 @@ extern int tecfwd[CSIZE + 1], tecbck[CSIZE + 1];
 extern int lastsc, *scset, *scbol, *scxclu, *sceof;
 extern int current_max_scs;
 extern char **scname;
-
 
 /* Variables for dfa machine data:
  * current_max_dfa_size - current maximum number of NFA states in DFA
@@ -550,11 +539,11 @@ extern int current_max_dfa_size, current_max_xpairs;
 extern int current_max_template_xpairs, current_max_dfas;
 extern int lastdfa, *nxt, *chk, *tnxt;
 extern int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss,
-	*dfasiz;
+    *dfasiz;
 extern union dfaacc_union {
-	int    *dfaacc_set;
-	int     dfaacc_state;
-}      *dfaacc;
+    int *dfaacc_set;
+    int dfaacc_state;
+} * dfaacc;
 extern int *accsiz, *dhash, numas;
 extern int numsnpairs, jambase, jamstate;
 extern int end_of_buffer_state;
@@ -574,7 +563,6 @@ extern int end_of_buffer_state;
 extern int lastccl, *cclmap, *ccllen, *cclng, cclreuse;
 extern int current_maxccls, current_max_ccl_tbl_size;
 extern unsigned char *ccltbl;
-
 
 /* Variables for miscellaneous information:
  * nmstr - last NAME scanned by the scanner
@@ -601,73 +589,68 @@ extern int sectnum, nummt, hshcol, dfaeql, numeps, eps2, num_reallocs;
 extern int tmpuses, totnst, peakpairs, numuniq, numdup, hshsave;
 extern int num_backing_up, bol_needed;
 
-
-void   *allocate_array(int, size_t);
-void   *reallocate_array(void *, int, size_t);
+void *allocate_array(int, size_t);
+void *reallocate_array(void *, int, size_t);
 
 #define allocate_integer_array(size) \
-	allocate_array(size, sizeof(int))
+    allocate_array(size, sizeof(int))
 
-#define reallocate_integer_array(array,size) \
-	reallocate_array((void *) array, size, sizeof(int))
+#define reallocate_integer_array(array, size) \
+    reallocate_array((void *)array, size, sizeof(int))
 
 #define allocate_bool_array(size) \
-	allocate_array(size, sizeof(bool))
+    allocate_array(size, sizeof(bool))
 
-#define reallocate_bool_array(array,size) \
-	reallocate_array((void *) array, size, sizeof(bool))
+#define reallocate_bool_array(array, size) \
+    reallocate_array((void *)array, size, sizeof(bool))
 
 #define allocate_int_ptr_array(size) \
-	allocate_array(size, sizeof(int *))
+    allocate_array(size, sizeof(int *))
 
 #define allocate_char_ptr_array(size) \
-	allocate_array(size, sizeof(char *))
+    allocate_array(size, sizeof(char *))
 
 #define allocate_dfaacc_union(size) \
-	allocate_array(size, sizeof(union dfaacc_union))
+    allocate_array(size, sizeof(union dfaacc_union))
 
-#define reallocate_int_ptr_array(array,size) \
-	reallocate_array((void *) array, size, sizeof(int *))
+#define reallocate_int_ptr_array(array, size) \
+    reallocate_array((void *)array, size, sizeof(int *))
 
-#define reallocate_char_ptr_array(array,size) \
-	reallocate_array((void *) array, size, sizeof(char *))
+#define reallocate_char_ptr_array(array, size) \
+    reallocate_array((void *)array, size, sizeof(char *))
 
 #define reallocate_dfaacc_union(array, size) \
-	reallocate_array((void *) array, size, sizeof(union dfaacc_union))
+    reallocate_array((void *)array, size, sizeof(union dfaacc_union))
 
 #define allocate_character_array(size) \
-	allocate_array( size, sizeof(char))
+    allocate_array(size, sizeof(char))
 
-#define reallocate_character_array(array,size) \
-	reallocate_array((void *) array, size, sizeof(char))
+#define reallocate_character_array(array, size) \
+    reallocate_array((void *)array, size, sizeof(char))
 
 #define allocate_Character_array(size) \
-	allocate_array(size, sizeof(unsigned char))
+    allocate_array(size, sizeof(unsigned char))
 
-#define reallocate_Character_array(array,size) \
-	reallocate_array((void *) array, size, sizeof(unsigned char))
-
+#define reallocate_Character_array(array, size) \
+    reallocate_array((void *)array, size, sizeof(unsigned char))
 
 /* Used to communicate between scanner and parser.  The type should really
  * be YYSTYPE, but we can't easily get our hands on it.
  */
 extern int yylval;
 
-
 /* External functions that are cross-referenced among the flex source files. */
-
 
 /* from file ccl.c */
 
-extern void ccladd(int, int);	/* add a single character to a ccl */
-extern int cclinit(void);	/* make an empty ccl */
-extern void cclnegate(int);	/* negate a ccl */
-extern int ccl_set_diff (int a, int b); /* set difference of two ccls. */
-extern int ccl_set_union (int a, int b); /* set union of two ccls. */
+extern void ccladd(int, int);           /* add a single character to a ccl */
+extern int cclinit(void);               /* make an empty ccl */
+extern void cclnegate(int);             /* negate a ccl */
+extern int ccl_set_diff(int a, int b);  /* set difference of two ccls. */
+extern int ccl_set_union(int a, int b); /* set union of two ccls. */
 
 /* List the members of a set of characters in CCL form. */
 extern void list_character_set(FILE *, int[]);
-
 
 /* from file dfa.c */
 
@@ -683,11 +666,10 @@ extern int *epsclosure(int *, int *, int[], int *, int *);
 /* Increase the maximum number of dfas. */
 extern void increase_max_dfas(void);
 
-extern void ntod(void);	/* convert a ndfa to a dfa */
+extern void ntod(void); /* convert a ndfa to a dfa */
 
 /* Converts a set of ndfa states into a dfa state. */
 extern int snstods(int[], int, int[], int, int, int *);
-
 
 /* from file ecs.c */
 
@@ -703,7 +685,6 @@ extern void mkeccl(unsigned char[], int, int[], int[], int, int);
 /* Create equivalence class for single character. */
 extern void mkechar(int, int[], int[]);
 
-
 /* from file gen.c */
 
 /* Generate the code to keep backing-up information. */
@@ -718,7 +699,7 @@ extern void genctbl(void);
 /* Generate the code to find the action number. */
 extern void gen_find_action(void);
 
-extern void genftbl(void);	/* generate full transition table */
+extern void genftbl(void); /* generate full transition table */
 
 /* Generate the code to find the next compressed-table state. */
 extern void gen_next_compressed_state(char *);
@@ -744,15 +725,13 @@ extern void indent_put2s(const char *, const char *);
 /* Write out a string + newline at the current indentation level. */
 extern void indent_puts(const char *);
 
-extern void make_tables(void);	/* generate transition tables */
-
+extern void make_tables(void); /* generate transition tables */
 
 /* from file main.c */
 
 extern void check_options(void);
 extern void flexend(int);
 extern void usage(void);
-
 
 /* from file misc.c */
 
@@ -797,23 +776,25 @@ extern void flexfatal(const char *);
 
 /* Report a fatal error with a pinpoint, and terminate */
 #if HAVE_DECL___FUNC__
-#define flex_die(msg) \
-    do{ \
-        fprintf (stderr,\
-                _("%s: fatal internal error at %s:%d (%s): %s\n"),\
-                program_name, __FILE__, (int)__LINE__,\
-                __func__,msg);\
-        FLEX_EXIT(1);\
-    }while(0)
+#define flex_die(msg)                                              \
+    do                                                             \
+    {                                                              \
+        fprintf(stderr,                                            \
+                _("%s: fatal internal error at %s:%d (%s): %s\n"), \
+                program_name, __FILE__, (int)__LINE__,             \
+                __func__, msg);                                    \
+        FLEX_EXIT(1);                                              \
+    } while (0)
 #else /* ! HAVE_DECL___FUNC__ */
-#define flex_die(msg) \
-    do{ \
-        fprintf (stderr,\
-                _("%s: fatal internal error at %s:%d %s\n"),\
-                program_name, __FILE__, (int)__LINE__,\
-                msg);\
-        FLEX_EXIT(1);\
-    }while(0)
+#define flex_die(msg)                                        \
+    do                                                       \
+    {                                                        \
+        fprintf(stderr,                                      \
+                _("%s: fatal internal error at %s:%d %s\n"), \
+                program_name, __FILE__, (int)__LINE__,       \
+                msg);                                        \
+        FLEX_EXIT(1);                                        \
+    } while (0)
 #endif /* ! HAVE_DECL___func__ */
 
 /* Convert a hexadecimal digit string to an integer value. */
@@ -824,14 +805,14 @@ extern void lerr(const char *, ...)
 #if defined(__GNUC__) && __GNUC__ >= 3
     __attribute__((__format__(__printf__, 1, 2)))
 #endif
-;
+    ;
 
 /* Like lerr, but also exit after displaying message. */
 extern void lerr_fatal(const char *, ...)
 #if defined(__GNUC__) && __GNUC__ >= 3
     __attribute__((__format__(__printf__, 1, 2)))
 #endif
-;
+    ;
 
 /* Spit out a "#line" statement. */
 void line_directive_out(bool print, bool infile);
@@ -847,7 +828,7 @@ extern void mark_prolog(void);
 /* Generate a data statment for a two-dimensional array. */
 extern void mk2data(int);
 
-extern void mkdata(int);	/* generate a data statement */
+extern void mkdata(int); /* generate a data statement */
 
 /* Return the integer represented by a string of digits. */
 extern int myctoi(const char *);
@@ -871,7 +852,6 @@ extern void skelout(void);
 
 /* Output a yy_trans_info structure. */
 extern void transition_struct_out(int, int);
-
 
 /* from file nfa.c */
 
@@ -898,8 +878,8 @@ extern void mark_beginning_as_normal(int);
 /* Make a machine that branches to two machines. */
 extern int mkbranch(int, int);
 
-extern int mkclos(int);	/* convert a machine into a closure */
-extern int mkopt(int);	/* make a machine optional */
+extern int mkclos(int); /* convert a machine into a closure */
+extern int mkopt(int);  /* make a machine optional */
 
 /* Make a machine that matches either one of two machines. */
 extern int mkor(int, int);
@@ -907,13 +887,12 @@ extern int mkor(int, int);
 /* Convert a machine into a positive closure. */
 extern int mkposcl(int);
 
-extern int mkrep(int, int, int);	/* make a replicated machine */
+extern int mkrep(int, int, int); /* make a replicated machine */
 
 /* Create a state with a transition on a given symbol. */
 extern int mkstate(int);
 
-extern void new_rule(void);	/* initialize for a new rule */
-
+extern void new_rule(void); /* initialize for a new rule */
 
 /* from file parse.y */
 
@@ -934,12 +913,11 @@ extern void line_pinpoint(const char *, int);
 
 /* Report a formatted syntax error. */
 extern void format_synerr(const char *, const char *);
-extern void synerr(const char *);	/* report a syntax error */
+extern void synerr(const char *); /* report a syntax error */
 extern void format_warn(const char *, const char *);
-extern void warn(const char *);	/* report a warning */
-extern void yyerror(const char *);	/* report a parse error */
-extern int yyparse(void);	/* the YACC parser */
-
+extern void warn(const char *);    /* report a warning */
+extern void yyerror(const char *); /* report a parse error */
+extern int yyparse(void);          /* the YACC parser */
 
 /* from file scan.l */
 
@@ -956,7 +934,6 @@ extern "C" int yywrap(void);
 extern int yywrap(void);
 #endif
 
-
 /* from file sym.c */
 
 /* Save the text of a character class. */
@@ -965,28 +942,27 @@ extern void cclinstal(unsigned char[], int);
 /* Lookup the number associated with character class. */
 extern int ccllookup(unsigned char[]);
 
-extern void ndinstal(const char *, unsigned char[]);	/* install a name definition */
-extern unsigned char *ndlookup(const char *);	/* lookup a name definition */
+extern void ndinstal(const char *, unsigned char[]); /* install a name definition */
+extern unsigned char *ndlookup(const char *);        /* lookup a name definition */
 
 /* Increase maximum number of SC's. */
 extern void scextend(void);
-extern void scinstal(const char *, int);	/* make a start condition */
+extern void scinstal(const char *, int); /* make a start condition */
 
 /* Lookup the number associated with a start condition. */
 extern int sclookup(const char *);
-
 
 /* from file tblcmp.c */
 
 /* Build table entries for dfa state. */
 extern void bldtbl(int[], int, int, int, int);
 
-extern void cmptmps(void);	/* compress template table entries */
-extern void expand_nxt_chk(void);	/* increase nxt/chk arrays */
+extern void cmptmps(void);        /* compress template table entries */
+extern void expand_nxt_chk(void); /* increase nxt/chk arrays */
 
 /* Finds a space in the table for a state to be placed. */
 extern int find_table_space(int *, int);
-extern void inittbl(void);	/* initialize transition tables */
+extern void inittbl(void); /* initialize transition tables */
 
 /* Make the default, "jam" table entries. */
 extern void mkdeftbl(void);
@@ -1002,28 +978,23 @@ extern void place_state(int *, int, int);
 /* Save states with only one out-transition to be processed later. */
 extern void stack1(int, int, int, int);
 
-
 /* from file yylex.c */
 
 extern int yylex(void);
 
-
-
-
-
 /* For blocking out code from the header file. */
 #define OUT_BEGIN_CODE() outn("m4_ifdef( [[M4_YY_IN_HEADER]],,[[")
-#define OUT_END_CODE()   outn("]])")
+#define OUT_END_CODE() outn("]])")
 
 void flex_exit(int code);
 #define FLEX_EXIT(status) flex_exit(status)
 
 /* Removes all \n and \r chars from tail of str. returns str. */
-extern char *chomp (char *str);
+extern char *chomp(char *str);
 
 /* ctype functions forced to return boolean */
-#define b_islower(c) (islower(c)?true:false)
-#define b_isupper(c) (isupper(c)?true:false)
+#define b_islower(c) (islower(c) ? true : false)
+#define b_isupper(c) (isupper(c) ? true : false)
 
 /* return true if char is uppercase or lowercase. */
 bool has_case(int c);
@@ -1032,38 +1003,27 @@ bool has_case(int c);
 int reverse_case(int c);
 
 /* return false if [c1-c2] is ambiguous for a caseless scanner. */
-bool range_covers_case (int c1, int c2);
-
-
-
-
-
-
-
-
+bool range_covers_case(int c1, int c2);
 
 /* From "scanflags.h" */
 typedef unsigned int scanflags_t;
-extern scanflags_t* _sf_stk;
+extern scanflags_t *_sf_stk;
 extern size_t _sf_top_ix, _sf_max; /**< stack of scanner flags. */
-#define _SF_CASE_INS   0x0001
-#define _SF_DOT_ALL    0x0002
-#define _SF_SKIP_WS    0x0004
-#define sf_top()           (_sf_stk[_sf_top_ix])
-#define sf_case_ins()      (sf_top() & _SF_CASE_INS)
-#define sf_dot_all()       (sf_top() & _SF_DOT_ALL)
-#define sf_skip_ws()       (sf_top() & _SF_SKIP_WS)
-#define sf_set_case_ins(X)      ((X) ? (sf_top() |= _SF_CASE_INS) : (sf_top() &= ~_SF_CASE_INS))
-#define sf_set_dot_all(X)       ((X) ? (sf_top() |= _SF_DOT_ALL)  : (sf_top() &= ~_SF_DOT_ALL))
-#define sf_set_skip_ws(X)       ((X) ? (sf_top() |= _SF_SKIP_WS)  : (sf_top() &= ~_SF_SKIP_WS))
+#define _SF_CASE_INS 0x0001
+#define _SF_DOT_ALL 0x0002
+#define _SF_SKIP_WS 0x0004
+#define sf_top() (_sf_stk[_sf_top_ix])
+#define sf_case_ins() (sf_top() & _SF_CASE_INS)
+#define sf_dot_all() (sf_top() & _SF_DOT_ALL)
+#define sf_skip_ws() (sf_top() & _SF_SKIP_WS)
+#define sf_set_case_ins(X) ((X) ? (sf_top() |= _SF_CASE_INS) : (sf_top() &= ~_SF_CASE_INS))
+#define sf_set_dot_all(X) ((X) ? (sf_top() |= _SF_DOT_ALL) : (sf_top() &= ~_SF_DOT_ALL))
+#define sf_set_skip_ws(X) ((X) ? (sf_top() |= _SF_SKIP_WS) : (sf_top() &= ~_SF_SKIP_WS))
 extern void sf_init(void);
 extern void sf_push(void);
 extern void sf_pop(void);
 
-
-extern bool    tablesext, tablesverify;
-
-
+extern bool tablesext, tablesverify;
 
 template <typename T>
 bool replace_all(T &str, const T &from, const T &to)
@@ -1083,4 +1043,3 @@ inline bool replace_all(std::string &str, const std::string &from, const std::st
 {
     return replace_all<std::string>(str, from, to);
 }
-

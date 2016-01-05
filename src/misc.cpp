@@ -40,570 +40,543 @@
 #include "context.h"
 #include "tables.h"
 
-#define CMD_IF_TABLES_SER       "%if-tables-serialization"
-#define CMD_TABLES_YYDMAP       "%tables-yydmap"
-#define CMD_DEFINE_YYTABLES     "%define-yytables"
-#define CMD_IF_CPP_ONLY         "%if-c++-only"
-#define CMD_IF_C_ONLY           "%if-c-only"
-#define CMD_IF_C_OR_CPP         "%if-c-or-c++"
-#define CMD_NOT_FOR_HEADER      "%not-for-header"
-#define CMD_OK_FOR_HEADER       "%ok-for-header"
-#define CMD_PUSH                "%push"
-#define CMD_POP                 "%pop"
-#define CMD_IF_REENTRANT        "%if-reentrant"
-#define CMD_IF_NOT_REENTRANT    "%if-not-reentrant"
-#define CMD_IF_BISON_BRIDGE     "%if-bison-bridge"
+#define CMD_IF_TABLES_SER "%if-tables-serialization"
+#define CMD_TABLES_YYDMAP "%tables-yydmap"
+#define CMD_DEFINE_YYTABLES "%define-yytables"
+#define CMD_IF_CPP_ONLY "%if-c++-only"
+#define CMD_IF_C_ONLY "%if-c-only"
+#define CMD_IF_C_OR_CPP "%if-c-or-c++"
+#define CMD_NOT_FOR_HEADER "%not-for-header"
+#define CMD_OK_FOR_HEADER "%ok-for-header"
+#define CMD_PUSH "%push"
+#define CMD_POP "%pop"
+#define CMD_IF_REENTRANT "%if-reentrant"
+#define CMD_IF_NOT_REENTRANT "%if-not-reentrant"
+#define CMD_IF_BISON_BRIDGE "%if-bison-bridge"
 #define CMD_IF_NOT_BISON_BRIDGE "%if-not-bison-bridge"
-#define CMD_ENDIF               "%endif"
+#define CMD_ENDIF "%endif"
 
 extern std::ifstream skelfile;
 
-
 /* Append "#define defname value\n" to the running buffer. */
-void action_define (const char *defname, int value)
+void action_define(const char *defname, int value)
 {
-	char    buf[MAXLINE];
-	char   *cpy;
+    char buf[MAXLINE];
+    char *cpy;
 
-	if ((int) strlen (defname) > MAXLINE / 2) {
-		format_pinpoint_message (_
-					 ("name \"%s\" ridiculously long"),
-					 defname);
-		return;
-	}
+    if ((int)strlen(defname) > MAXLINE / 2)
+    {
+        format_pinpoint_message(_("name \"%s\" ridiculously long"),
+                                defname);
+        return;
+    }
 
-	snprintf (buf, sizeof(buf), "#define %s %d\n", defname, value);
-	add_action (buf);
+    snprintf(buf, sizeof(buf), "#define %s %d\n", defname, value);
+    add_action(buf);
 
-	/* track #defines so we can undef them when we're done. */
-	cpy = xstrdup(defname);
+    /* track #defines so we can undef them when we're done. */
+    cpy = xstrdup(defname);
     defs_buf.addText(cpy);
 }
 
-
 /* Append "new_text" to the running buffer. */
-void add_action (const char *new_text)
+void add_action(const char *new_text)
 {
-	int     len = strlen (new_text);
+    int len = strlen(new_text);
 
-	while (len + action_index >= action_size - 10 /* slop */ ) {
-		int     new_size = action_size * 2;
+    while (len + action_index >= action_size - 10 /* slop */)
+    {
+        int new_size = action_size * 2;
 
-		if (new_size <= 0)
-			/* Increase just a little, to try to avoid overflow
+        if (new_size <= 0)
+            /* Increase just a little, to try to avoid overflow
 			 * on 16-bit machines.
 			 */
-			action_size += action_size / 8;
-		else
-			action_size = new_size;
+            action_size += action_size / 8;
+        else
+            action_size = new_size;
 
-		action_array =
-            (decltype(action_array))reallocate_character_array (action_array,
-						    action_size);
-	}
+        action_array =
+            (decltype(action_array))reallocate_character_array(action_array,
+                                                               action_size);
+    }
 
-	strcpy (&action_array[action_index], new_text);
+    strcpy(&action_array[action_index], new_text);
 
-	action_index += len;
+    action_index += len;
 }
-
 
 /* allocate_array - allocate memory for an integer array of the given size */
 
-void   *allocate_array (int size, size_t element_size)
+void *allocate_array(int size, size_t element_size)
 {
-	void *mem;
-	size_t  num_bytes = element_size * size;
+    void *mem;
+    size_t num_bytes = element_size * size;
 
-	mem = malloc(num_bytes);
-	if (!mem)
-		flexfatal (_
-			   ("memory allocation failed in allocate_array()"));
+    mem = malloc(num_bytes);
+    if (!mem)
+        flexfatal(_("memory allocation failed in allocate_array()"));
 
-	return mem;
+    return mem;
 }
-
 
 /* all_lower - true if a string is all lower-case */
 
-int all_lower (char *str)
+int all_lower(char *str)
 {
-	while (*str) {
-		if (!isascii ((unsigned char) * str) || !islower ((unsigned char) * str))
-			return 0;
-		++str;
-	}
+    while (*str)
+    {
+        if (!isascii((unsigned char)*str) || !islower((unsigned char)*str))
+            return 0;
+        ++str;
+    }
 
-	return 1;
+    return 1;
 }
-
 
 /* all_upper - true if a string is all upper-case */
 
-int all_upper (char *str)
+int all_upper(char *str)
 {
-	while (*str) {
-		if (!isascii ((unsigned char) * str) || !isupper ((unsigned char) * str))
-			return 0;
-		++str;
-	}
+    while (*str)
+    {
+        if (!isascii((unsigned char)*str) || !isupper((unsigned char)*str))
+            return 0;
+        ++str;
+    }
 
-	return 1;
+    return 1;
 }
-
 
 /* intcmp - compares two integers for use by qsort. */
 
-int intcmp (const void *a, const void *b)
+int intcmp(const void *a, const void *b)
 {
-  return *(const int *) a - *(const int *) b;
+    return *(const int *)a - *(const int *)b;
 }
-
 
 /* check_char - checks a character to make sure it's within the range
  *		we're expecting.  If not, generates fatal error message
  *		and exits.
  */
 
-void check_char (int c)
+void check_char(int c)
 {
-	if (c >= CSIZE)
-		lerr (_("bad character '%s' detected in check_char()"),
-			readable_form (c));
+    if (c >= CSIZE)
+        lerr(_("bad character '%s' detected in check_char()"),
+             readable_form(c));
 
-	if (c >= csize)
-		lerr (_
-			("scanner requires -8 flag to use the character %s"),
-			readable_form (c));
+    if (c >= csize)
+        lerr(_("scanner requires -8 flag to use the character %s"),
+             readable_form(c));
 }
-
-
 
 /* clower - replace upper-case letter to lower-case */
 
-unsigned char clower (int c)
+unsigned char clower(int c)
 {
-	return (unsigned char) ((isascii (c) && isupper (c)) ? tolower (c) : c);
+    return (unsigned char)((isascii(c) && isupper(c)) ? tolower(c) : c);
 }
-
 
 char *xstrdup(const char *s)
 {
-	char *s2;
+    char *s2;
 
-	if ((s2 = strdup(s)) == NULL)
-		flexfatal (_("memory allocation failure in xstrdup()"));
+    if ((s2 = strdup(s)) == NULL)
+        flexfatal(_("memory allocation failure in xstrdup()"));
 
-	return s2;
+    return s2;
 }
-
 
 /* cclcmp - compares two characters for use by qsort with '\0' sorting last. */
 
-int cclcmp (const void *a, const void *b)
+int cclcmp(const void *a, const void *b)
 {
-  if (!*(const unsigned char *) a)
-	return 1;
-  else
-	if (!*(const unsigned char *) b)
-	  return - 1;
-	else
-	  return *(const unsigned char *) a - *(const unsigned char *) b;
+    if (!*(const unsigned char *)a)
+        return 1;
+    else if (!*(const unsigned char *)b)
+        return -1;
+    else
+        return *(const unsigned char *)a - *(const unsigned char *)b;
 }
-
 
 /* dataend - finish up a block of data declarations */
 
-void dataend (void)
+void dataend(void)
 {
-	/* short circuit any output */
-	if (gentables) {
+    /* short circuit any output */
+    if (gentables)
+    {
 
-		if (datapos > 0)
-			dataflush ();
+        if (datapos > 0)
+            dataflush();
 
-		/* add terminator for initialization; { for vi */
-		outn ("    } ;\n");
-	}
-	dataline = 0;
-	datapos = 0;
+        /* add terminator for initialization; { for vi */
+        outn("    } ;\n");
+    }
+    dataline = 0;
+    datapos = 0;
 }
-
 
 /* dataflush - flush generated data statements */
 
-void dataflush (void)
+void dataflush(void)
 {
-	/* short circuit any output */
-	if (!gentables)
-		return;
+    /* short circuit any output */
+    if (!gentables)
+        return;
 
     processed_file << Context::eol;
 
-	if (++dataline >= NUMDATALINES) {
-		/* Put out a blank line so that the table is grouped into
+    if (++dataline >= NUMDATALINES)
+    {
+        /* Put out a blank line so that the table is grouped into
 		 * large blocks that enable the user to find elements easily.
          */
         processed_file << Context::eol;
-		dataline = 0;
-	}
+        dataline = 0;
+    }
 
-	/* Reset the number of characters written on the current line. */
-	datapos = 0;
+    /* Reset the number of characters written on the current line. */
+    datapos = 0;
 }
-
 
 /* flexerror - report an error message and terminate */
 
-void flexerror (const char *msg)
+void flexerror(const char *msg)
 {
-	fprintf (stderr, "%s: %s\n", program_name, msg);
-	flexend (1);
+    fprintf(stderr, "%s: %s\n", program_name, msg);
+    flexend(1);
 }
-
 
 /* flexfatal - report a fatal error message and terminate */
 
-void flexfatal (const char *msg)
+void flexfatal(const char *msg)
 {
-	fprintf (stderr, _("%s: fatal internal error, %s\n"),
-		 program_name, msg);
-	FLEX_EXIT (1);
+    fprintf(stderr, _("%s: fatal internal error, %s\n"),
+            program_name, msg);
+    FLEX_EXIT(1);
 }
-
 
 /* htoi - convert a hexadecimal digit string to an integer value */
 
-int htoi (unsigned char str[])
+int htoi(unsigned char str[])
 {
-	unsigned int result;
+    unsigned int result;
 
-	(void) sscanf ((char *) str, "%x", &result);
+    (void)sscanf((char *)str, "%x", &result);
 
-	return result;
+    return result;
 }
-
 
 /* lerr - report an error message */
 
-void lerr (const char *msg, ...)
+void lerr(const char *msg, ...)
 {
-	char    errmsg[MAXLINE];
-	va_list args;
+    char errmsg[MAXLINE];
+    va_list args;
 
-	va_start(args, msg);
-	vsnprintf (errmsg, sizeof(errmsg), msg, args);
-	va_end(args);
-	flexerror (errmsg);
+    va_start(args, msg);
+    vsnprintf(errmsg, sizeof(errmsg), msg, args);
+    va_end(args);
+    flexerror(errmsg);
 }
-
 
 /* lerr_fatal - as lerr, but call flexfatal */
 
-void lerr_fatal (const char *msg, ...)
+void lerr_fatal(const char *msg, ...)
 {
-	char    errmsg[MAXLINE];
-	va_list args;
-	va_start(args, msg);
+    char errmsg[MAXLINE];
+    va_list args;
+    va_start(args, msg);
 
-	vsnprintf (errmsg, sizeof(errmsg), msg, args);
-	va_end(args);
-	flexfatal (errmsg);
+    vsnprintf(errmsg, sizeof(errmsg), msg, args);
+    va_end(args);
+    flexfatal(errmsg);
 }
-
 
 /* line_directive_out - spit out a "#line" statement */
 
 void line_directive_out(bool print, bool do_infile)
 {
-	char    directive[MAXLINE], filename[MAXLINE];
-	char   *s1, *s2, *s3;
-	static const char *line_fmt = "#line %d \"%s\"\n";
+    char directive[MAXLINE], filename[MAXLINE];
+    char *s1, *s2, *s3;
+    static const char *line_fmt = "#line %d \"%s\"\n";
 
-	if (!gen_line_dirs)
-		return;
+    if (!gen_line_dirs)
+        return;
 
-	s1 = do_infile ? infilename : "M4_YY_OUTFILE_NAME";
+    s1 = do_infile ? infilename : "M4_YY_OUTFILE_NAME";
 
-	if (do_infile && !s1)
+    if (do_infile && !s1)
         s1 = "<stdin>";
-    
-	s2 = filename;
-	s3 = &filename[sizeof (filename) - 2];
 
-	while (s2 < s3 && *s1) {
-		if (*s1 == '\\')
-			/* Escape the '\' */
-			*s2++ = '\\';
+    s2 = filename;
+    s3 = &filename[sizeof(filename) - 2];
 
-		*s2++ = *s1++;
-	}
+    while (s2 < s3 && *s1)
+    {
+        if (*s1 == '\\')
+            /* Escape the '\' */
+            *s2++ = '\\';
 
-	*s2 = '\0';
+        *s2++ = *s1++;
+    }
 
-	if (do_infile)
-		snprintf (directive, sizeof(directive), line_fmt, linenum, filename);
-	else {
-		snprintf (directive, sizeof(directive), line_fmt, 0, filename);
-	}
+    *s2 = '\0';
 
-	/* If print is false then we should put the directive in
+    if (do_infile)
+        snprintf(directive, sizeof(directive), line_fmt, linenum, filename);
+    else
+    {
+        snprintf(directive, sizeof(directive), line_fmt, 0, filename);
+    }
+
+    /* If print is false then we should put the directive in
 	 * the accumulated actions.
 	 */
-	if (print)
+    if (print)
         processed_file.addLine(directive);
-	else
-		add_action(directive);
+    else
+        add_action(directive);
 }
-
 
 /* mark_defs1 - mark the current position in the action array as
  *               representing where the user's section 1 definitions end
  *		 and the prolog begins
  */
-void mark_defs1 (void)
+void mark_defs1(void)
 {
-	defs1_offset = 0;
-	action_array[action_index++] = '\0';
-	action_offset = prolog_offset = action_index;
-	action_array[action_index] = '\0';
+    defs1_offset = 0;
+    action_array[action_index++] = '\0';
+    action_offset = prolog_offset = action_index;
+    action_array[action_index] = '\0';
 }
-
 
 /* mark_prolog - mark the current position in the action array as
  *               representing the end of the action prolog
  */
-void mark_prolog (void)
+void mark_prolog(void)
 {
-	action_array[action_index++] = '\0';
-	action_offset = action_index;
-	action_array[action_index] = '\0';
+    action_array[action_index++] = '\0';
+    action_offset = action_index;
+    action_array[action_index] = '\0';
 }
-
 
 /* mk2data - generate a data statement for a two-dimensional array
  *
  * Generates a data statement initializing the current 2-D array to "value".
  */
-void mk2data (int value)
+void mk2data(int value)
 {
-	/* short circuit any output */
-	if (!gentables)
-		return;
+    /* short circuit any output */
+    if (!gentables)
+        return;
 
-    if (datapos >= NUMDATAITEMS) {
+    if (datapos >= NUMDATAITEMS)
+    {
         processed_file << ',';
-		dataflush ();
-	}
+        dataflush();
+    }
 
-	if (datapos == 0)
+    if (datapos == 0)
         /* Indent. */
         processed_file << "    ";
 
     else
         processed_file << ',';
 
-	++datapos;
+    ++datapos;
 
     processed_file << std::setw(5) << value;
 }
-
 
 /* mkdata - generate a data statement
  *
  * Generates a data statement initializing the current array element to
  * "value".
  */
-void mkdata (int value)
+void mkdata(int value)
 {
-	/* short circuit any output */
-	if (!gentables)
-		return;
+    /* short circuit any output */
+    if (!gentables)
+        return;
 
-    if (datapos >= NUMDATAITEMS) {
+    if (datapos >= NUMDATAITEMS)
+    {
         processed_file << ',';
-		dataflush ();
-	}
+        dataflush();
+    }
 
-	if (datapos == 0)
-		/* Indent. */
+    if (datapos == 0)
+        /* Indent. */
         processed_file << "    ";
     else
         processed_file << ',';
 
-	++datapos;
+    ++datapos;
 
     processed_file << std::setw(5) << value;
 }
 
-
 /* myctoi - return the integer represented by a string of digits */
 
-int myctoi (const char *array)
+int myctoi(const char *array)
 {
-	int     val = 0;
+    int val = 0;
 
-	(void) sscanf (array, "%d", &val);
+    (void)sscanf(array, "%d", &val);
 
-	return val;
+    return val;
 }
-
 
 /* myesc - return character corresponding to escape sequence */
 
-unsigned char myesc (unsigned char array[])
+unsigned char myesc(unsigned char array[])
 {
-	unsigned char    c, esc_char;
+    unsigned char c, esc_char;
 
-	switch (array[1]) {
-	case 'b':
-		return '\b';
-	case 'f':
-		return '\f';
-	case 'n':
-		return '\n';
-	case 'r':
-		return '\r';
-	case 't':
-		return '\t';
-	case 'a':
-		return '\a';
-	case 'v':
-		return '\v';
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-		{		/* \<octal> */
-			int     sptr = 1;
+    switch (array[1])
+    {
+    case 'b':
+        return '\b';
+    case 'f':
+        return '\f';
+    case 'n':
+        return '\n';
+    case 'r':
+        return '\r';
+    case 't':
+        return '\t';
+    case 'a':
+        return '\a';
+    case 'v':
+        return '\v';
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    { /* \<octal> */
+        int sptr = 1;
 
-			while (isascii (array[sptr]) &&
-			       isdigit (array[sptr]))
-				/* Don't increment inside loop control
+        while (isascii(array[sptr]) &&
+               isdigit(array[sptr]))
+            /* Don't increment inside loop control
 				 * because if isdigit() is a macro it might
 				 * expand into multiple increments ...
 				 */
-				++sptr;
+            ++sptr;
 
-			c = array[sptr];
-			array[sptr] = '\0';
+        c = array[sptr];
+        array[sptr] = '\0';
 
-            auto o = std::stoi((const char *)array + 1, 0, 8);
-			esc_char = o;
+        auto o = std::stoi((const char *)array + 1, 0, 8);
+        esc_char = o;
 
-			array[sptr] = c;
+        array[sptr] = c;
 
-			return esc_char;
-		}
+        return esc_char;
+    }
 
-	case 'x':
-		{		/* \x<hex> */
-			int     sptr = 2;
+    case 'x':
+    { /* \x<hex> */
+        int sptr = 2;
 
-			while (isascii (array[sptr]) &&
-			       isxdigit (array[sptr]))
-				/* Don't increment inside loop control
+        while (isascii(array[sptr]) &&
+               isxdigit(array[sptr]))
+            /* Don't increment inside loop control
 				 * because if isdigit() is a macro it might
 				 * expand into multiple increments ...
 				 */
-				++sptr;
+            ++sptr;
 
-			c = array[sptr];
-			array[sptr] = '\0';
+        c = array[sptr];
+        array[sptr] = '\0';
 
-			esc_char = htoi (array + 2);
+        esc_char = htoi(array + 2);
 
-			array[sptr] = c;
+        array[sptr] = c;
 
-			return esc_char;
-		}
+        return esc_char;
+    }
 
-	default:
-		return array[1];
-	}
+    default:
+        return array[1];
+    }
 }
-
-
-
-
-
 
 void out_str_dec(const char *fmt, const char str[], int n)
 {
-    char buf[8192] = { 0 };
+    char buf[8192] = {0};
     snprintf(buf, 8192, fmt, str, n);
     processed_file << buf;
-
 }
-
-
-
-
 
 /* readable_form - return the the human-readable form of a character
  *
  * The returned string is in static storage.
  */
 
-char   *readable_form (int c)
+char *readable_form(int c)
 {
-	static char rform[20];
+    static char rform[20];
 
-	if ((c >= 0 && c < 32) || c >= 127) {
-		switch (c) {
-		case '\b':
-			return "\\b";
-		case '\f':
-			return "\\f";
-		case '\n':
-			return "\\n";
-		case '\r':
-			return "\\r";
-		case '\t':
-			return "\\t";
-		case '\a':
-			return "\\a";
-		case '\v':
-			return "\\v";
-		default:
-			if(trace_hex)
-				snprintf (rform, sizeof(rform), "\\x%.2x", (unsigned int) c);
-			else
-				snprintf (rform, sizeof(rform), "\\%.3o", (unsigned int) c);
-			return rform;
-		}
-	}
+    if ((c >= 0 && c < 32) || c >= 127)
+    {
+        switch (c)
+        {
+        case '\b':
+            return "\\b";
+        case '\f':
+            return "\\f";
+        case '\n':
+            return "\\n";
+        case '\r':
+            return "\\r";
+        case '\t':
+            return "\\t";
+        case '\a':
+            return "\\a";
+        case '\v':
+            return "\\v";
+        default:
+            if (trace_hex)
+                snprintf(rform, sizeof(rform), "\\x%.2x", (unsigned int)c);
+            else
+                snprintf(rform, sizeof(rform), "\\%.3o", (unsigned int)c);
+            return rform;
+        }
+    }
 
-	else if (c == ' ')
-		return "' '";
+    else if (c == ' ')
+        return "' '";
 
-	else {
-		rform[0] = c;
-		rform[1] = '\0';
+    else
+    {
+        rform[0] = c;
+        rform[1] = '\0';
 
-		return rform;
-	}
+        return rform;
+    }
 }
-
 
 /* reallocate_array - increase the size of a dynamic array */
 
-void   *reallocate_array (void *array, int size, size_t element_size)
+void *reallocate_array(void *array, int size, size_t element_size)
 {
-	void *new_array;
-	size_t  num_bytes = element_size * size;
+    void *new_array;
+    size_t num_bytes = element_size * size;
 
-	new_array = realloc(array, num_bytes);
-	if (!new_array)
-		flexfatal (_("attempt to increase array size failed"));
+    new_array = realloc(array, num_bytes);
+    if (!new_array)
+        flexfatal(_("attempt to increase array size failed"));
 
-	return new_array;
+    return new_array;
 }
-
 
 /* skelout - write out one section of the skeleton file
  *
@@ -611,19 +584,18 @@ void   *reallocate_array (void *array, int size, size_t element_size)
  *    Copies skelfile or skel array to stdout until a line beginning with
  *    "%%" or EOF is found.
  */
-void skelout (void)
+void skelout(void)
 {
-	String buf;
-	bool do_copy = true;
+    String buf;
+    bool do_copy = true;
 
     std::stack<bool> sko_stack;
     sko_stack.push(true);
 
-
-	/* Loop pulling lines either from the skelfile, if we're using
+    /* Loop pulling lines either from the skelfile, if we're using
 	 * one, or from the skel[] array.
 	 */
-	while (1)
+    while (1)
     {
         if (skelfile.is_open())
         {
@@ -640,105 +612,126 @@ void skelout (void)
             buf = s;
         }
 
-		/* copy from skel array */
-		if (buf[0] == '%') {	/* control line */
-			/* print the control line as a comment. */
-			if (ddebug && buf[1] != '#') {
-                    processed_file << "/* " << buf << " */" << (buf.back() == '\\' ? "\\" : "") << Context::eol;
-			}
+        /* copy from skel array */
+        if (buf[0] == '%')
+        { /* control line */
+            /* print the control line as a comment. */
+            if (ddebug && buf[1] != '#')
+            {
+                processed_file << "/* " << buf << " */" << (buf.back() == '\\' ? "\\" : "") << Context::eol;
+            }
 
-			/* We've been accused of using cryptic markers in the skel.
+/* We've been accused of using cryptic markers in the skel.
 			 * So we'll use emacs-style-hyphenated-commands.
              * We might consider a hash if this if-else-if-else
              * chain gets too large.
 			 */
 #define cmd_match(s) (buf.find(s) == 0)
 
-			if (buf[1] == '%') {
-				/* %% is a break point for skelout() */
-				return;
-			}
-            else if (cmd_match(CMD_PUSH)) {
+            if (buf[1] == '%')
+            {
+                /* %% is a break point for skelout() */
+                return;
+            }
+            else if (cmd_match(CMD_PUSH))
+            {
                 sko_stack.push(do_copy);
-                if (ddebug) {
+                if (ddebug)
+                {
                     processed_file << "/*(state = (" << (do_copy ? "true" : "false") << ") */" << Context::eol;
                 }
                 processed_file << (buf.back() == '\\' ? "\\" : "") << Context::eol;
             }
-            else if (cmd_match(CMD_POP)) {
+            else if (cmd_match(CMD_POP))
+            {
                 do_copy = sko_stack.top();
                 sko_stack.pop();
-                if (ddebug) {
+                if (ddebug)
+                {
                     processed_file << "/*(state = (" << (do_copy ? "true" : "false") << ") */" << Context::eol;
                 }
                 processed_file << (buf.back() == '\\' ? "\\" : "") << Context::eol;
             }
-            else if (cmd_match(CMD_IF_REENTRANT)) {
+            else if (cmd_match(CMD_IF_REENTRANT))
+            {
                 sko_stack.push(do_copy);
                 do_copy = reentrant && do_copy;
             }
-            else if (cmd_match(CMD_IF_NOT_REENTRANT)) {
+            else if (cmd_match(CMD_IF_NOT_REENTRANT))
+            {
                 sko_stack.push(do_copy);
                 do_copy = !reentrant && do_copy;
             }
-            else if (cmd_match(CMD_IF_BISON_BRIDGE)) {
+            else if (cmd_match(CMD_IF_BISON_BRIDGE))
+            {
                 sko_stack.push(do_copy);
                 do_copy = bison_bridge_lval && do_copy;
             }
-            else if (cmd_match(CMD_IF_NOT_BISON_BRIDGE)) {
+            else if (cmd_match(CMD_IF_NOT_BISON_BRIDGE))
+            {
                 sko_stack.push(do_copy);
                 do_copy = !bison_bridge_lval && do_copy;
             }
-            else if (cmd_match(CMD_ENDIF)) {
+            else if (cmd_match(CMD_ENDIF))
+            {
                 do_copy = sko_stack.top();
                 sko_stack.pop();
             }
-			else if (cmd_match (CMD_IF_TABLES_SER)) {
+            else if (cmd_match(CMD_IF_TABLES_SER))
+            {
                 do_copy = do_copy && tablesext;
-			}
-			else if (cmd_match (CMD_TABLES_YYDMAP)) {
-				if (tablesext && !yydmap_buf.empty())
-					outn ((char *) (yydmap_buf.getText().c_str()));
-			}
-            else if (cmd_match(CMD_DEFINE_YYTABLES)) {
+            }
+            else if (cmd_match(CMD_TABLES_YYDMAP))
+            {
+                if (tablesext && !yydmap_buf.empty())
+                    outn((char *)(yydmap_buf.getText().c_str()));
+            }
+            else if (cmd_match(CMD_DEFINE_YYTABLES))
+            {
                 processed_file << "#define YYTABLES_NAME \"" << (tablesname ? tablesname : "yytables") << "\"" << Context::eol;
             }
-			else if (cmd_match (CMD_IF_CPP_ONLY)) {
+            else if (cmd_match(CMD_IF_CPP_ONLY))
+            {
                 /* only for C++ */
                 sko_stack.push(do_copy);
-				do_copy = C_plus_plus;
-			}
-			else if (cmd_match (CMD_IF_C_ONLY)) {
+                do_copy = C_plus_plus;
+            }
+            else if (cmd_match(CMD_IF_C_ONLY))
+            {
                 /* %- only for C */
                 sko_stack.push(do_copy);
-				do_copy = !C_plus_plus;
-			}
-			else if (cmd_match (CMD_IF_C_OR_CPP)) {
+                do_copy = !C_plus_plus;
+            }
+            else if (cmd_match(CMD_IF_C_OR_CPP))
+            {
                 /* %* for C and C++ */
                 sko_stack.push(do_copy);
-				do_copy = true;
-			}
-			else if (cmd_match (CMD_NOT_FOR_HEADER)) {
-				/* %c begin linkage-only (non-header) code. */
-				OUT_BEGIN_CODE ();
-			}
-			else if (cmd_match (CMD_OK_FOR_HEADER)) {
-				/* %e end linkage-only code. */
-				OUT_END_CODE ();
-			}
-			else if (buf[1] == '#') {
-				/* %# a comment in the skel. ignore. */
-			}
-			else {
-				flexfatal (_("bad line in skeleton file"));
-			}
-		}
+                do_copy = true;
+            }
+            else if (cmd_match(CMD_NOT_FOR_HEADER))
+            {
+                /* %c begin linkage-only (non-header) code. */
+                OUT_BEGIN_CODE();
+            }
+            else if (cmd_match(CMD_OK_FOR_HEADER))
+            {
+                /* %e end linkage-only code. */
+                OUT_END_CODE();
+            }
+            else if (buf[1] == '#')
+            {
+                /* %# a comment in the skel. ignore. */
+            }
+            else
+            {
+                flexfatal(_("bad line in skeleton file"));
+            }
+        }
 
-		else if (do_copy) 
-            outn (buf.c_str());
-	}			/* end while */
+        else if (do_copy)
+            outn(buf.c_str());
+    } /* end while */
 }
-
 
 /* transition_struct_out - output a yy_trans_info structure
  *
@@ -746,45 +739,45 @@ void skelout (void)
  * element_n.  Formats the output with spaces and carriage returns.
  */
 
-void transition_struct_out (int element_v, int element_n)
+void transition_struct_out(int element_v, int element_n)
 {
 
-	/* short circuit any output */
-	if (!gentables)
-		return;
+    /* short circuit any output */
+    if (!gentables)
+        return;
 
     processed_file << " {" << std::setw(4) << element_v << "," << std::setw(4) << element_n << " }," << Context::eol;
 
-	datapos += TRANS_STRUCT_PRINT_LENGTH;
+    datapos += TRANS_STRUCT_PRINT_LENGTH;
 
-    if (datapos >= 79 - TRANS_STRUCT_PRINT_LENGTH) {
+    if (datapos >= 79 - TRANS_STRUCT_PRINT_LENGTH)
+    {
         processed_file << Context::eol;
 
         if (++dataline % 10 == 0)
             processed_file << Context::eol;
 
-		datapos = 0;
-	}
+        datapos = 0;
+    }
 }
-
 
 /* Remove all '\n' and '\r' characters, if any, from the end of str.
  * str can be any null-terminated string, or NULL.
  * returns str. */
-char   *chomp (char *str)
+char *chomp(char *str)
 {
-	char   *p = str;
+    char *p = str;
 
-	if (!str || !*str)	/* s is null or empty string */
-		return str;
+    if (!str || !*str) /* s is null or empty string */
+        return str;
 
-	/* find end of string minus one */
-	while (*p)
-		++p;
-	--p;
+    /* find end of string minus one */
+    while (*p)
+        ++p;
+    --p;
 
-	/* eat newlines */
-	while (p >= str && (*p == '\r' || *p == '\n'))
-		*p-- = 0;
-	return str;
+    /* eat newlines */
+    while (p >= str && (*p == '\r' || *p == '\n'))
+        *p-- = 0;
+    return str;
 }
