@@ -93,6 +93,14 @@ static const char *get_yy_char_decl(void)
                : "static yyconst YY_CHAR * %s = 0;\n";
 }
 
+
+void out_str_dec(const char *fmt, const char str[], int n)
+{
+    char buf[8192] = { 0 };
+    snprintf(buf, 8192, fmt, str, n);
+    processed_file << buf;
+}
+
 /** Make the table for possible eol matches.
  *  @return the newly allocated rule_can_match_eol table
  */

@@ -553,9 +553,11 @@ void ntod(void)
 		 * long-shot that that won't be large enough.
 		 */
         if (gentables)
-            out_str_dec("static yyconst %s yy_nxt[][%d] =\n    {\n",
-                        long_align ? "flex_int32_t" : "flex_int16_t",
-                        num_full_table_rows);
+        {
+            processed_file << "static yyconst " << (long_align ? "flex_int32_t" : "flex_int16_t")
+                << " yy_nxt[][" << num_full_table_rows << "] =" << Context::eol;
+            processed_file << "    {" << Context::eol;
+        }
         else
         {
             processed_file << "#undef YY_NXT_LOLEN" << Context::eol;

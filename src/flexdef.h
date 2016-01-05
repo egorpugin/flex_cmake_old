@@ -797,9 +797,6 @@ extern void flexfatal(const char *);
     } while (0)
 #endif /* ! HAVE_DECL___func__ */
 
-/* Convert a hexadecimal digit string to an integer value. */
-extern int htoi(unsigned char[]);
-
 /* Report an error message formatted  */
 extern void lerr(const char *, ...)
 #if defined(__GNUC__) && __GNUC__ >= 3
@@ -830,14 +827,9 @@ extern void mk2data(int);
 
 extern void mkdata(int); /* generate a data statement */
 
-/* Return the integer represented by a string of digits. */
-extern int myctoi(const char *);
 
 /* Return character corresponding to escape sequence. */
 extern unsigned char myesc(unsigned char[]);
-
-/* Output a (possibly-formatted) string to the generated scanner. */
-extern void out_str_dec(const char *, const char *, int);
 
 #define outn(x) processed_file << (x) << Context::eol
 #define indent_puts outn

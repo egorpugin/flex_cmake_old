@@ -245,7 +245,7 @@ M4QEND      "]]"
 
 <LINEDIR>{
 	\n		yy_pop_state();
-	[[:digit:]]+	linenum = myctoi( yytext );
+	[[:digit:]]+	linenum = std::stoi( yytext );
 
 	\"[^"\n]*\"	{
 			free(infilename);
@@ -869,7 +869,7 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 
 <NUM>{
 	[[:digit:]]+	{
-			yylval = myctoi( yytext );
+			yylval = std::stoi( yytext );
 			return NUMBER;
 			}
 

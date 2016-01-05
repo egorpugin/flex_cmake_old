@@ -33,6 +33,7 @@
 
 #ifndef OPTIONS_H
 #define OPTIONS_H
+
 #include "scanopt.h"
 
 extern optspec_t flexopts[];

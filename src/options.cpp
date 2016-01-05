@@ -40,7 +40,6 @@
 
 /* The command-line options, passed to scanopt_init() */
 optspec_t flexopts[] = {
-
     {"-7", OPT_7BIT, 0},
     {"--7bit", OPT_7BIT, 0}, /* Generate 7-bit scanner. */
     {"-8", OPT_8BIT, 0},
@@ -57,7 +56,6 @@ optspec_t flexopts[] = {
     {"--bison-locations", OPT_BISON_BRIDGE_LOCATIONS, 0}, /* Scanner to be called by a bison pure parser. */
     {"-i", OPT_CASE_INSENSITIVE, 0},
     {"--case-insensitive", OPT_CASE_INSENSITIVE, 0}, /* Generate case-insensitive scanner. */
-
     {"-C[aefFmr]", OPT_COMPRESSION,
      "Specify degree of table compression (default is -Cem)"},
     {"-+", OPT_CPLUSPLUS, 0},
@@ -133,12 +131,10 @@ optspec_t flexopts[] = {
     {"--yyclass=NAME", OPT_YYCLASS, 0},
     {"--yylineno", OPT_YYLINENO, 0},
     {"--noyylineno", OPT_NO_YYLINENO, 0},
-
     {"--yymore", OPT_YYMORE, 0},
     {"--noyymore", OPT_NO_YYMORE, 0},
     {"--noyywrap", OPT_NO_YYWRAP, 0},
     {"--yywrap", OPT_YYWRAP, 0},
-
     {"--nounput", OPT_NO_UNPUT, 0},
     {"--noyy_push_state", OPT_NO_YY_PUSH_STATE, 0},
     {"--noyy_pop_state", OPT_NO_YY_POP_STATE, 0},

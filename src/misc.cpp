@@ -107,7 +107,6 @@ void add_action(const char *new_text)
 }
 
 /* allocate_array - allocate memory for an integer array of the given size */
-
 void *allocate_array(int size, size_t element_size)
 {
     void *mem;
@@ -121,7 +120,6 @@ void *allocate_array(int size, size_t element_size)
 }
 
 /* all_lower - true if a string is all lower-case */
-
 int all_lower(char *str)
 {
     while (*str)
@@ -135,7 +133,6 @@ int all_lower(char *str)
 }
 
 /* all_upper - true if a string is all upper-case */
-
 int all_upper(char *str)
 {
     while (*str)
@@ -149,7 +146,6 @@ int all_upper(char *str)
 }
 
 /* intcmp - compares two integers for use by qsort. */
-
 int intcmp(const void *a, const void *b)
 {
     return *(const int *)a - *(const int *)b;
@@ -159,7 +155,6 @@ int intcmp(const void *a, const void *b)
  *		we're expecting.  If not, generates fatal error message
  *		and exits.
  */
-
 void check_char(int c)
 {
     if (c >= CSIZE)
@@ -172,7 +167,6 @@ void check_char(int c)
 }
 
 /* clower - replace upper-case letter to lower-case */
-
 unsigned char clower(int c)
 {
     return (unsigned char)((isascii(c) && isupper(c)) ? tolower(c) : c);
@@ -189,7 +183,6 @@ char *xstrdup(const char *s)
 }
 
 /* cclcmp - compares two characters for use by qsort with '\0' sorting last. */
-
 int cclcmp(const void *a, const void *b)
 {
     if (!*(const unsigned char *)a)
@@ -201,7 +194,6 @@ int cclcmp(const void *a, const void *b)
 }
 
 /* dataend - finish up a block of data declarations */
-
 void dataend(void)
 {
     /* short circuit any output */
@@ -219,7 +211,6 @@ void dataend(void)
 }
 
 /* dataflush - flush generated data statements */
-
 void dataflush(void)
 {
     /* short circuit any output */
@@ -242,7 +233,6 @@ void dataflush(void)
 }
 
 /* flexerror - report an error message and terminate */
-
 void flexerror(const char *msg)
 {
     fprintf(stderr, "%s: %s\n", program_name, msg);
@@ -250,7 +240,6 @@ void flexerror(const char *msg)
 }
 
 /* flexfatal - report a fatal error message and terminate */
-
 void flexfatal(const char *msg)
 {
     fprintf(stderr, _("%s: fatal internal error, %s\n"),
@@ -258,19 +247,7 @@ void flexfatal(const char *msg)
     FLEX_EXIT(1);
 }
 
-/* htoi - convert a hexadecimal digit string to an integer value */
-
-int htoi(unsigned char str[])
-{
-    unsigned int result;
-
-    (void)sscanf((char *)str, "%x", &result);
-
-    return result;
-}
-
 /* lerr - report an error message */
-
 void lerr(const char *msg, ...)
 {
     char errmsg[MAXLINE];
@@ -283,7 +260,6 @@ void lerr(const char *msg, ...)
 }
 
 /* lerr_fatal - as lerr, but call flexfatal */
-
 void lerr_fatal(const char *msg, ...)
 {
     char errmsg[MAXLINE];
@@ -296,7 +272,6 @@ void lerr_fatal(const char *msg, ...)
 }
 
 /* line_directive_out - spit out a "#line" statement */
-
 void line_directive_out(bool print, bool do_infile)
 {
     char directive[MAXLINE], filename[MAXLINE];
@@ -419,19 +394,7 @@ void mkdata(int value)
     processed_file << std::setw(5) << value;
 }
 
-/* myctoi - return the integer represented by a string of digits */
-
-int myctoi(const char *array)
-{
-    int val = 0;
-
-    (void)sscanf(array, "%d", &val);
-
-    return val;
-}
-
 /* myesc - return character corresponding to escape sequence */
-
 unsigned char myesc(unsigned char array[])
 {
     unsigned char c, esc_char;
@@ -497,7 +460,8 @@ unsigned char myesc(unsigned char array[])
         c = array[sptr];
         array[sptr] = '\0';
 
-        esc_char = htoi(array + 2);
+        auto h = std::stoi((const char *)array + 2, 0, 16);
+        esc_char = h;
 
         array[sptr] = c;
 
@@ -509,12 +473,6 @@ unsigned char myesc(unsigned char array[])
     }
 }
 
-void out_str_dec(const char *fmt, const char str[], int n)
-{
-    char buf[8192] = {0};
-    snprintf(buf, 8192, fmt, str, n);
-    processed_file << buf;
-}
 
 /* readable_form - return the the human-readable form of a character
  *
@@ -565,7 +523,6 @@ char *readable_form(int c)
 }
 
 /* reallocate_array - increase the size of a dynamic array */
-
 void *reallocate_array(void *array, int size, size_t element_size)
 {
     void *new_array;
