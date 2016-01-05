@@ -530,12 +530,6 @@ unsigned char myesc (unsigned char array[])
 
 
 
-void out_str (const char *fmt, const char str[])
-{
-    char buf[8192] = { 0 };
-    snprintf(buf, 8192, fmt, str);
-    processed_file << buf;
-}
 
 
 void out_str_dec(const char *fmt, const char str[], int n)
@@ -650,10 +644,7 @@ void skelout (void)
 		if (buf[0] == '%') {	/* control line */
 			/* print the control line as a comment. */
 			if (ddebug && buf[1] != '#') {
-				if (buf.back() == '\\')
-					out_str ("/* %s */\\\n", buf.c_str());
-				else
-					out_str ("/* %s */\n", buf.c_str());
+                    processed_file << "/* " << buf << " */" << (buf.back() == '\\' ? "\\" : "") << Context::eol;
 			}
 
 			/* We've been accused of using cryptic markers in the skel.
@@ -669,18 +660,18 @@ void skelout (void)
 			}
             else if (cmd_match(CMD_PUSH)) {
                 sko_stack.push(do_copy);
-                if(ddebug){
-                    out_str("/*(state = (%s) */",do_copy?"true":"false");
+                if (ddebug) {
+                    processed_file << "/*(state = (" << (do_copy ? "true" : "false") << ") */" << Context::eol;
                 }
-                out_str("%s\n", buf.back() =='\\' ? "\\" : "");
+                processed_file << (buf.back() == '\\' ? "\\" : "") << Context::eol;
             }
             else if (cmd_match(CMD_POP)) {
                 do_copy = sko_stack.top();
                 sko_stack.pop();
-                if(ddebug){
-                    out_str("/*(state = (%s) */",do_copy?"true":"false");
+                if (ddebug) {
+                    processed_file << "/*(state = (" << (do_copy ? "true" : "false") << ") */" << Context::eol;
                 }
-                out_str("%s\n", buf.back() =='\\' ? "\\" : "");
+                processed_file << (buf.back() == '\\' ? "\\" : "") << Context::eol;
             }
             else if (cmd_match(CMD_IF_REENTRANT)) {
                 sko_stack.push(do_copy);
@@ -709,9 +700,8 @@ void skelout (void)
 				if (tablesext && !yydmap_buf.empty())
 					outn ((char *) (yydmap_buf.getText().c_str()));
 			}
-            else if (cmd_match (CMD_DEFINE_YYTABLES)) {
-                out_str("#define YYTABLES_NAME \"%s\"\n",
-                        tablesname?tablesname:"yytables");
+            else if (cmd_match(CMD_DEFINE_YYTABLES)) {
+                processed_file << "#define YYTABLES_NAME \"" << (tablesname ? tablesname : "yytables") << "\"" << Context::eol;
             }
 			else if (cmd_match (CMD_IF_CPP_ONLY)) {
                 /* only for C++ */
