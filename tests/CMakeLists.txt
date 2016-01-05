@@ -4,13 +4,6 @@
 
 ################################################################################
 
-if (WIN32)
-    add_definitions(-DYY_NO_UNISTD_H=1)
-    add_definitions(-Disatty=_isatty)
-endif()
-
-add_definitions(-DDEFINE_ME)
-
 include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
