@@ -101,10 +101,7 @@ public:
         return e;
     }
 
-    void printToFile(FILE* out) const
-    {
-        fprintf(out, "%s", getText().c_str());
-    }
+    void printToFile(FILE* out) const;
 
     void define(const char *str, const char *def = nullptr)
     {

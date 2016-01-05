@@ -31,6 +31,8 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include <stack>
+
 #include "flexdef.h"
 
 #include "context.h"
@@ -51,46 +53,6 @@
 #define CMD_IF_BISON_BRIDGE  "%if-bison-bridge"
 #define CMD_IF_NOT_BISON_BRIDGE  "%if-not-bison-bridge"
 #define CMD_ENDIF            "%endif"
-
-/* we allow the skeleton to push and pop. */
-struct sko_state {
-    bool dc; /**< do_copy */
-};
-static struct sko_state *sko_stack=0;
-static int sko_len=0,sko_sz=0;
-static void sko_push(bool dc)
-{
-    if(!sko_stack){
-        sko_sz = 1;
-        sko_stack = (decltype(sko_stack))malloc(sizeof(struct sko_state) * sko_sz);
-        if (!sko_stack)
-            flexfatal(_("allocation of sko_stack failed"));
-        sko_len = 0;
-    }
-    if(sko_len >= sko_sz){
-        sko_sz *= 2;
-        sko_stack = (decltype(sko_stack))realloc(sko_stack,
-			sizeof(struct sko_state) * sko_sz);
-    }
-    
-    /* initialize to zero and push */
-    sko_stack[sko_len].dc = dc;
-    sko_len++;
-}
-static void sko_peek(bool *dc)
-{
-    if(sko_len <= 0)
-        flex_die("peek attempt when sko stack is empty");
-    if(dc)
-        *dc = sko_stack[sko_len-1].dc;
-}
-static void sko_pop(bool* dc)
-{
-    sko_peek(dc);
-    sko_len--;
-    if(sko_len < 0)
-        flex_die("popped too many times in skeleton.");
-}
 
 /* Append "#define defname value\n" to the running buffer. */
 void action_define (const char *defname, int value)
@@ -733,11 +695,8 @@ void skelout (void)
 	char   *buf = buf_storage;
 	bool   do_copy = true;
 
-    /* "reset" the state by clearing the buffer and pushing a '1' */
-    if(sko_len > 0)
-        sko_peek(&do_copy);
-    sko_len = 0;
-    sko_push(do_copy=true);
+    std::stack<bool> sko_stack;
+    sko_stack.push(true);
 
 
 	/* Loop pulling lines either from the skelfile, if we're using
@@ -771,38 +730,40 @@ void skelout (void)
 				/* %% is a break point for skelout() */
 				return;
 			}
-            else if (cmd_match (CMD_PUSH)){
-                sko_push(do_copy);
+            else if (cmd_match(CMD_PUSH)) {
+                sko_stack.push(do_copy);
                 if(ddebug){
                     out_str("/*(state = (%s) */",do_copy?"true":"false");
                 }
                 out_str("%s\n", buf[strlen (buf) - 1] =='\\' ? "\\" : "");
             }
-            else if (cmd_match (CMD_POP)){
-                sko_pop(&do_copy);
+            else if (cmd_match(CMD_POP)) {
+                do_copy = sko_stack.top();
+                sko_stack.pop();
                 if(ddebug){
                     out_str("/*(state = (%s) */",do_copy?"true":"false");
                 }
                 out_str("%s\n", buf[strlen (buf) - 1] =='\\' ? "\\" : "");
             }
-            else if (cmd_match (CMD_IF_REENTRANT)){
-                sko_push(do_copy);
+            else if (cmd_match(CMD_IF_REENTRANT)) {
+                sko_stack.push(do_copy);
                 do_copy = reentrant && do_copy;
             }
-            else if (cmd_match (CMD_IF_NOT_REENTRANT)){
-                sko_push(do_copy);
+            else if (cmd_match(CMD_IF_NOT_REENTRANT)) {
+                sko_stack.push(do_copy);
                 do_copy = !reentrant && do_copy;
             }
-            else if (cmd_match(CMD_IF_BISON_BRIDGE)){
-                sko_push(do_copy);
+            else if (cmd_match(CMD_IF_BISON_BRIDGE)) {
+                sko_stack.push(do_copy);
                 do_copy = bison_bridge_lval && do_copy;
             }
-            else if (cmd_match(CMD_IF_NOT_BISON_BRIDGE)){
-                sko_push(do_copy);
+            else if (cmd_match(CMD_IF_NOT_BISON_BRIDGE)) {
+                sko_stack.push(do_copy);
                 do_copy = !bison_bridge_lval && do_copy;
             }
-            else if (cmd_match (CMD_ENDIF)){
-                sko_pop(&do_copy);
+            else if (cmd_match(CMD_ENDIF)) {
+                do_copy = sko_stack.top();
+                sko_stack.pop();
             }
 			else if (cmd_match (CMD_IF_TABLES_SER)) {
                 do_copy = do_copy && tablesext;
@@ -816,18 +777,18 @@ void skelout (void)
                         tablesname?tablesname:"yytables");
             }
 			else if (cmd_match (CMD_IF_CPP_ONLY)) {
-				/* only for C++ */
-                sko_push(do_copy);
+                /* only for C++ */
+                sko_stack.push(do_copy);
 				do_copy = C_plus_plus;
 			}
 			else if (cmd_match (CMD_IF_C_ONLY)) {
-				/* %- only for C */
-                sko_push(do_copy);
+                /* %- only for C */
+                sko_stack.push(do_copy);
 				do_copy = !C_plus_plus;
 			}
 			else if (cmd_match (CMD_IF_C_OR_CPP)) {
-				/* %* for C and C++ */
-                sko_push(do_copy);
+                /* %* for C and C++ */
+                sko_stack.push(do_copy);
 				do_copy = true;
 			}
 			else if (cmd_match (CMD_NOT_FOR_HEADER)) {
