@@ -773,7 +773,7 @@ void transition_struct_out (int element_v, int element_n)
 	if (!gentables)
 		return;
 
-    processed_file << " {" << std::setw(4) << element_v << std::setw(4) << element_n << "," << " }," << Context::eol;
+    processed_file << " {" << std::setw(4) << element_v << "," << std::setw(4) << element_n << " }," << Context::eol;
 
 	datapos += TRANS_STRUCT_PRINT_LENGTH;
 
