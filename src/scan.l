@@ -53,8 +53,8 @@
 extern bool tablesverify, tablesext;
 extern int trlcontxt; /* Set in  parse.y for each rule. */
 
-const String escaped_qstart = "[[]]M4_YY_NOOP[M4_YY_NOOP[M4_YY_NOOP[[]]";
-const String escaped_qend = "[[]]M4_YY_NOOP]M4_YY_NOOP]M4_YY_NOOP[[]]";
+const String escaped_qstart = "[[]]M4""_YY_NOOP[M4""_YY_NOOP[M4""_YY_NOOP[[]]";
+const String escaped_qend = "[[]]M4""_YY_NOOP]M4""_YY_NOOP]M4""_YY_NOOP[[]]";
 
 // ndtbl - name-definition symbol table
 std::unordered_map<String, String> ndtbl;
