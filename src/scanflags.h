@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 typedef unsigned int scanflags_t;
 extern scanflags_t *_sf_stk;
 extern size_t _sf_top_ix, _sf_max; /**< stack of scanner flags. */
