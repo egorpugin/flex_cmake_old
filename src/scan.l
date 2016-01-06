@@ -146,7 +146,7 @@ M4QEND      "]]"
 
 	int doing_codeblock = false;
 	int i, brace_depth=0, brace_start_line=0;
-	unsigned char nmdef[MAXLINE];
+	String nmdef;
 
 
 <INITIAL>{
@@ -295,22 +295,10 @@ M4QEND      "]]"
 	{WS}		/* separates name and definition */
 
 	{NOT_WS}[^\r\n]*	{
- 		        if(yyleng < MAXLINE)
- 		         {
-			strcpy( (char *) nmdef, yytext );
- 		         }
- 		        else
- 		         {
- 		           format_synerr( _("Definition value for {%s} too long\n"), nmstr.c_str());
- 		           FLEX_EXIT(EXIT_FAILURE);
-			 }
+			nmdef = yytext;
 			/* Skip trailing whitespace. */
-			for ( i = strlen( (char *) nmdef ) - 1;
-			      i >= 0 && (nmdef[i] == ' ' || nmdef[i] == '\t');
-			      --i )
-				;
-
-			nmdef[i + 1] = '\0';
+            while (nmdef.back() == ' ' || nmdef.back() == '\t')
+                nmdef.resize(nmdef.size() - 1);
 
 			ndinstal( nmstr, nmdef );
 			didadef = true;
@@ -655,25 +643,25 @@ M4QEND      "]]"
      * context.
      */
 	"{"{NAME}"}"[[:space:]]?	 {
-			unsigned char *nmdefptr;
+			String nmdefptr;
             int end_is_ws, end_ch;
 
             end_ch = yytext[yyleng-1];
             end_is_ws = end_ch != '}' ? 1 : 0;
 
 			nmstr = yytext + 1;
-
             nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
             nmstr = nmstr.c_str();
 
-			if ( (nmdefptr = ndlookup( nmstr )) == 0 )
+            nmdefptr = ndlookup( nmstr );
+			if ( nmdefptr.empty() )
 				format_synerr(
 					_( "undefined definition {%s}" ),
 						nmstr.c_str() );
 
 			else
 				{ /* push back name surrounded by ()'s */
-				int len = strlen( (char *) nmdefptr );
+				int len = nmdefptr.size();
                 if (end_is_ws)
                     unput(end_ch);
 
@@ -681,7 +669,7 @@ M4QEND      "]]"
 				     (len > 0 && nmdefptr[len - 1] == '$')
                      || (end_is_ws && trlcontxt && !sf_skip_ws()))
 					{ /* don't use ()'s after all */
-					PUT_BACK_STRING((char *) nmdefptr, 0);
+					PUT_BACK_STRING(nmdefptr.c_str(), 0);
 
 					if ( nmdefptr[0] == '^' )
 						BEGIN(CARETISBOL);
@@ -690,7 +678,7 @@ M4QEND      "]]"
 				else
 					{
 					unput(')');
-					PUT_BACK_STRING((char *) nmdefptr, 0);
+					PUT_BACK_STRING(nmdefptr.c_str(), 0);
 					unput('(');
 					}
 				}

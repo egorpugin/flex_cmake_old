@@ -72,24 +72,24 @@ int ccllookup(const String &ccltxt)
 }
 
 /* ndinstal - install a name definition */
-void ndinstal(const String &name, unsigned char* definition)
+void ndinstal(const String &name, const String &definition)
 {
     auto i = ndtbl.find(name);
     if (i != ndtbl.end())
         synerr(_("name defined twice"));
-    ndtbl[name] = (const char*)definition;
+    ndtbl[name] = definition;
 }
 
 /* ndlookup - lookup a name definition
  *
  * Returns a nil pointer if the name definition does not exist.
  */
-unsigned char* ndlookup(const String &nd)
+String ndlookup(const String &nd)
 {
     auto i = ndtbl.find(nd);
     if (i == ndtbl.end())
-        return 0;
-    return (unsigned char*)i->second.c_str();
+        return String();
+    return i->second;
 }
 
 /* scextend - increase the maximum number of start conditions */
