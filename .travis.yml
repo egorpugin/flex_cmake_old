@@ -47,4 +47,4 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake .. && make -j2 && ctest
+  - cmake .. && make -j2 && (ctest || cat Testing/Temporary/LastTest.log)

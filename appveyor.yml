@@ -35,5 +35,4 @@ build_script:
   - cd build
   - cmake .. -G "%generator%" -DBISON_EXECUTABLE=%CYG_ROOT%/bin/bison -DFLEX_EXECUTABLE=%CYG_ROOT%/bin/flex
   - msbuild flex.sln /p:Platform=%vcplatform% /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-  - ctest -C %configuration%
-  
+  - ctest -C %configuration% || type Testing\\Temporary\\LastTest.log
