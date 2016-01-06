@@ -72,7 +72,7 @@ int trace_hex = 0;
 int datapos, dataline, linenum;
 std::ifstream skelfile;
 int skel_ind = 0;
-char *action_array;
+String action_array;
 int action_size, defs1_offset, prolog_offset, action_offset,
     action_index;
 String infilename, headerfilename;
@@ -833,20 +833,11 @@ void flexinit(int argc, char **argv)
     sawcmpflag = false;
 
     /* Initialize dynamic array for holding the rule actions. */
-    action_size = 2048; /* default size of action array in bytes */
-    action_array = (decltype(action_array))allocate_character_array(action_size);
-    defs1_offset = prolog_offset = action_offset = action_index = 0;
-    action_array[0] = '\0';
+    defs1_offset = prolog_offset = action_offset = 0;
 
     /* Initialize any buffers. */
-
-    {
-        const char *m4defs_init_str[] = {"m4_changequote\n",
-                                         "m4_changequote([[, ]])\n"};
-
-        m4defs_buf.addLine("m4_changequote");
-        m4defs_buf.addLine("m4_changequote([[, ]])");
-    }
+    m4defs_buf.addLine("m4_changequote");
+    m4defs_buf.addLine("m4_changequote([[, ]])");
 
     sf_init();
 

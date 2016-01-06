@@ -369,9 +369,8 @@ extern String prefix, yyclass, extra_type;
 extern int do_stdinit, use_stdout;
 extern InputFiles input_files;
 extern String program_name;
-extern char *action_array;
-extern int action_size;
-extern int defs1_offset, prolog_offset, action_offset, action_index;
+extern String action_array;
+extern int defs1_offset, prolog_offset, action_offset;
 
 /* Variables for stack of states having only one out-transition:
  * onestate - state number

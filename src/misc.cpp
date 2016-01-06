@@ -63,49 +63,17 @@ extern std::ifstream skelfile;
 /* Append "#define defname value\n" to the running buffer. */
 void action_define(const char *defname, int value)
 {
-    char buf[MAXLINE];
-    char *cpy;
+    String s = "#define ";
+    s += defname;
+    s += " " + std::to_string(value) + "\n";
 
-    if ((int)strlen(defname) > MAXLINE / 2)
-    {
-        format_pinpoint_message(_("name \"%s\" ridiculously long"),
-                                defname);
-        return;
-    }
-
-    snprintf(buf, sizeof(buf), "#define %s %d\n", defname, value);
-    add_action(buf);
-
-    /* track #defines so we can undef them when we're done. */
-    cpy = xstrdup(defname);
-    defs_buf.addText(cpy);
+    add_action(s);
 }
 
 /* Append "new_text" to the running buffer. */
-void add_action(const char *new_text)
+void add_action(const String &new_text)
 {
-    int len = strlen(new_text);
-
-    while (len + action_index >= action_size - 10 /* slop */)
-    {
-        int new_size = action_size * 2;
-
-        if (new_size <= 0)
-            /* Increase just a little, to try to avoid overflow
-			 * on 16-bit machines.
-			 */
-            action_size += action_size / 8;
-        else
-            action_size = new_size;
-
-        action_array =
-            (decltype(action_array))reallocate_character_array(action_array,
-                                                               action_size);
-    }
-
-    strcpy(&action_array[action_index], new_text);
-
-    action_index += len;
+    action_array += new_text;
 }
 
 /* allocate_array - allocate memory for an integer array of the given size */
@@ -307,9 +275,8 @@ void line_directive_out(bool print, bool do_infile)
 void mark_defs1(void)
 {
     defs1_offset = 0;
-    action_array[action_index++] = '\0';
-    action_offset = prolog_offset = action_index;
-    action_array[action_index] = '\0';
+    action_array += '\0';
+    action_offset = prolog_offset = action_array.size();
 }
 
 /* mark_prolog - mark the current position in the action array as
@@ -317,9 +284,8 @@ void mark_defs1(void)
  */
 void mark_prolog(void)
 {
-    action_array[action_index++] = '\0';
-    action_offset = action_index;
-    action_array[action_index] = '\0';
+    action_array += '\0';
+    action_offset = action_array.size();
 }
 
 /* mk2data - generate a data statement for a two-dimensional array

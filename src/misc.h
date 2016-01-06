@@ -1,10 +1,12 @@
 #pragma once
 
+#include "common.h"
+
 /* Add a #define to the action file. */
 void action_define(const char *defname, int value);
 
 /* Add the given text to the stored actions. */
-void add_action(const char *new_text);
+void add_action(const String &new_text);
 
 /* True if a string is all lower case. */
 int all_lower(char *);
