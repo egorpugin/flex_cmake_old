@@ -32,6 +32,8 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include <unordered_map>
+
 #include "flexdef.h"
 
 #include "context.h"
@@ -51,6 +53,9 @@
 extern bool tablesverify, tablesext;
 extern int trlcontxt; /* Set in  parse.y for each rule. */
 extern const char *escaped_qstart, *escaped_qend;
+
+// ndtbl - name-definition symbol table
+std::unordered_map<String, String> ndtbl;
 
 #define ACTION_ECHO add_action( yytext )
 #define ACTION_IFDEF(def, should_define) \
@@ -84,7 +89,7 @@ extern const char *escaped_qstart, *escaped_qend;
 	return NAME;
 
 #define PUT_BACK_STRING(str, start) \
-	for ( i = strlen( str ) - 1; i >= start; --i ) \
+	for ( int i = strlen( str ) - 1; i >= start; --i ) \
 		unput((str)[i])
 
 #define CHECK_REJECT(str) \
@@ -145,7 +150,7 @@ M4QEND      "]]"
 	static int option_sense;
 
 	int doing_codeblock = false;
-	int i, brace_depth=0, brace_start_line=0;
+	int brace_depth=0, brace_start_line=0;
 	String nmdef;
 
 
@@ -300,7 +305,11 @@ M4QEND      "]]"
             while (nmdef.back() == ' ' || nmdef.back() == '\t')
                 nmdef.resize(nmdef.size() - 1);
 
-			ndinstal( nmstr, nmdef );
+            auto i = ndtbl.find(nmstr);
+            if (i != ndtbl.end())
+                synerr(_("name defined twice"));
+            ndtbl[nmstr] = nmdef;
+
 			didadef = true;
 			}
 
@@ -427,6 +436,7 @@ M4QEND      "]]"
 
 	\"[^"\n]*\"	{
 			nmstr = yytext + 1;
+            nmstr.resize(nmstr.size() - 1);
 			return NAME;
 			}
 
@@ -653,14 +663,16 @@ M4QEND      "]]"
             nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
             nmstr = nmstr.c_str();
 
-            nmdefptr = ndlookup( nmstr );
-			if ( nmdefptr.empty() )
+            auto i = ndtbl.find(nmstr);
+            if (i == ndtbl.end())
 				format_synerr(
 					_( "undefined definition {%s}" ),
 						nmstr.c_str() );
-
 			else
 				{ /* push back name surrounded by ()'s */
+
+                nmdefptr = i->second;
+
 				int len = nmdefptr.size();
                 if (end_is_ws)
                     unput(end_ch);

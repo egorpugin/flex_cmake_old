@@ -42,11 +42,9 @@
 
 /* Variables for symbol tables:
  * sctbl - start-condition symbol table
- * ndtbl - name-definition symbol table
  * ccltab - character class text symbol table
  */
 
-std::unordered_map<String, String> ndtbl;
 std::unordered_map<String, int> sctbl;
 std::unordered_map<String, int> ccltab;
 
@@ -71,26 +69,7 @@ int ccllookup(const String &ccltxt)
     return i->second;
 }
 
-/* ndinstal - install a name definition */
-void ndinstal(const String &name, const String &definition)
-{
-    auto i = ndtbl.find(name);
-    if (i != ndtbl.end())
-        synerr(_("name defined twice"));
-    ndtbl[name] = definition;
-}
 
-/* ndlookup - lookup a name definition
- *
- * Returns a nil pointer if the name definition does not exist.
- */
-String ndlookup(const String &nd)
-{
-    auto i = ndtbl.find(nd);
-    if (i == ndtbl.end())
-        return String();
-    return i->second;
-}
 
 /* scextend - increase the maximum number of start conditions */
 void scextend(void)
