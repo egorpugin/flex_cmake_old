@@ -46,17 +46,9 @@
  * ccltab - character class text symbol table
  */
 
-struct symbol_def
-{
-    int i;
-    String s;
-};
-
-using hash_table = std::unordered_map<String, symbol_def>;
-
-hash_table ndtbl;
-hash_table sctbl;
-hash_table ccltab;
+std::unordered_map<String, String> ndtbl;
+std::unordered_map<String, int> sctbl;
+std::unordered_map<String, int> ccltab;
 
 /* cclinstal - save the text of a character class */
 void cclinstal(unsigned char* ccltxt, int cclnum)
@@ -64,7 +56,7 @@ void cclinstal(unsigned char* ccltxt, int cclnum)
     /* We don't bother checking the return status because we are not
 	 * called unless the symbol is new.
 	 */
-    ccltab[(const char*)ccltxt].i = cclnum;
+    ccltab[(const char*)ccltxt] = cclnum;
 }
 
 /* ccllookup - lookup the number associated with character class text
@@ -76,7 +68,7 @@ int ccllookup(unsigned char* ccltxt)
     auto i = ccltab.find((const char*)ccltxt);
     if (i == ccltab.end())
         return 0;
-    return i->second.i;
+    return i->second;
 }
 
 /* ndinstal - install a name definition */
@@ -85,7 +77,7 @@ void ndinstal(char *name, unsigned char* definition)
     auto i = ndtbl.find(name);
     if (i != ndtbl.end())
         synerr(_("name defined twice"));
-    ndtbl[name].s = (const char*)definition;
+    ndtbl[name] = (const char*)definition;
 }
 
 /* ndlookup - lookup a name definition
@@ -97,7 +89,7 @@ unsigned char* ndlookup(const char *nd)
     auto i = ndtbl.find(nd);
     if (i == ndtbl.end())
         return 0;
-    return (unsigned char*)i->second.s.c_str();
+    return (unsigned char*)i->second.c_str();
 }
 
 /* scextend - increase the maximum number of start conditions */
@@ -129,7 +121,7 @@ void scinstal(const char *str, int xcluflg)
     auto i = sctbl.find(str);
     if (i != sctbl.end())
         format_pinpoint_message(_("start condition %s declared twice"), str);
-    sctbl[scname[lastsc]].i = lastsc;
+    sctbl[scname[lastsc]] = lastsc;
 
     scset[lastsc] = mkstate(SYM_EPSILON);
     scbol[lastsc] = mkstate(SYM_EPSILON);
@@ -146,5 +138,5 @@ int sclookup(const char *str)
     auto i = sctbl.find(str);
     if (i == sctbl.end())
         return 0;
-    return i->second.i;
+    return i->second;
 }

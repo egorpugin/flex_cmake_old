@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <stdlib.h>
 
 typedef unsigned int scanflags_t;
 extern scanflags_t *_sf_stk;
