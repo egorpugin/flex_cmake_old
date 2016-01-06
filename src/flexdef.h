@@ -318,8 +318,7 @@ using String = std::string;
  * trace_hex - use hexadecimal numbers in trace/debug outputs instead of octals
  */
 
-extern int printstats, syntaxerror, eofseen, ddebug, trace, nowarn,
-    spprdflt;
+extern int printstats, syntaxerror, eofseen, ddebug, trace, nowarn, spprdflt;
 extern int interactive, lex_compat, posix_compat, do_yylineno;
 extern int useecs, fulltbl, usemecs, fullspd;
 extern int gen_line_dirs, performance_report, backing_up_report;
@@ -328,7 +327,6 @@ extern bool ansi_func_defs, ansi_func_protos;
 extern int C_plus_plus, long_align, use_read, yytext_is_array, do_yywrap;
 extern int csize;
 extern int yymore_used, reject, real_reject, continued_action, in_rule;
-
 extern int yymore_really_used, reject_really_used;
 extern int trace_hex;
 
@@ -376,7 +374,6 @@ extern int do_stdinit, use_stdout;
 extern char **input_files;
 extern int num_input_files;
 extern char *program_name;
-
 extern char *action_array;
 extern int action_size;
 extern int defs1_offset, prolog_offset, action_offset, action_index;
@@ -538,12 +535,11 @@ extern char **scname;
 extern int current_max_dfa_size, current_max_xpairs;
 extern int current_max_template_xpairs, current_max_dfas;
 extern int lastdfa, *nxt, *chk, *tnxt;
-extern int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss,
-    *dfasiz;
+extern int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss, *dfasiz;
 extern union dfaacc_union {
     int *dfaacc_set;
     int dfaacc_state;
-} * dfaacc;
+} *dfaacc;
 extern int *accsiz, *dhash, numas;
 extern int numsnpairs, jambase, jamstate;
 extern int end_of_buffer_state;
@@ -639,340 +635,63 @@ void *reallocate_array(void *, int, size_t);
  */
 extern int yylval;
 
+
+
+
+
+
+
+
+
+
 /* External functions that are cross-referenced among the flex source files. */
 
-/* from file ccl.c */
 
-extern void ccladd(int, int);           /* add a single character to a ccl */
-extern int cclinit(void);               /* make an empty ccl */
-extern void cclnegate(int);             /* negate a ccl */
-extern int ccl_set_diff(int a, int b);  /* set difference of two ccls. */
-extern int ccl_set_union(int a, int b); /* set union of two ccls. */
-
-/* List the members of a set of characters in CCL form. */
-extern void list_character_set(FILE *, int[]);
-
-/* from file dfa.c */
-
-/* Check a DFA state for backing up. */
-extern void check_for_backing_up(int, int[]);
-
-/* Check to see if NFA state set constitutes "dangerous" trailing context. */
-extern void check_trailing_context(int *, int, int *, int);
-
-/* Construct the epsilon closure of a set of ndfa states. */
-extern int *epsclosure(int *, int *, int[], int *, int *);
-
-/* Increase the maximum number of dfas. */
-extern void increase_max_dfas(void);
-
-extern void ntod(void); /* convert a ndfa to a dfa */
-
-/* Converts a set of ndfa states into a dfa state. */
-extern int snstods(int[], int, int[], int, int, int *);
-
-/* from file ecs.c */
-
-/* Convert character classes to set of equivalence classes. */
-extern void ccl2ecl(void);
-
-/* Associate equivalence class numbers with class members. */
-extern int cre8ecs(int[], int[], int);
-
-/* Update equivalence classes based on character class transitions. */
-extern void mkeccl(unsigned char[], int, int[], int[], int, int);
-
-/* Create equivalence class for single character. */
-extern void mkechar(int, int[], int[]);
-
-/* from file gen.c */
-
-/* Generate the code to keep backing-up information. */
-extern void gen_backing_up(void);
-
-/* Generate the code to perform the backing up. */
-extern void gen_bu_action(void);
-
-/* Generate full speed compressed transition table. */
-extern void genctbl(void);
-
-/* Generate the code to find the action number. */
-extern void gen_find_action(void);
-
-extern void genftbl(void); /* generate full transition table */
-
-/* Generate the code to find the next compressed-table state. */
-extern void gen_next_compressed_state(char *);
-
-/* Generate the code to find the next match. */
-extern void gen_next_match(void);
-
-/* Generate the code to find the next state. */
-extern void gen_next_state(int);
-
-/* Generate the code to make a NUL transition. */
-extern void gen_NUL_trans(void);
-
-/* Generate the code to find the start state. */
-extern void gen_start_state(void);
-
-/* Generate data statements for the transition tables. */
-extern void gentabs(void);
-
-/* Write out a formatted string at the current indentation level. */
-extern void indent_put2s(const char *, const char *);
-
-/* Write out a string + newline at the current indentation level. */
-extern void indent_puts(const char *);
-
-extern void make_tables(void); /* generate transition tables */
 
 /* from file main.c */
 
-extern void check_options(void);
-extern void flexend(int);
-extern void usage(void);
-
-/* from file misc.c */
-
-/* Add a #define to the action file. */
-extern void action_define(const char *defname, int value);
-
-/* Add the given text to the stored actions. */
-extern void add_action(const char *new_text);
-
-/* True if a string is all lower case. */
-extern int all_lower(char *);
-
-/* True if a string is all upper case. */
-extern int all_upper(char *);
-
-/* Compare two integers for use by qsort. */
-extern int intcmp(const void *, const void *);
-
-/* Check a character to make sure it's in the expected range. */
-extern void check_char(int c);
-
-/* Replace upper-case letter to lower-case. */
-extern unsigned char clower(int);
-
-/* strdup() that fails fatally on allocation failures. */
-extern char *xstrdup(const char *);
-
-/* Compare two characters for use by qsort with '\0' sorting last. */
-extern int cclcmp(const void *, const void *);
-
-/* Finish up a block of data declarations. */
-extern void dataend(void);
-
-/* Flush generated data statements. */
-extern void dataflush(void);
-
-/* Report an error message and terminate. */
-extern void flexerror(const char *);
-
-/* Report a fatal error message and terminate. */
-extern void flexfatal(const char *);
-
-/* Report a fatal error with a pinpoint, and terminate */
-#if HAVE_DECL___FUNC__
-#define flex_die(msg)                                              \
-    do                                                             \
-    {                                                              \
-        fprintf(stderr,                                            \
-                _("%s: fatal internal error at %s:%d (%s): %s\n"), \
-                program_name, __FILE__, (int)__LINE__,             \
-                __func__, msg);                                    \
-        FLEX_EXIT(1);                                              \
-    } while (0)
-#else /* ! HAVE_DECL___FUNC__ */
-#define flex_die(msg)                                        \
-    do                                                       \
-    {                                                        \
-        fprintf(stderr,                                      \
-                _("%s: fatal internal error at %s:%d %s\n"), \
-                program_name, __FILE__, (int)__LINE__,       \
-                msg);                                        \
-        FLEX_EXIT(1);                                        \
-    } while (0)
-#endif /* ! HAVE_DECL___func__ */
-
-/* Report an error message formatted  */
-extern void lerr(const char *, ...)
-#if defined(__GNUC__) && __GNUC__ >= 3
-    __attribute__((__format__(__printf__, 1, 2)))
-#endif
-    ;
-
-/* Like lerr, but also exit after displaying message. */
-extern void lerr_fatal(const char *, ...)
-#if defined(__GNUC__) && __GNUC__ >= 3
-    __attribute__((__format__(__printf__, 1, 2)))
-#endif
-    ;
-
-/* Spit out a "#line" statement. */
-void line_directive_out(bool print, bool infile);
-
-/* Mark the current position in the action array as the end of the section 1
- * user defs.
- */
-extern void mark_defs1(void);
-
-/* Mark the current position in the action array as the end of the prolog. */
-extern void mark_prolog(void);
-
-/* Generate a data statment for a two-dimensional array. */
-extern void mk2data(int);
-
-extern void mkdata(int); /* generate a data statement */
+void check_options(void);
+void flexend(int);
 
 
-/* Return character corresponding to escape sequence. */
-extern unsigned char myesc(unsigned char[]);
 
-#define outn(x) processed_file << (x) << Context::eol
-#define indent_puts outn
-
-/* Return a printable version of the given character, which might be
- * 8-bit.
- */
-extern char *readable_form(int);
-
-/* Write out one section of the skeleton file. */
-extern void skelout(void);
-
-/* Output a yy_trans_info structure. */
-extern void transition_struct_out(int, int);
-
-/* from file nfa.c */
-
-/* Add an accepting state to a machine. */
-extern void add_accept(int, int);
-
-/* Make a given number of copies of a singleton machine. */
-extern int copysingl(int, int);
-
-/* Debugging routine to write out an nfa. */
-extern void dumpnfa(int);
-
-/* Finish up the processing for a rule. */
-extern void finish_rule(int, int, int, int, int);
-
-/* Connect two machines together. */
-extern int link_machines(int, int);
-
-/* Mark each "beginning" state in a machine as being a "normal" (i.e.,
- * not trailing context associated) state.
- */
-extern void mark_beginning_as_normal(int);
-
-/* Make a machine that branches to two machines. */
-extern int mkbranch(int, int);
-
-extern int mkclos(int); /* convert a machine into a closure */
-extern int mkopt(int);  /* make a machine optional */
-
-/* Make a machine that matches either one of two machines. */
-extern int mkor(int, int);
-
-/* Convert a machine into a positive closure. */
-extern int mkposcl(int);
-
-extern int mkrep(int, int, int); /* make a replicated machine */
-
-/* Create a state with a transition on a given symbol. */
-extern int mkstate(int);
-
-extern void new_rule(void); /* initialize for a new rule */
 
 /* from file parse.y */
 
-/* Build the "<<EOF>>" action for the active start conditions. */
-extern void build_eof_action(void);
-
 /* Write out a message formatted with one string, pinpointing its location. */
-extern void format_pinpoint_message(const char *, const char *);
+void format_pinpoint_message(const char *, const char *);
 
 /* Write out a message, pinpointing its location. */
-extern void pinpoint_message(const char *);
+void pinpoint_message(const char *);
 
 /* Write out a warning, pinpointing it at the given line. */
-extern void line_warning(const char *, int);
+void line_warning(const char *, int);
 
 /* Write out a message, pinpointing it at the given line. */
-extern void line_pinpoint(const char *, int);
+void line_pinpoint(const char *, int);
 
 /* Report a formatted syntax error. */
-extern void format_synerr(const char *, const char *);
-extern void synerr(const char *); /* report a syntax error */
-extern void format_warn(const char *, const char *);
-extern void warn(const char *);    /* report a warning */
-extern void yyerror(const char *); /* report a parse error */
-extern int yyparse(void);          /* the YACC parser */
+void format_synerr(const char *, const char *);
+void synerr(const char *); /* report a syntax error */
+void format_warn(const char *, const char *);
+void warn(const char *);    /* report a warning */
+void yyerror(const char *); /* report a parse error */
+
+
+
 
 /* from file scan.l */
 
 /* The Flex-generated scanner for flex. */
-extern int flexscan(void);
+int flexscan(void);
 
-/* Open the given file (if NULL, stdin) for scanning. */
-extern void set_input_file(char *);
 
-/* Wrapup a file in the lexical analyzer. */
-#ifdef __cplusplus
-extern "C" int yywrap(void);
-#else
-extern int yywrap(void);
-#endif
 
-/* from file sym.c */
 
-/* Save the text of a character class. */
-extern void cclinstal(unsigned char[], int);
 
-/* Lookup the number associated with character class. */
-extern int ccllookup(unsigned char[]);
 
-extern void ndinstal(const char *, unsigned char[]); /* install a name definition */
-extern unsigned char *ndlookup(const char *);        /* lookup a name definition */
 
-/* Increase maximum number of SC's. */
-extern void scextend(void);
-extern void scinstal(const char *, int); /* make a start condition */
 
-/* Lookup the number associated with a start condition. */
-extern int sclookup(const char *);
-
-/* from file tblcmp.c */
-
-/* Build table entries for dfa state. */
-extern void bldtbl(int[], int, int, int, int);
-
-extern void cmptmps(void);        /* compress template table entries */
-extern void expand_nxt_chk(void); /* increase nxt/chk arrays */
-
-/* Finds a space in the table for a state to be placed. */
-extern int find_table_space(int *, int);
-extern void inittbl(void); /* initialize transition tables */
-
-/* Make the default, "jam" table entries. */
-extern void mkdeftbl(void);
-
-/* Create table entries for a state (or state fragment) which has
- * only one out-transition.
- */
-extern void mk1tbl(int, int, int, int);
-
-/* Place a state into full speed transition table. */
-extern void place_state(int *, int, int);
-
-/* Save states with only one out-transition to be processed later. */
-extern void stack1(int, int, int, int);
-
-/* from file yylex.c */
-
-extern int yylex(void);
 
 /* For blocking out code from the header file. */
 #define OUT_BEGIN_CODE() outn("m4_ifdef( [[M4_YY_IN_HEADER]],,[[")
@@ -997,25 +716,13 @@ int reverse_case(int c);
 /* return false if [c1-c2] is ambiguous for a caseless scanner. */
 bool range_covers_case(int c1, int c2);
 
-/* From "scanflags.h" */
-typedef unsigned int scanflags_t;
-extern scanflags_t *_sf_stk;
-extern size_t _sf_top_ix, _sf_max; /**< stack of scanner flags. */
-#define _SF_CASE_INS 0x0001
-#define _SF_DOT_ALL 0x0002
-#define _SF_SKIP_WS 0x0004
-#define sf_top() (_sf_stk[_sf_top_ix])
-#define sf_case_ins() (sf_top() & _SF_CASE_INS)
-#define sf_dot_all() (sf_top() & _SF_DOT_ALL)
-#define sf_skip_ws() (sf_top() & _SF_SKIP_WS)
-#define sf_set_case_ins(X) ((X) ? (sf_top() |= _SF_CASE_INS) : (sf_top() &= ~_SF_CASE_INS))
-#define sf_set_dot_all(X) ((X) ? (sf_top() |= _SF_DOT_ALL) : (sf_top() &= ~_SF_DOT_ALL))
-#define sf_set_skip_ws(X) ((X) ? (sf_top() |= _SF_SKIP_WS) : (sf_top() &= ~_SF_SKIP_WS))
-extern void sf_init(void);
-extern void sf_push(void);
-extern void sf_pop(void);
 
 extern bool tablesext, tablesverify;
+
+
+
+
+
 
 template <typename T>
 bool replace_all(T &str, const T &from, const T &to)
@@ -1031,7 +738,10 @@ bool replace_all(T &str, const T &from, const T &to)
     return replaced;
 }
 
-inline bool replace_all(std::string &str, const std::string &from, const std::string &to)
+inline bool replace_all(String &str, const String &from, const String &to)
 {
-    return replace_all<std::string>(str, from, to);
+    return replace_all<String>(str, from, to);
 }
+
+#define outn(x) processed_file << (x) << Context::eol
+#define indent_puts outn

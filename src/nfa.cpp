@@ -31,7 +31,12 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include "nfa.h"
+
 #include "flexdef.h"
+
+#include "ecs.h"
+#include "misc.h"
 
 /* declare functions that have forward references */
 

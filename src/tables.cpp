@@ -32,8 +32,11 @@
  *  PURPOSE.
  */
 
-#include "flexdef.h"
 #include "tables.h"
+
+#include "flexdef.h"
+
+#include "misc.h"
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -505,5 +508,3 @@ void yytbl_data_compress(struct yytbl_data *tbl)
     free(tbl->td_data);
     *tbl = newtbl;
 }
-
-/* vim:set noexpandtab cindent tabstop=8 softtabstop=0 shiftwidth=8 textwidth=0: */

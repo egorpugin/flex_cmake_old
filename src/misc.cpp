@@ -35,6 +35,8 @@
 #include <iomanip>
 #include <stack>
 
+#include "misc.h"
+
 #include "flexdef.h"
 
 #include "context.h"

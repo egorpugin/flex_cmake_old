@@ -1,9 +1,10 @@
 #include <fstream>
 #include <iostream>
 
+#include <config.h>
+
 #include "flexdef.h"
 #include "simple_m4.h"
-#include "version.h"
 
 const simple_m4::M4Functions preprocess_functions =
 {

@@ -72,16 +72,18 @@ M4Token M4::getNextToken1()
 
     if (isalpha(c) || c == '_')
     {
+        int len = 0;
         while (1)
         {
             if (isalnum(c) || c == '_')
-                tok.word += c;
+                len++;
             else
                 break;
             c = *++p;
             if (c == 0)
                 break;
         }
+        tok.word.assign(p - len, p);
         tok.type = TokenType::word;
         return tok;
     }

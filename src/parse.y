@@ -64,7 +64,14 @@
 /*  PURPOSE. */
 
 #include "flexdef.h"
+
+#include "sym.h"
 #include "tables.h"
+#include "misc.h"
+#include "ccl.h"
+#include "scanflags.h"
+#include "nfa.h"
+#include "ecs.h"
 
 int pat, scnum, eps, headcnt, trailcnt, lastchar, i, rulelen;
 int trlcontxt, xcluflg, currccl, cclsorted, varlength, variable_trail_rule;
@@ -111,6 +118,16 @@ int previous_continued_action;	/* whether the previous rule's action was '|' */
  * following should ensure that the default token type is "int".
  */
 #define YYSTYPE int
+
+%}
+
+%{
+
+/* Build the "<<EOF>>" action for the active start conditions. */
+void build_eof_action();
+
+/* from file yylex.c */
+int yylex(void);
 
 %}
 

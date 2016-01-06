@@ -31,7 +31,11 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include "ccl.h"
+
 #include "flexdef.h"
+
+#include "misc.h"
 
 /* return true if the chr is in the ccl. Takes negation into account. */
 static bool

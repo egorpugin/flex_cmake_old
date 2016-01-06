@@ -29,10 +29,18 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include "dfa.h"
+
 #include "flexdef.h"
 
+#include "ccl.h"
 #include "context.h"
+#include "ecs.h"
+#include "misc.h"
+#include "nfa.h"
+#include "sym.h"
 #include "tables.h"
+#include "tblcmp.h"
 
 /* declare functions that have forward references */
 

@@ -32,11 +32,15 @@
  *  PURPOSE.
  */
 
-#ifndef TABLES_H
-#define TABLES_H
+#pragma once
+
+#include <stdio.h>
+
+#include "flexint.h"
 
 /* Tables serialization API declarations. */
 #include "tables_shared.h"
+
 struct yytbl_writer
 {
     FILE *out;
@@ -68,7 +72,3 @@ int yytbl_hdr_fwrite(struct yytbl_writer *wr,
 int yytbl_data_fwrite(struct yytbl_writer *wr, struct yytbl_data *td);
 void yytbl_data_compress(struct yytbl_data *tbl);
 struct yytbl_data *mkftbl(void);
-
-#endif
-
-/* vim:set expandtab cindent tabstop=4 softtabstop=4 shiftwidth=4 textwidth=0: */

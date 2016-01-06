@@ -121,4 +121,3 @@ int scanopt
      int *optindex);
 }
 #endif
-/* vim:set tabstop=8 softtabstop=4 shiftwidth=4: */

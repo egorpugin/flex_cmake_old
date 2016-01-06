@@ -61,27 +61,35 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp
 
 set(common_flex_src
     ccl.cpp
+    ccl.h
     dfa.cpp
+    dfa.h
     ecs.cpp
+    ecs.h
     flexdef.h
     flexint.h
     gen.cpp
+    gen.h
     gettext.h
     main.cpp
     misc.cpp
+    misc.h
     nfa.cpp
+    nfa.h
     options.cpp
     options.h
     scanflags.cpp
+    scanflags.h
     scanopt.cpp
     scanopt.h
     sym.cpp
+    sym.h
     tables.cpp
     tables.h
     tables_shared.cpp
     tables_shared.h
     tblcmp.cpp
-    version.h
+    tblcmp.h
     yylex.cpp
     
     ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp

@@ -31,7 +31,12 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include "tblcmp.h"
+
 #include "flexdef.h"
+
+#include "ecs.h"
+#include "dfa.h"
 
 /* declarations for functions that have forward references */
 

@@ -31,7 +31,11 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include "scanflags.h"
+
 #include "flexdef.h"
+
+#include "misc.h"
 
 scanflags_t *_sf_stk = NULL;
 size_t _sf_top_ix = 0, _sf_max = 0;
@@ -63,5 +67,3 @@ void sf_init(void)
         lerr_fatal(_("Unable to allocate %zu of stack"), sizeof(scanflags_t));
     _sf_stk[_sf_top_ix] = 0;
 }
-
-/* vim:set expandtab cindent tabstop=4 softtabstop=4 shiftwidth=4 textwidth=0: */

@@ -874,5 +874,3 @@ int scanopt_destroy(scanopt_t *svoid)
     }
     return 0;
 }
-
-/* vim:set tabstop=8 softtabstop=4 shiftwidth=4: */

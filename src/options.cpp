@@ -159,5 +159,3 @@ optspec_t flexopts[] = {
 
     {0, 0, 0} /* required final NULL entry. */
 };
-
-/* vim:set tabstop=8 softtabstop=4 shiftwidth=4: */

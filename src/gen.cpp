@@ -31,10 +31,15 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include "gen.h"
+
 #include "flexdef.h"
 
 #include "context.h"
+#include "tblcmp.h"
 #include "tables.h"
+#include "dfa.h"
+#include "misc.h"
 
 /* declare functions that have forward references */
 

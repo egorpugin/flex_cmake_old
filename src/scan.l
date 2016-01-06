@@ -34,13 +34,19 @@
 
 #include "flexdef.h"
 
+#include "context.h"
+#include "sym.h"
+#include "misc.h"
+#include "scanflags.h"
+#include "ccl.h"
+#include "sym.h"
+#include "ecs.h"
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
 #include "parse.h"
-
-#include "context.h"
 
 extern bool tablesverify, tablesext;
 extern int trlcontxt; /* Set in  parse.y for each rule. */
@@ -998,6 +1004,7 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 
 %%
 
+void set_input_file( char *file );
 
 int yywrap(void)
 	{

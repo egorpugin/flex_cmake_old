@@ -44,7 +44,6 @@ EXTRA_DIST = \
 
 SUBDIRS = \
 	lib \
-	src \
 	doc \
 	examples \
 	po \

@@ -143,5 +143,3 @@ yyskel_static flex_int32_t yytbl_calc_total_len (const struct yytbl_data *tbl);
 #ifdef FLEX_SCANNER
 %ok-for-header
 #endif
-
-/* vim:set noexpandtab cindent tabstop=8 softtabstop=0 shiftwidth=8 textwidth=0: */

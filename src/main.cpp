@@ -32,6 +32,7 @@
 /*  PURPOSE. */
 
 #include <fstream>
+#include <regex>
 
 #include "flexdef.h"
 
@@ -41,15 +42,14 @@
 
 #include "options.h"
 #include "tables.h"
-#include "version.h"
-
-#include <regex>
-using regex_t = std::regex;
-using regmatch_t = std::cmatch;
-
+#include "misc.h"
+#include "dfa.h"
+#include "ecs.h"
 #include "simple_m4.h"
+#include "gen.h"
+#include "scanflags.h"
 
-static char flex_version[] = FLEX_VERSION;
+const std::string flex_version = FLEX_VERSION;
 
 /* declare functions that have forward references */
 
@@ -123,6 +123,13 @@ bool tablesext, tablesverify, gentables;
 char *tablesfilename = 0, *tablesname = 0;
 struct yytbl_writer tableswr;
 
+int yyparse(void); /* the YACC parser */
+
+/* Open the given file (if NULL, stdin) for scanning. */
+void set_input_file(char *);
+
+void usage();
+
 /* Make sure program_name is initialized so we don't crash if writing
  * out an error message before getting the program name from argv[0].
  */
@@ -173,7 +180,6 @@ int flex_main(int argc, char *argv[])
         // init context
         if (preproc_level == 0)
             break;
-        //processed_file.initFromString(content);
 
         // create header
         if (preproc_level == 1)
@@ -232,8 +238,8 @@ int flex_main(int argc, char *argv[])
         if (preproc_level == 4)
             break;
         {
-            regex_t regex_blank_line("^[[:space:]]*$", std::regex_constants::extended);
-            regex_t regex_linedir(R"r(^#line ([[:digit:]]+) "(.*)")r", std::regex_constants::extended);
+            std::regex regex_blank_line("^[[:space:]]*$", std::regex_constants::extended);
+            std::regex regex_linedir(R"r(^#line ([[:digit:]]+) "(.*)")r", std::regex_constants::extended);
 
             auto fix_lines = [&regex_blank_line, &regex_linedir](auto &ctx) {
                 int lineno = 1;
@@ -243,7 +249,7 @@ int flex_main(int argc, char *argv[])
                 for (auto &line : ctx.getLinesRef())
                 {
                     String &buf = line.text;
-                    regmatch_t m;
+                    std::cmatch m;
 
                     // Check for #line directive.
                     if (buf[0] == '#' && std::regex_match(buf.c_str(), m, regex_linedir))
@@ -496,7 +502,7 @@ void check_options(void)
         nbytes = strlen(prefix) + strlen("tables") + 2;
         tablesname = (decltype(tablesname))calloc(nbytes, 1);
         snprintf(tablesname, nbytes, "%stables", prefix);
-        yytbl_hdr_init(&hdr, flex_version, tablesname);
+        yytbl_hdr_init(&hdr, flex_version.c_str(), tablesname);
 
         if (yytbl_hdr_fwrite(&tableswr, &hdr) <= 0)
             flexerror(_("could not write tables header"));
@@ -1646,7 +1652,7 @@ static char *basename2(char *path)
     return b;
 }
 
-void usage(void)
+void usage()
 {
     FILE *f = stdout;
 
