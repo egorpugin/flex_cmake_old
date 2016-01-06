@@ -89,18 +89,17 @@ int yytbl_writer_init(struct yytbl_writer *wr, FILE *out)
  *  @param version_str the  version string
  *  @param name the name of this table set
  */
-int yytbl_hdr_init(struct yytbl_hdr *th, const char *version_str,
-                   const char *name)
+int yytbl_hdr_init(struct yytbl_hdr *th, const String& version_str, const String& name)
 {
     memset(th, 0, sizeof(struct yytbl_hdr));
 
     th->th_magic = YYTBL_MAGIC;
-    th->th_hsize = 14 + strlen(version_str) + 1 + strlen(name) + 1;
+    th->th_hsize = 14 + version_str.size() + 1 + name.size() + 1;
     th->th_hsize += yypad64(th->th_hsize);
     th->th_ssize = 0; // Not known at this point.
     th->th_flags = 0;
-    th->th_version = xstrdup(version_str);
-    th->th_name = xstrdup(name);
+    th->th_version = xstrdup(version_str.c_str());
+    th->th_name = xstrdup(name.c_str());
     return 0;
 }
 

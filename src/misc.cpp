@@ -276,46 +276,28 @@ void lerr_fatal(const char *msg, ...)
 /* line_directive_out - spit out a "#line" statement */
 void line_directive_out(bool print, bool do_infile)
 {
-    char directive[MAXLINE], filename[MAXLINE];
-    char *s1, *s2, *s3;
     static const char *line_fmt = "#line %d \"%s\"\n";
 
     if (!gen_line_dirs)
         return;
 
-    s1 = do_infile ? infilename : "M4_YY_OUTFILE_NAME";
+    String filename = do_infile ? infilename : "M4_YY_OUTFILE_NAME";
 
-    if (do_infile && !s1)
-        s1 = "<stdin>";
+    if (do_infile && filename.empty())
+        filename = "<stdin>";
 
-    s2 = filename;
-    s3 = &filename[sizeof(filename) - 2];
-
-    while (s2 < s3 && *s1)
-    {
-        if (*s1 == '\\')
-            /* Escape the '\' */
-            *s2++ = '\\';
-
-        *s2++ = *s1++;
-    }
-
-    *s2 = '\0';
-
-    if (do_infile)
-        snprintf(directive, sizeof(directive), line_fmt, linenum, filename);
-    else
-    {
-        snprintf(directive, sizeof(directive), line_fmt, 0, filename);
-    }
-
+    replace_all(filename, "\\", "\\\\");
+    
+    std::ostringstream ss;
+    ss << "#line " << (do_infile ? linenum : 0) << "\"" << filename << "\"" << "\n";
+    
     /* If print is false then we should put the directive in
 	 * the accumulated actions.
 	 */
     if (print)
-        processed_file.addLine(directive);
+        processed_file.addLine(ss.str());
     else
-        add_action(directive);
+        add_action(ss.str().c_str());
 }
 
 /* mark_defs1 - mark the current position in the action array as
@@ -647,7 +629,8 @@ void skelout(void)
             }
             else if (cmd_match(CMD_DEFINE_YYTABLES))
             {
-                processed_file << "#define YYTABLES_NAME \"" << (tablesname ? tablesname : "yytables") << "\"" << Context::eol;
+                processed_file << "#define YYTABLES_NAME \""
+                    << (!tablesname.empty() ? tablesname : "yytables") << "\"" << Context::eol;
             }
             else if (cmd_match(CMD_IF_CPP_ONLY))
             {

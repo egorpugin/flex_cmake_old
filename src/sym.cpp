@@ -51,28 +51,28 @@ std::unordered_map<String, int> sctbl;
 std::unordered_map<String, int> ccltab;
 
 /* cclinstal - save the text of a character class */
-void cclinstal(unsigned char* ccltxt, int cclnum)
+void cclinstal(const String &ccltxt, int cclnum)
 {
     /* We don't bother checking the return status because we are not
 	 * called unless the symbol is new.
 	 */
-    ccltab[(const char*)ccltxt] = cclnum;
+    ccltab[ccltxt] = cclnum;
 }
 
 /* ccllookup - lookup the number associated with character class text
  *
  * Returns 0 if there's no CCL associated with the text.
  */
-int ccllookup(unsigned char* ccltxt)
+int ccllookup(const String &ccltxt)
 {
-    auto i = ccltab.find((const char*)ccltxt);
+    auto i = ccltab.find(ccltxt);
     if (i == ccltab.end())
         return 0;
     return i->second;
 }
 
 /* ndinstal - install a name definition */
-void ndinstal(char *name, unsigned char* definition)
+void ndinstal(const String &name, unsigned char* definition)
 {
     auto i = ndtbl.find(name);
     if (i != ndtbl.end())
@@ -84,7 +84,7 @@ void ndinstal(char *name, unsigned char* definition)
  *
  * Returns a nil pointer if the name definition does not exist.
  */
-unsigned char* ndlookup(const char *nd)
+unsigned char* ndlookup(const String &nd)
 {
     auto i = ndtbl.find(nd);
     if (i == ndtbl.end())
@@ -111,16 +111,16 @@ void scextend(void)
  * NOTE
  *    The start condition is "exclusive" if xcluflg is true.
  */
-void scinstal(const char *str, int xcluflg)
+void scinstal(const String& str, int xcluflg)
 {
     if (++lastsc >= current_max_scs)
         scextend();
 
-    scname[lastsc] = xstrdup(str);
+    scname[lastsc] = xstrdup(str.c_str());
 
     auto i = sctbl.find(str);
     if (i != sctbl.end())
-        format_pinpoint_message(_("start condition %s declared twice"), str);
+        format_pinpoint_message(_("start condition %s declared twice"), str.c_str());
     sctbl[scname[lastsc]] = lastsc;
 
     scset[lastsc] = mkstate(SYM_EPSILON);
@@ -133,7 +133,7 @@ void scinstal(const char *str, int xcluflg)
  *
  * Returns 0 if no such start condition.
  */
-int sclookup(const char *str)
+int sclookup(const String &str)
 {
     auto i = sctbl.find(str);
     if (i == sctbl.end())

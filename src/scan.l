@@ -80,15 +80,7 @@ extern const char *escaped_qstart, *escaped_qend;
 	return CHAR;
 
 #define RETURNNAME \
-	if(yyleng < MAXLINE) \
-         { \
-	strcpy( nmstr, yytext ); \
-	 } \
-	else \
-	 { \
-	   synerr(_("Input line too long\n")); \
-	   FLEX_EXIT(EXIT_FAILURE);  \
-	 }  \
+	nmstr = yytext; \
 	return NAME;
 
 #define PUT_BACK_STRING(str, start) \
@@ -173,7 +165,7 @@ M4QEND      "]]"
                 brace_start_line = linenum;
                 ++linenum;
                 {
-                    std::string fn = infilename ? infilename : "<stdin>";
+                    std::string fn = !infilename.empty() ? infilename : "<stdin>";
                     replace_all(fn, "\\", "\\\\");
                     top_buf.addLine("#line " + std::to_string(linenum) + " \"" + fn + "\"");
                 }
@@ -206,16 +198,7 @@ M4QEND      "]]"
 	^"%"[^sxaceknopr{}].*	synerr( _( "unrecognized '%' directive" ) );
 
 	^{NAME}		{
-			if(yyleng < MAXLINE)
-        		 {
-			strcpy( nmstr, yytext );
-			 }
-			else
-			 {
-			   synerr( _("Definition name too long\n"));
-			   FLEX_EXIT(EXIT_FAILURE);
-			 }
-
+			nmstr = yytext;
 			didadef = false;
 			BEGIN(PICKUPDEF);
 			}
@@ -254,9 +237,7 @@ M4QEND      "]]"
 	[[:digit:]]+	linenum = std::stoi( yytext );
 
 	\"[^"\n]*\"	{
-			free(infilename);
-			infilename = xstrdup(yytext + 1);
-			infilename[strlen( infilename ) - 1] = '\0';
+			infilename = yytext + 1;
 			}
 	.		/* ignore spurious characters */
 }
@@ -320,7 +301,7 @@ M4QEND      "]]"
  		         }
  		        else
  		         {
- 		           format_synerr( _("Definition value for {%s} too long\n"), nmstr);
+ 		           format_synerr( _("Definition value for {%s} too long\n"), nmstr.c_str());
  		           FLEX_EXIT(EXIT_FAILURE);
 			 }
 			/* Skip trailing whitespace. */
@@ -457,16 +438,7 @@ M4QEND      "]]"
 
 
 	\"[^"\n]*\"	{
-			if(yyleng-1 < MAXLINE)
-        		 {
-			strcpy( nmstr, yytext + 1 );
-			 }
-			else
-			 {
-			   synerr( _("Option line too long\n"));
-			   FLEX_EXIT(EXIT_FAILURE);
-			 }
-			nmstr[strlen( nmstr ) - 1] = '\0';
+			nmstr = yytext + 1;
 			return NAME;
 			}
 
@@ -632,15 +604,7 @@ M4QEND      "]]"
 	"["({FIRST_CCL_CHAR}|{CCL_EXPR})({CCL_CHAR}|{CCL_EXPR})*	{
 			int cclval;
 
-			if(yyleng < MAXLINE)
-        		 {
-			strcpy( nmstr, yytext );
-			 }
-			else
-			 {
-			   synerr( _("Input line too long\n"));
-			   FLEX_EXIT(EXIT_FAILURE);
-			 }
+			nmstr = yytext;
 
 			/* Check to see if we've already encountered this
 			 * ccl.
@@ -650,7 +614,7 @@ M4QEND      "]]"
                    * The reason it was disabled is so yacc/bison can parse
                    * ccl operations, such as ccl difference and union.
                    */
-                &&  (cclval = ccllookup( (unsigned char *) nmstr )) != 0 )
+                &&  (cclval = ccllookup( nmstr )) != 0 )
 				{
                 char c =
 #ifdef __cplusplus
@@ -671,7 +635,7 @@ M4QEND      "]]"
 				/* We fudge a bit.  We know that this ccl will
 				 * soon be numbered as lastccl + 1 by cclinit.
 				 */
-				cclinstal( (unsigned char *) nmstr, lastccl + 1 );
+				cclinstal( nmstr, lastccl + 1 );
 
 				/* Push back everything but the leading bracket
 				 * so the ccl can be rescanned.
@@ -697,21 +661,15 @@ M4QEND      "]]"
             end_ch = yytext[yyleng-1];
             end_is_ws = end_ch != '}' ? 1 : 0;
 
- 			if(yyleng-1 < MAXLINE)
-         		 {
-			strcpy( nmstr, yytext + 1 );
- 			 }
- 			else
- 			 {
- 			   synerr( _("Input line too long\n"));
- 			   FLEX_EXIT(EXIT_FAILURE);
- 			 }
-nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
+			nmstr = yytext + 1;
+
+            nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
+            nmstr = nmstr.c_str();
 
 			if ( (nmdefptr = ndlookup( nmstr )) == 0 )
 				format_synerr(
 					_( "undefined definition {%s}" ),
-						nmstr );
+						nmstr.c_str() );
 
 			else
 				{ /* push back name surrounded by ()'s */
@@ -1025,8 +983,8 @@ void set_input_file( char *file )
 	{
 	if ( file && strcmp( file, "-" ) )
 		{
-		infilename = xstrdup(file);
-		yyin = fopen( infilename, "r" );
+		infilename = file;
+		yyin = fopen( infilename.c_str(), "r" );
 
 		if ( yyin == NULL )
 			lerr( _( "can't open %s" ), file );
@@ -1035,7 +993,7 @@ void set_input_file( char *file )
 	else
 		{
 		yyin = stdin;
-		infilename = xstrdup("<stdin>");
+		infilename = "<stdin>";
 		}
 
 	linenum = 1;

@@ -45,9 +45,7 @@
 
 #include "flexint.h"
 
-#include <string>
-
-using String = std::string;
+#include "common.h"
 
 /* We use gettext. So, when we write strings which should be translated, we mark them with _() */
 #ifdef ENABLE_NLS
@@ -366,10 +364,10 @@ extern int datapos, dataline, linenum;
 extern FILE *backing_up_file;
 extern const char *skel[];
 extern int skel_ind;
-extern char *infilename, *headerfilename;
+extern String infilename, headerfilename;
 extern std::string outfilename;
 extern int did_outfilename;
-extern char *prefix, *yyclass, *extra_type;
+extern String prefix, yyclass, extra_type;
 extern int do_stdinit, use_stdout;
 extern char **input_files;
 extern int num_input_files;
@@ -659,7 +657,7 @@ void flexend(int);
 /* from file parse.y */
 
 /* Write out a message formatted with one string, pinpointing its location. */
-void format_pinpoint_message(const char *, const char *);
+void format_pinpoint_message(const String &, const String &);
 
 /* Write out a message, pinpointing its location. */
 void pinpoint_message(const char *);

@@ -106,24 +106,19 @@ public:
 
     void printToFile(FILE* out) const;
 
-    void define(const char *str, const char *def = nullptr)
+    void define(const Text& str, const Text& def = Text())
     {
-        Text s = str ? str : Text();
-        Text d = def ? def : Text();
-        addLine("#define " + s + " " + d + "\n");
+        addLine("#define " + str + " " + def + "\n");
     }
 
-    void m4define(const char* def, const char* val = nullptr)
+    void m4define(const Text& def, const Text& val = Text())
     {
-        Text d = def ? def : Text();
-        Text v = val ? val : Text();
-        addLine("m4_define([[" + d + "]], [[" + v + "]])m4_dnl");
+        addLine("m4_define([[" + def + "]], [[" + val + "]])m4_dnl");
     }
 
-    void m4undefine(const char* def)
+    void m4undefine(const Text& def)
     {
-        Text d = def ? def : Text();
-        addLine("m4_undefine([[" + d + "]])m4_dnl");
+        addLine("m4_undefine([[" + def + "]])m4_dnl");
     }
 
     template <typename T>

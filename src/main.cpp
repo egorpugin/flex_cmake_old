@@ -75,10 +75,10 @@ int skel_ind = 0;
 char *action_array;
 int action_size, defs1_offset, prolog_offset, action_offset,
     action_index;
-char *infilename = NULL, *headerfilename = NULL;
-std::string outfilename;
+String infilename, headerfilename;
+String outfilename;
 int did_outfilename;
-char *prefix, *yyclass, *extra_type = NULL;
+String prefix, yyclass, extra_type;
 int do_stdinit, use_stdout;
 int onestate[ONE_STACK_SIZE], onesym[ONE_STACK_SIZE];
 int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
@@ -120,7 +120,7 @@ int nlch = '\n';
 bool ansi_func_defs, ansi_func_protos;
 
 bool tablesext, tablesverify, gentables;
-char *tablesfilename = 0, *tablesname = 0;
+String tablesfilename, tablesname;
 struct yytbl_writer tableswr;
 
 int yyparse(void); /* the YACC parser */
@@ -185,19 +185,19 @@ int flex_main(int argc, char *argv[])
         if (preproc_level == 1)
             break;
         {
-            if (headerfilename)
+            if (!headerfilename.empty())
             {
                 header_file.before().addLine("m4_changecom`'m4_dnl");
                 header_file.before().addLine("m4_changequote`'m4_dnl");
                 header_file.before().addLine("m4_changequote([[,]])[[]]m4_dnl");
                 header_file.before().addLine("m4_define([[M4_YY_NOOP]])[[]]m4_dnl");
                 header_file.before().addLine("m4_define( [[M4_YY_IN_HEADER]],[[]])m4_dnl");
-                header_file.before().addLine("#ifndef " + String(prefix) + "HEADER_H");
-                header_file.before().addLine("#define " + String(prefix) + "HEADER_H 1");
-                header_file.before().addLine("#define " + String(prefix) + "IN_HEADER 1");
+                header_file.before().addLine("#ifndef " + prefix + "HEADER_H");
+                header_file.before().addLine("#define " + prefix + "HEADER_H 1");
+                header_file.before().addLine("#define " + prefix + "IN_HEADER 1");
                 header_file.before().addLine();
                 header_file.before().addLine("m4_define( [[M4_YY_OUTFILE_NAME]],[[" +
-                                             (headerfilename ? String(headerfilename) : "<stdout>") + "]])m4_dnl");
+                                             (!headerfilename.empty() ? headerfilename : "<stdout>") + "]])m4_dnl");
 
                 header_file += processed_file;
 
@@ -257,7 +257,7 @@ int flex_main(int argc, char *argv[])
                         // extract the line number and filename
                         String fname = m[2].str();
                         String sfile = !outfilename.empty() ? outfilename.c_str() : "<stdout>";
-                        String hfile = headerfilename ? headerfilename : "<stdout>";
+                        String hfile = !headerfilename.empty() ? headerfilename : "<stdout>";
 
                         if (fname == sfile || fname == hfile)
                         {
@@ -310,9 +310,9 @@ int flex_main(int argc, char *argv[])
         print_lines(output_file, processed_file);
         fclose(output_file);
 
-        if (headerfilename)
+        if (!headerfilename.empty())
         {
-            output_file = fopen(headerfilename, "wb");
+            output_file = fopen(headerfilename.c_str(), "wb");
             if (!output_file)
                 lerr(_("could not create %s"), headerfilename);
             print_lines(output_file, header_file);
@@ -442,7 +442,7 @@ void check_options(void)
     if (!ansi_func_protos)
         m4defs_buf.m4define("M4_YY_NO_ANSI_FUNC_PROTOS");
 
-    if (extra_type)
+    if (!extra_type.empty())
         m4defs_buf.m4define("M4_EXTRA_TYPE_DEFS", extra_type);
 
     if (!use_stdout)
@@ -485,23 +485,23 @@ void check_options(void)
 
         m4defs_buf.m4define("M4_YY_TABLES_EXTERNAL");
 
-        if (!tablesfilename)
+        if (tablesfilename.empty())
         {
-            nbytes = strlen(prefix) + strlen(tablesfile_template) + 2;
+            nbytes = prefix.size() + strlen(tablesfile_template) + 2;
             tablesfilename = pname = (decltype(pname))calloc(nbytes, 1);
             snprintf(pname, nbytes, tablesfile_template, prefix);
         }
 
-        if ((tablesout = fopen(tablesfilename, "wb")) == NULL)
-            lerr(_("could not create %s"), tablesfilename);
+        if ((tablesout = fopen(tablesfilename.c_str(), "wb")) == NULL)
+            lerr(_("could not create %s"), tablesfilename.c_str());
         free(pname);
-        tablesfilename = 0;
+        tablesfilename.clear();
 
         yytbl_writer_init(&tableswr, tablesout);
 
-        nbytes = strlen(prefix) + strlen("tables") + 2;
-        tablesname = (decltype(tablesname))calloc(nbytes, 1);
-        snprintf(tablesname, nbytes, "%stables", prefix);
+        nbytes = prefix.size() + strlen("tables") + 2;
+        tablesname.resize(nbytes);
+        snprintf(&tablesname[0], nbytes, "%stables", prefix);
         yytbl_hdr_init(&hdr, flex_version.c_str(), tablesname);
 
         if (yytbl_hdr_fwrite(&tableswr, &hdr) <= 0)
@@ -696,7 +696,7 @@ void flexend(int exit_status)
         if (skelname)
             fprintf(stderr, " -S%s", skelname);
 
-        if (strcmp(prefix, "yy"))
+        if (prefix != "yy")
             fprintf(stderr, " -P%s", prefix);
 
         putc('\n', stderr);
@@ -830,11 +830,9 @@ void flexinit(int argc, char **argv)
     performance_report = 0;
     did_outfilename = 0;
     prefix = "yy";
-    yyclass = 0;
     use_read = use_stdout = false;
     tablesext = tablesverify = false;
     gentables = true;
-    tablesfilename = tablesname = NULL;
     ansi_func_defs = ansi_func_protos = true;
 
     sawcmpflag = false;
@@ -1523,7 +1521,7 @@ void readin(void)
             outn("\nint yyFlexLexer::yywrap() { return 1; }");
         }
 
-        if (yyclass)
+        if (!yyclass.empty())
         {
             outn("int yyFlexLexer::yylex()");
             outn("\t{");
@@ -1564,7 +1562,7 @@ void readin(void)
             }
         }
 
-        if (yyclass)
+        if (!yyclass.empty())
             flexerror(_("%option yyclass only meaningful for C++ scanners"));
     }
 

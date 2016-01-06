@@ -210,19 +210,19 @@ optionlist	:  optionlist option
 
 option		:  OPT_OUTFILE '=' NAME
 			{
-			outfilename = xstrdup(nmstr);
+			outfilename = nmstr;
 			did_outfilename = 1;
 			}
 		|  OPT_EXTRA_TYPE '=' NAME
-			{ extra_type = xstrdup(nmstr); }
+			{ extra_type = nmstr; }
 		|  OPT_PREFIX '=' NAME
-			{ prefix = xstrdup(nmstr); }
+			{ prefix = nmstr; }
 		|  OPT_YYCLASS '=' NAME
-			{ yyclass = xstrdup(nmstr); }
+			{ yyclass = nmstr; }
 		|  OPT_HEADER '=' NAME
-			{ headerfilename = xstrdup(nmstr); }
+			{ headerfilename = nmstr; }
 	    |  OPT_TABLES '=' NAME
-            { tablesext = true; tablesfilename = xstrdup(nmstr); }
+            { tablesext = true; tablesfilename = nmstr; }
 		;
 
 sect2		:  sect2 scon initforrule flexrule '\n'
@@ -1047,11 +1047,11 @@ void warn( const char *str )
  *			     pinpointing its location
  */
 
-void format_pinpoint_message( const char *msg, const char arg[] )
+void format_pinpoint_message( const String &msg, const String &arg )
 	{
 	char errmsg[MAXLINE];
 
-	snprintf( errmsg, sizeof(errmsg), msg, arg );
+	snprintf( errmsg, sizeof(errmsg), msg.c_str(), arg.c_str() );
 	pinpoint_message( errmsg );
 	}
 
