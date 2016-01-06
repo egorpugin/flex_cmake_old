@@ -1,7 +1,9 @@
 language: cpp
 
 notifications:
-  email: false
+  email:
+    recipients:
+      - egor.pugin@gmail.com
   
 sudo: required
 dist: trusty
