@@ -52,7 +52,9 @@
 
 extern bool tablesverify, tablesext;
 extern int trlcontxt; /* Set in  parse.y for each rule. */
-extern const char *escaped_qstart, *escaped_qend;
+
+const String escaped_qstart = "[[]]M4_YY_NOOP[M4_YY_NOOP[M4_YY_NOOP[[]]";
+const String escaped_qend = "[[]]M4_YY_NOOP]M4_YY_NOOP]M4_YY_NOOP[[]]";
 
 // ndtbl - name-definition symbol table
 std::unordered_map<String, String> ndtbl;
@@ -284,8 +286,8 @@ M4QEND      "]]"
                 top_buf.addText(yytext, yyleng);
             }
 
-    {M4QSTART}  top_buf.addText(escaped_qstart, strlen(escaped_qstart));
-    {M4QEND}    top_buf.addText(escaped_qend, strlen(escaped_qend));
+    {M4QSTART}  top_buf.addText(escaped_qstart);
+    {M4QEND}    top_buf.addText(escaped_qend);
 
     [^{}\r\n]  {
                 top_buf.addText(yytext, yyleng);

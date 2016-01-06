@@ -122,7 +122,7 @@ bool tablesext, tablesverify, gentables;
 String tablesfilename, tablesname;
 struct yytbl_writer tableswr;
 
-int yyparse(void); /* the YACC parser */
+int yyparse(); /* the YACC parser */
 
 /* Open the given file (if NULL, stdin) for scanning. */
 void set_input_file(const String &);
@@ -139,9 +139,7 @@ static const char backing_name[] = "lex.backup";
 static const char tablesfile_template[] = "lex.%s.tables";
 
 static char outfile_path[MAXLINE];
-static char *skelname = NULL;
-const char *escaped_qstart = "[[]]M4_YY_NOOP[M4_YY_NOOP[M4_YY_NOOP[[]]";
-const char *escaped_qend = "[[]]M4_YY_NOOP]M4_YY_NOOP]M4_YY_NOOP[[]]";
+static String skelname;
 
 /* For debugging. The max number of filters to apply to skeleton. */
 static int preproc_level = 1000;
@@ -505,7 +503,7 @@ void check_options(void)
             flexerror(_("could not write tables header"));
     }
 
-    if (skelname && !(skelfile = decltype(skelfile)(skelname)))
+    if (!skelname.empty() && !(skelfile = decltype(skelfile)(skelname.c_str())))
         lerr(_("can't open skeleton file %s"), skelname);
 
     if (reentrant)
@@ -690,8 +688,8 @@ void flexend(int exit_status)
         if (did_outfilename)
             fprintf(stderr, " -o%s", outfilename);
 
-        if (skelname)
-            fprintf(stderr, " -S%s", skelname);
+        if (!skelname.empty())
+            fprintf(stderr, " -S%s", skelname.c_str());
 
         if (prefix != "yy")
             fprintf(stderr, " -P%s", prefix);
