@@ -35,10 +35,15 @@
 #include "parse.h"
 #include <ctype.h>
 
-/* yylex - scan for a regular expression token */
+/* Used to communicate between scanner and parser.  The type should really
+* be YYSTYPE, but we can't easily get our hands on it.
+*/
+extern int yylval;
 
 extern char *yytext;
-int yylex(void)
+
+/* yylex - scan for a regular expression token */
+int yylex()
 {
     int toktype;
     static int beglin = false;

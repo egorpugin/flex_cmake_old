@@ -289,7 +289,7 @@ void line_directive_out(bool print, bool do_infile)
     replace_all(filename, "\\", "\\\\");
     
     std::ostringstream ss;
-    ss << "#line " << (do_infile ? linenum : 0) << "\"" << filename << "\"" << "\n";
+    ss << "#line " << (do_infile ? linenum : 0) << " \"" << filename << "\"" << "\n";
     
     /* If print is false then we should put the directive in
 	 * the accumulated actions.

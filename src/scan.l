@@ -966,39 +966,34 @@ M4QEND      "]]"
 
 %%
 
-void set_input_file( char *file );
-
-int yywrap(void)
-	{
-	if ( --num_input_files > 0 )
-		{
-		set_input_file( *++input_files );
-		return 0;
-		}
-
-	else
-		return 1;
-	}
-
-
 /* set_input_file - open the given file (if NULL, stdin) for scanning */
+void set_input_file(const String &file)
+{
+    if (!file.empty() && file != "-")
+    {
+        infilename = file;
+        yyin = fopen(infilename.c_str(), "r");
 
-void set_input_file( char *file )
-	{
-	if ( file && strcmp( file, "-" ) )
-		{
-		infilename = file;
-		yyin = fopen( infilename.c_str(), "r" );
+        if (yyin == NULL)
+            lerr(_("can't open %s"), file);
+    }
+    else
+    {
+        yyin = stdin;
+        infilename = "<stdin>";
+    }
 
-		if ( yyin == NULL )
-			lerr( _( "can't open %s" ), file );
-		}
+    linenum = 1;
+}
 
-	else
-		{
-		yyin = stdin;
-		infilename = "<stdin>";
-		}
-
-	linenum = 1;
-	}
+int yywrap()
+{
+    if (input_files.size())
+    {
+        set_input_file(input_files.front());
+        input_files.pop();
+        return 0;
+    }
+    else
+        return 1;
+}

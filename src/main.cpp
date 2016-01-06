@@ -56,7 +56,7 @@ const std::string flex_version = FLEX_VERSION;
 void flexinit(int, char **);
 void readin(void);
 void set_up_initial_allocations(void);
-static char *basename2(char *path);
+static String basename2(String path);
 
 /* these globals are all defined and commented in flexdef.h */
 int printstats, syntaxerror, eofseen, ddebug, trace, nowarn, spprdflt;
@@ -113,8 +113,7 @@ int tmpuses, totnst, peakpairs, numuniq, numdup, hshsave;
 int num_backing_up, bol_needed;
 FILE *backing_up_file;
 int end_of_buffer_state;
-char **input_files;
-int num_input_files;
+InputFiles input_files;
 bool *rule_has_nl, *ccl_has_nl;
 int nlch = '\n';
 bool ansi_func_defs, ansi_func_protos;
@@ -126,14 +125,14 @@ struct yytbl_writer tableswr;
 int yyparse(void); /* the YACC parser */
 
 /* Open the given file (if NULL, stdin) for scanning. */
-void set_input_file(char *);
+void set_input_file(const String &);
 
 void usage();
 
 /* Make sure program_name is initialized so we don't crash if writing
  * out an error message before getting the program name from argv[0].
  */
-char *program_name = "flex";
+String program_name = "flex";
 
 static const char outfile_template[] = "lex.%s.%s";
 static const char backing_name[] = "lex.backup";
@@ -817,10 +816,8 @@ void flexinit(int argc, char **argv)
     printstats = syntaxerror = trace = spprdflt = false;
     lex_compat = posix_compat = C_plus_plus = backing_up_report =
         ddebug = fulltbl = false;
-    fullspd = long_align = nowarn = yymore_used = continued_action =
-        false;
-    do_yylineno = yytext_is_array = in_rule = reject = do_stdinit =
-        false;
+    fullspd = long_align = nowarn = yymore_used = continued_action = false;
+    do_yylineno = yytext_is_array = in_rule = reject = do_stdinit = false;
     yymore_really_used = reject_really_used = unspecified;
     interactive = csize = unspecified;
     do_yywrap = gen_line_dirs = usemecs = useecs = true;
@@ -856,8 +853,7 @@ void flexinit(int argc, char **argv)
     /* Enable C++ if program name ends with '+'. */
     program_name = basename2(argv[0]);
 
-    if (program_name[0] != '\0' &&
-        program_name[strlen(program_name) - 1] == '+')
+    if (!program_name.empty() && program_name.back() == '+')
         C_plus_plus = true;
 
     /* read flags */
@@ -1284,9 +1280,15 @@ void flexinit(int argc, char **argv)
 
     scanopt_destroy(sopt);
 
-    num_input_files = argc - optind;
-    input_files = argv + optind;
-    set_input_file(num_input_files > 0 ? input_files[0] : NULL);
+    for (auto i = optind; i < argc; i++)
+        input_files.push(argv[i]);
+    if (input_files.size())
+    {
+        set_input_file(input_files.front());
+        input_files.pop();
+    }
+    else
+        set_input_file(String());
 
     lastccl = lastsc = lastdfa = lastnfa = 0;
     num_rules = num_eof_rules = default_rule = 0;
@@ -1638,14 +1640,14 @@ void set_up_initial_allocations(void)
 
 /* extracts basename from path, optionally stripping the extension "\.*"
  * (same concept as /bin/sh `basename`, but different handling of extension). */
-static char *basename2(char *path)
+static String basename2(String path)
 {
-    char *b;
-
-    for (b = path; *path; path++)
-        if (*path == '/')
-            b = path + 1;
-    return b;
+    replace_all(path, "\\", "/");
+    replace_all(path, ".exe", "");
+    auto p = path.rfind("/");
+    if (p != path.npos)
+        return path.substr(p + 1);
+    return path;
 }
 
 void usage()

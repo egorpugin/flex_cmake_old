@@ -347,9 +347,7 @@ extern int trace_hex;
  * do_stdinit - whether to initialize yyin/yyout to stdin/stdout
  * use_stdout - the -t flag
  * input_files - array holding names of input files
- * num_input_files - size of input_files array
  * program_name - name with which program was invoked
- *
  * action_array - array to hold the rule actions
  * action_size - size of action_array
  * defs1_offset - index where the user's section 1 definitions start
@@ -369,9 +367,8 @@ extern std::string outfilename;
 extern int did_outfilename;
 extern String prefix, yyclass, extra_type;
 extern int do_stdinit, use_stdout;
-extern char **input_files;
-extern int num_input_files;
-extern char *program_name;
+extern InputFiles input_files;
+extern String program_name;
 extern char *action_array;
 extern int action_size;
 extern int defs1_offset, prolog_offset, action_offset, action_index;
@@ -628,10 +625,6 @@ void *reallocate_array(void *, int, size_t);
 #define reallocate_Character_array(array, size) \
     reallocate_array((void *)array, size, sizeof(unsigned char))
 
-/* Used to communicate between scanner and parser.  The type should really
- * be YYSTYPE, but we can't easily get our hands on it.
- */
-extern int yylval;
 
 
 

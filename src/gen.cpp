@@ -1827,7 +1827,7 @@ void make_tables(void)
         }
     }
 
-    processed_file << &action_array[defs1_offset];
+    processed_file << &action_array[defs1_offset] << Context::eol;
 
     line_directive_out(true, false);
 
@@ -1900,7 +1900,7 @@ void make_tables(void)
     skelout(); /* %% [7.0] - break point in skel */
 
     /* Copy prolog to output file. */
-    processed_file << &action_array[prolog_offset];
+    processed_file << &action_array[prolog_offset] << Context::eol;
 
     line_directive_out(true, false);
 
@@ -2027,7 +2027,7 @@ void make_tables(void)
     skelout(); /* %% [13.0] - break point in skel */
     ++indent_level;
     gen_bu_action();
-    processed_file << &action_array[action_offset];
+    processed_file << &action_array[action_offset] << Context::eol;
 
     line_directive_out(true, false);
 
