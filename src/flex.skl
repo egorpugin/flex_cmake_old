@@ -793,6 +793,7 @@ m4_ifdef( [[M4_YY_NOT_IN_HEADER]],
         m4_ifdef( [[M4_YY_NEVER_INTERACTIVE]],[[]],
         [[
 #ifdef WIN32
+#include <io.h>
 #define isatty _isatty
 #endif
         ]])

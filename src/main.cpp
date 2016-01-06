@@ -499,9 +499,7 @@ void check_options(void)
 
         yytbl_writer_init(&tableswr, tablesout);
 
-        nbytes = prefix.size() + strlen("tables") + 2;
-        tablesname.resize(nbytes);
-        snprintf(&tablesname[0], nbytes, "%stables", prefix);
+        tablesname = prefix + "tables";
         yytbl_hdr_init(&hdr, flex_version.c_str(), tablesname);
 
         if (yytbl_hdr_fwrite(&tableswr, &hdr) <= 0)
