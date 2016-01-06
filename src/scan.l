@@ -57,6 +57,9 @@ extern const char *escaped_qstart, *escaped_qend;
 // ndtbl - name-definition symbol table
 std::unordered_map<String, String> ndtbl;
 
+// ccltab - character class text symbol table
+std::unordered_map<String, int> ccltab;
+
 #define ACTION_ECHO add_action( yytext )
 #define ACTION_IFDEF(def, should_define) \
 	{ \
@@ -612,7 +615,8 @@ M4QEND      "]]"
                    * The reason it was disabled is so yacc/bison can parse
                    * ccl operations, such as ccl difference and union.
                    */
-                &&  (cclval = ccllookup( nmstr )) != 0 )
+                &&  ccltab.find(nmstr) != ccltab.end()
+                && (cclval = ccltab.find(nmstr)->second) != 0 )
 				{
                 char c =
 #ifdef __cplusplus
@@ -633,7 +637,7 @@ M4QEND      "]]"
 				/* We fudge a bit.  We know that this ccl will
 				 * soon be numbered as lastccl + 1 by cclinit.
 				 */
-				cclinstal( nmstr, lastccl + 1 );
+                ccltab[nmstr] = lastccl + 1;
 
 				/* Push back everything but the leading bracket
 				 * so the ccl can be rescanned.

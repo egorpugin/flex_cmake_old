@@ -46,33 +46,11 @@
  */
 
 std::unordered_map<String, int> sctbl;
-std::unordered_map<String, int> ccltab;
-
-/* cclinstal - save the text of a character class */
-void cclinstal(const String &ccltxt, int cclnum)
-{
-    /* We don't bother checking the return status because we are not
-	 * called unless the symbol is new.
-	 */
-    ccltab[ccltxt] = cclnum;
-}
-
-/* ccllookup - lookup the number associated with character class text
- *
- * Returns 0 if there's no CCL associated with the text.
- */
-int ccllookup(const String &ccltxt)
-{
-    auto i = ccltab.find(ccltxt);
-    if (i == ccltab.end())
-        return 0;
-    return i->second;
-}
 
 
 
 /* scextend - increase the maximum number of start conditions */
-void scextend(void)
+void scextend()
 {
     current_max_scs += MAX_SCS_INCREMENT;
 
