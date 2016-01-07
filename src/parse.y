@@ -144,7 +144,7 @@ goal		:  initlex sect1 sect1end sect2 initforrule
 			/* Remember the number of the default rule so we
 			 * don't generate "can't match" warnings for it.
 			 */
-			default_rule = num_rules;
+			default_rule = rules.size() - 1;
 
 			finish_rule( def_rule, false, 0, 0, 0);
 
@@ -152,8 +152,7 @@ goal		:  initlex sect1 sect1end sect2 initforrule
 				scset[i] = mkbranch( scset[i], def_rule );
 
 			if ( spprdflt )
-				add_action(
-				"YY_FATAL_ERROR( \"flex scanner jammed\" )" );
+				add_action("YY_FATAL_ERROR( \"flex scanner jammed\" )" );
 			else
 				add_action( "ECHO" );
 
@@ -436,8 +435,7 @@ rule		:  re2 re
 				 * trail rule, and add_accept() can create
 				 * a new state ...
 				 */
-				add_accept( $1,
-					num_rules | YY_TRAILING_HEAD_MASK );
+				add_accept( $1, (rules.size() - 1) | YY_TRAILING_HEAD_MASK );
 				variable_trail_rule = true;
 				}
 			
@@ -481,8 +479,7 @@ rule		:  re2 re
 				/* Again, see the comment in the rule for
 				 * "re2 re" above.
 				 */
-				add_accept( $1,
-					num_rules | YY_TRAILING_HEAD_MASK );
+				add_accept( $1, (rules.size() - 1) | YY_TRAILING_HEAD_MASK );
 				variable_trail_rule = true;
 				}
 
@@ -751,7 +748,7 @@ singleton	:  singleton '*'
 			++rulelen;
 
 			if (ccl_has_nl[$1])
-				rule_has_nl[num_rules] = true;
+				rules[rules.size() - 1].has_nl = true;
 
 			$$ = mkstate( -$1 );
 			}
@@ -761,7 +758,7 @@ singleton	:  singleton '*'
 			++rulelen;
 
 			if (ccl_has_nl[$1])
-				rule_has_nl[num_rules] = true;
+				rules[rules.size() - 1].has_nl = true;
 
 			$$ = mkstate( -$1 );
 			}
@@ -777,7 +774,7 @@ singleton	:  singleton '*'
 			++rulelen;
 
 			if ($1 == nlch)
-				rule_has_nl[num_rules] = true;
+				rules[rules.size() - 1].has_nl = true;
 
             if (sf_case_ins() && has_case($1))
                 /* create an alternation, as in (a|A) */
@@ -945,7 +942,7 @@ ccl_expr:
 string		:  string CHAR
 			{
 			if ( $2 == nlch )
-				rule_has_nl[num_rules] = true;
+				rules[rules.size() - 1].has_nl = true;
 
 			++rulelen;
 
@@ -976,10 +973,7 @@ void build_eof_action(void)
 	for ( i = 1; i <= scon_stk_ptr; ++i )
 		{
 		if ( sceof[scon_stk[i]] )
-			format_pinpoint_message(
-				"multiple <<EOF>> rules for start condition %s",
-				scname[scon_stk[i]] );
-
+			format_pinpoint_message("multiple <<EOF>> rules for start condition %s", scname[scon_stk[i]] );
 		else
 			{
 			sceof[scon_stk[i]] = true;
@@ -987,8 +981,7 @@ void build_eof_action(void)
 			if (previous_continued_action /* && previous action was regular */)
 				add_action("YY_RULE_SETUP\n");
 
-			snprintf( action_text, sizeof(action_text), "case YY_STATE_EOF(%s):\n",
-				scname[scon_stk[i]] );
+			snprintf( action_text, sizeof(action_text), "case YY_STATE_EOF(%s):\n", scname[scon_stk[i]] );
 			add_action( action_text );
 			}
 		}
@@ -1000,7 +993,7 @@ void build_eof_action(void)
 	 * (which make generating "rule can never match" warnings
 	 * more difficult.
 	 */
-	--num_rules;
+    rules.pop_back();
 	++num_eof_rules;
 	}
 
@@ -1082,7 +1075,7 @@ void line_warning( const char *str, int line )
 
 void line_pinpoint( const char *str, int line )
 	{
-	fprintf( stderr, "%s:%d: %s\n", infilename, line, str );
+	fprintf( stderr, "%s:%d: %s\n", infilename.c_str(), line, str );
 	}
 
 

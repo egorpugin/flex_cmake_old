@@ -49,6 +49,15 @@ void dump_transitions(FILE *, int[]);
 void sympartition(int[], int, int[], int[]);
 int symfollowset(int[], int, int, int[]);
 
+/* Construct the epsilon closure of a set of ndfa states. */
+int *epsclosure(int *, int *, std::vector<int> &, int *, int *);
+
+/* Converts a set of ndfa states into a dfa state. */
+int snstods(int[], int, std::vector<int> &, int, int, int *);
+
+/* Check to see if NFA state set constitutes "dangerous" trailing context. */
+void check_trailing_context(int *, int, std::vector<int> &, int);
+
 /* check_for_backing_up - check a DFA state for backing up
  *
  * synopsis
@@ -57,7 +66,6 @@ int symfollowset(int[], int, int, int[]);
  * ds is the number of the state to check and state[] is its out-transitions,
  * indexed by equivalence class.
  */
-
 void check_for_backing_up(int ds, int state[])
 {
     if ((reject && !dfaacc[ds].dfaacc_set) || (!reject && !dfaacc[ds].dfaacc_state))
@@ -103,8 +111,7 @@ void check_for_backing_up(int ds, int state[])
  *    nfa_states[1 .. num_states] is the list of NFA states in the DFA.
  *    accset[1 .. nacc] is the list of accepting numbers for the DFA state.
  */
-
-void check_trailing_context(int *nfa_states, int num_states, int *accset, int nacc)
+void check_trailing_context(int *nfa_states, int num_states, std::vector<int> &accset, int nacc)
 {
     int i, j;
 
@@ -114,7 +121,7 @@ void check_trailing_context(int *nfa_states, int num_states, int *accset, int na
         int type = state_type[ns];
         int ar = assoc_rule[ns];
 
-        if (type == STATE_NORMAL || rule_type[ar] != RULE_VARIABLE)
+        if (type == STATE_NORMAL || rules[ar].type != RuleType::Variable)
         { /* do nothing */
         }
 
@@ -127,12 +134,13 @@ void check_trailing_context(int *nfa_states, int num_states, int *accset, int na
 			 * is large.
 			 */
             for (j = 1; j <= nacc; ++j)
+            {
                 if (accset[j] & YY_TRAILING_HEAD_MASK)
                 {
-                    line_warning(_("dangerous trailing context"),
-                                 rule_linenum[ar]);
+                    line_warning(_("dangerous trailing context"), rules[ar].linenum);
                     return;
                 }
+            }
         }
     }
 }
@@ -143,7 +151,6 @@ void check_trailing_context(int *nfa_states, int num_states, int *accset, int na
  * extracts the first MAX_ASSOC_RULES unique rules, sorts them,
  * and writes a report to the given file.
  */
-
 void dump_associated_rules(FILE *file, int ds)
 {
     int i, j;
@@ -154,7 +161,7 @@ void dump_associated_rules(FILE *file, int ds)
 
     for (i = 1; i <= size; ++i)
     {
-        int rule_num = rule_linenum[assoc_rule[dset[i]]];
+        int rule_num = rules[assoc_rule[dset[i]]].linenum;
 
         for (j = 1; j <= num_associated_rules; ++j)
             if (rule_num == rule_set[j])
@@ -193,7 +200,6 @@ void dump_associated_rules(FILE *file, int ds)
  * (i.e., all those which are not out-transitions, plus EOF).  The dump
  * is done to the given file.
  */
-
 void dump_transitions(FILE *file, int state[])
 {
     int i, ec;
@@ -239,8 +245,7 @@ void dump_transitions(FILE *file, int state[])
  *
  *  hashval is the hash value for the dfa corresponding to the state set.
  */
-
-int *epsclosure(int *t, int *ns_addr, int accset[], int *nacc_addr, int *hv_addr)
+int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, int *hv_addr)
 {
     int stkpos, ns, tsp;
     int numstates = *ns_addr, nacc, hashval, transsym, nfaccnum;
@@ -368,7 +373,6 @@ int *epsclosure(int *t, int *ns_addr, int accset[], int *nacc_addr, int *hv_addr
 }
 
 /* increase_max_dfas - increase the maximum number of DFAs */
-
 void increase_max_dfas(void)
 {
     current_max_dfas += MAX_DFAS_INCREMENT;
@@ -394,15 +398,13 @@ void increase_max_dfas(void)
  * Creates the dfa corresponding to the ndfa we've constructed.  The
  * dfa starts out in state #1.
  */
-
 void ntod(void)
 {
-    int *accset, ds, nacc, newds;
+    int ds, nacc, newds;
     int sym, hashval, numstates, dsize;
     int num_full_table_rows = 0; /* used only for -f */
     int *nset, *dset;
     int targptr, totaltrans, i, comstate, comfreq, targ;
-    int symlist[CSIZE + 1];
     int num_start_states;
     int todo_head, todo_next;
 
@@ -415,14 +417,17 @@ void ntod(void)
 	 * means that (since every character is potentially in its own
 	 * equivalence class) these arrays must have room for indices
 	 * from 1 to CSIZE, so their size must be CSIZE + 1.
-	 */
-    int duplist[CSIZE + 1], state[CSIZE + 1];
-    int targfreq[CSIZE + 1] = {0}, targstate[CSIZE + 1];
+     */
+    int symlist[CSIZE + 1] = { 0 };
+    int duplist[CSIZE + 1] = { 0 };
+    int state[CSIZE + 1];
+    int targfreq[CSIZE + 1] = { 0 };
+    int targstate[CSIZE + 1];
 
     /* accset needs to be large enough to hold all of the rules present
 	 * in the input, *plus* their YY_TRAILING_HEAD_MASK variants.
-	 */
-    accset = (int *)allocate_integer_array((num_rules + 1) * 2);
+     */
+    std::vector<int> accset(rules.size() * 2, 0);
     nset = (int *)allocate_integer_array(current_max_dfa_size);
 
     /* The "todo" queue is represented by the head, which is the DFA
@@ -432,16 +437,7 @@ void ntod(void)
 	 * need only know the bounds of the dfas to be processed.
 	 */
     todo_head = todo_next = 0;
-
-    for (i = 0; i <= csize; ++i)
-    {
-        duplist[i] = NIL;
-        symlist[i] = false;
-    }
-
-    for (i = 0; i <= num_rules; ++i)
-        accset[i] = NIL;
-
+    
     if (trace)
     {
         dumpnfa(scset[1]);
@@ -522,7 +518,6 @@ void ntod(void)
         place_state(state, 0, 0);
         dfaacc[0].dfaacc_state = 0;
     }
-
     else if (fulltbl)
     {
         if (nultrans)
@@ -606,8 +601,7 @@ void ntod(void)
             nset[numstates] =
                 mkbranch(scbol[i / 2], scset[i / 2]);
 
-        nset = epsclosure(nset, &numstates, accset, &nacc,
-                          &hashval);
+        nset = epsclosure(nset, &numstates, accset, &nacc, &hashval);
 
         if (snstods(nset, numstates, accset, nacc, hashval, &ds))
         {
@@ -616,8 +610,7 @@ void ntod(void)
             ++todo_next;
 
             if (variable_trailing_context_rules && nacc > 0)
-                check_trailing_context(nset, numstates,
-                                       accset, nacc);
+                check_trailing_context(nset, numstates, accset, nacc);
         }
     }
 
@@ -777,16 +770,13 @@ void ntod(void)
             if (gentables)
                 outn("    },\n");
         }
-
         else if (fullspd)
             place_state(state, ds, totaltrans);
-
         else if (ds == end_of_buffer_state)
             /* Special case this state to make sure it does what
 			 * it's supposed to, i.e., jam on end-of-buffer.
 			 */
             stack1(ds, 0, 0, JAMSTATE);
-
         else
         { /* normal, compressed state */
 
@@ -823,7 +813,6 @@ void ntod(void)
             yynxt_tbl = 0;
         }
     }
-
     else if (!fullspd)
     {
         cmptmps(); /* create compressed template entries */
@@ -841,7 +830,6 @@ void ntod(void)
         mkdeftbl();
     }
 
-    free(accset);
     free(nset);
 }
 
@@ -854,8 +842,7 @@ void ntod(void)
  *
  * On return, the dfa state number is in newds.
  */
-
-int snstods(int sns[], int numstates, int accset[], int nacc, int hashval, int *newds_addr)
+int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int hashval, int *newds_addr)
 {
     int didsort = 0;
     int i, j;
@@ -926,7 +913,6 @@ int snstods(int sns[], int numstates, int accset[], int nacc, int hashval, int *
 
         accsiz[newds] = 0;
     }
-
     else if (reject)
     {
         /* We sort the accepting set in increasing order so the
@@ -944,22 +930,21 @@ int snstods(int sns[], int numstates, int accset[], int nacc, int hashval, int *
         {
             dfaacc[newds].dfaacc_set[i] = accset[i];
 
-            if (accset[i] <= num_rules)
+            if (accset[i] < rules.size())
                 /* Who knows, perhaps a REJECT can yield
 				 * this rule.
 				 */
-                rule_useful[accset[i]] = true;
+                rules[accset[i]].useful = true;
         }
 
         accsiz[newds] = nacc;
     }
-
     else
     {
         /* Find lowest numbered rule so the disambiguating rule
 		 * will work.
 		 */
-        j = num_rules + 1;
+        j = rules.size();
 
         for (i = 1; i <= nacc; ++i)
             if (accset[i] < j)
@@ -967,8 +952,8 @@ int snstods(int sns[], int numstates, int accset[], int nacc, int hashval, int *
 
         dfaacc[newds].dfaacc_state = j;
 
-        if (j <= num_rules)
-            rule_useful[j] = true;
+        if (j < rules.size())
+            rules[j].useful = true;
     }
 
     *newds_addr = newds;
@@ -982,7 +967,6 @@ int snstods(int sns[], int numstates, int accset[], int nacc, int hashval, int *
  *    numstates = symfollowset( int ds[current_max_dfa_size], int dsize,
  *				int transsym, int nset[current_max_dfa_size] );
  */
-
 int symfollowset(int ds[], int dsize, int transsym, int nset[])
 {
     int ns, tsp, sym, i, j, lenccl, ch, numstates, ccllist;
@@ -1065,7 +1049,6 @@ int symfollowset(int ds[], int dsize, int transsym, int nset[])
  *    sympartition( int ds[current_max_dfa_size], int numstates,
  *			int symlist[numecs], int duplist[numecs] );
  */
-
 void sympartition(int ds[], int numstates, int symlist[], int duplist[])
 {
     int tch, i, j, k, ns, dupfwd[CSIZE + 1], lenccl, cclp, ich;

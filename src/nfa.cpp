@@ -97,9 +97,7 @@ void dumpnfa(int state1)
 {
     int sym, tsp1, tsp2, anum, ns;
 
-    fprintf(stderr,
-            _("\n\n********** beginning dump of nfa with start state %d\n"),
-            state1);
+    fprintf(stderr, _("\n\n********** beginning dump of nfa with start state %d\n"), state1);
 
     /* We probably should loop starting at firstst[state1] and going to
 	 * lastst[state1], but they're not maintained properly when we "or"
@@ -159,10 +157,8 @@ int dupmachine(int mach)
         {
             mkxtion(finalst[state], trans1[i] + state - i);
 
-            if (transchar[i] == SYM_EPSILON &&
-                trans2[i] != NO_TRANSITION)
-                mkxtion(finalst[state],
-                        trans2[i] + state - i);
+            if (transchar[i] == SYM_EPSILON && trans2[i] != NO_TRANSITION)
+                mkxtion(finalst[state], trans2[i] + state - i);
         }
 
         accptnum[state] = accptnum[i];
@@ -193,54 +189,50 @@ int dupmachine(int mach)
  * context has variable length.
  */
 
-void finish_rule(int mach, int variable_trail_rule, int headcnt, int trailcnt,
-                 int pcont_act)
+void finish_rule(int mach, int variable_trail_rule, int headcnt, int trailcnt, int pcont_act)
 {
     char action_text[MAXLINE];
+    auto rule_id = rules.size();
 
-    add_accept(mach, num_rules);
+    add_accept(mach, rule_id);
 
     /* We did this in new_rule(), but it often gets the wrong
 	 * number because we do it before we start parsing the current rule.
 	 */
-    rule_linenum[num_rules] = linenum;
+    rules[rule_id - 1].linenum = linenum;
 
     /* If this is a continued action, then the line-number has already
 	 * been updated, giving us the wrong number.
 	 */
     if (continued_action)
-        --rule_linenum[num_rules];
+        --rules[rule_id - 1].linenum;
 
     /* If the previous rule was continued action, then we inherit the
 	 * previous newline flag, possibly overriding the current one.
 	 */
-    if (pcont_act && rule_has_nl[num_rules - 1])
-        rule_has_nl[num_rules] = true;
+    if (pcont_act && rules[rule_id - 2].has_nl)
+        rules[rule_id - 1].has_nl = true;
 
-    snprintf(action_text, sizeof(action_text), "case %d:\n", num_rules);
+    snprintf(action_text, sizeof(action_text), "case %d:\n", rule_id);
     add_action(action_text);
-    if (rule_has_nl[num_rules])
+    if (rules[rule_id - 1].has_nl)
     {
-        snprintf(action_text, sizeof(action_text), "/* rule %d can match eol */\n",
-                 num_rules);
+        snprintf(action_text, sizeof(action_text), "/* rule %d can match eol */\n", rule_id);
         add_action(action_text);
     }
 
     if (variable_trail_rule)
     {
-        rule_type[num_rules] = RULE_VARIABLE;
+        rules[rule_id - 1].type = RuleType::Variable;
 
         if (performance_report > 0)
-            fprintf(stderr,
-                    _("Variable trailing context rule at line %d\n"),
-                    rule_linenum[num_rules]);
+            fprintf(stderr, _("Variable trailing context rule at line %d\n"), rules[rule_id - 1].linenum);
 
         variable_trailing_context_rules = true;
     }
-
     else
     {
-        rule_type[num_rules] = RULE_NORMAL;
+        rules[rule_id - 1].type = RuleType::Normal;
 
         if (headcnt > 0 || trailcnt > 0)
         {
@@ -254,28 +246,23 @@ void finish_rule(int mach, int variable_trail_rule, int headcnt, int trailcnt,
 
             if (headcnt > 0)
             {
-                if (rule_has_nl[num_rules])
+                if (rules[rule_id - 1].has_nl)
                 {
-                    snprintf(action_text, sizeof(action_text),
-                             "YY_LINENO_REWIND_TO(%s + %d);\n", scanner_bp, headcnt);
+                    snprintf(action_text, sizeof(action_text), "YY_LINENO_REWIND_TO(%s + %d);\n", scanner_bp, headcnt);
                     add_action(action_text);
                 }
-                snprintf(action_text, sizeof(action_text), "%s = %s + %d;\n",
-                         scanner_cp, scanner_bp, headcnt);
+                snprintf(action_text, sizeof(action_text), "%s = %s + %d;\n", scanner_cp, scanner_bp, headcnt);
                 add_action(action_text);
             }
-
             else
             {
-                if (rule_has_nl[num_rules])
+                if (rules[rule_id - 1].has_nl)
                 {
-                    snprintf(action_text, sizeof(action_text),
-                             "YY_LINENO_REWIND_TO(yy_cp - %d);\n", trailcnt);
+                    snprintf(action_text, sizeof(action_text), "YY_LINENO_REWIND_TO(yy_cp - %d);\n", trailcnt);
                     add_action(action_text);
                 }
 
-                snprintf(action_text, sizeof(action_text), "%s -= %d;\n",
-                         scanner_cp, trailcnt);
+                snprintf(action_text, sizeof(action_text), "%s -= %d;\n", scanner_cp, trailcnt);
                 add_action(action_text);
             }
 
@@ -626,7 +613,7 @@ int mkstate(int sym)
     trans1[lastnfa] = NO_TRANSITION;
     trans2[lastnfa] = NO_TRANSITION;
     accptnum[lastnfa] = NIL;
-    assoc_rule[lastnfa] = num_rules;
+    assoc_rule[lastnfa] = rules.size() - 1;
     state_type[lastnfa] = current_state_type;
 
     /* Fix up equivalence classes base on this transition.  Note that any
@@ -689,26 +676,9 @@ void mkxtion(int statefrom, int stateto)
 
 /* new_rule - initialize for a new rule */
 
-void new_rule(void)
+void new_rule()
 {
-    if (++num_rules >= current_max_rules)
-    {
-        ++num_reallocs;
-        current_max_rules += MAX_RULES_INCREMENT;
-        rule_type = (decltype(rule_type))reallocate_integer_array(rule_type,
-                                                                  current_max_rules);
-        rule_linenum = (decltype(rule_linenum))reallocate_integer_array(rule_linenum,
-                                                                        current_max_rules);
-        rule_useful = (decltype(rule_useful))reallocate_integer_array(rule_useful,
-                                                                      current_max_rules);
-        rule_has_nl = (decltype(rule_has_nl))reallocate_bool_array(rule_has_nl,
-                                                                   current_max_rules);
-    }
-
-    if (num_rules > MAX_RULE)
-        lerr(_("too many rules (> %d)!"), MAX_RULE);
-
-    rule_linenum[num_rules] = linenum;
-    rule_useful[num_rules] = false;
-    rule_has_nl[num_rules] = false;
+    Rule r;
+    r.linenum = linenum;
+    rules.push_back(r);
 }

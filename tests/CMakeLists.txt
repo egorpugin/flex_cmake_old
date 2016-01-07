@@ -273,6 +273,10 @@ test_simple_m4(1 13)
 # TESTS flex simple
 ########################################
 
+add_test(NAME invoke_help COMMAND flex --help)
+add_test(NAME invoke_verbose COMMAND flex -v -L ${CMAKE_CURRENT_SOURCE_DIR}/alloc_extra.l
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
 set(flex_tests_simple
 	alloc_extra.l
 	array_nr.l

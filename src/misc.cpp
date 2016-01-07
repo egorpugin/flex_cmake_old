@@ -274,9 +274,8 @@ void line_directive_out(bool print, bool do_infile)
  */
 void mark_defs1(void)
 {
-    defs1_offset = 0;
-    action_array += '\0';
-    action_offset = prolog_offset = action_array.size();
+    defs1_array = action_array;
+    action_array.clear();
 }
 
 /* mark_prolog - mark the current position in the action array as
@@ -284,8 +283,8 @@ void mark_defs1(void)
  */
 void mark_prolog(void)
 {
-    action_array += '\0';
-    action_offset = action_array.size();
+    prolog_array = action_array;
+    action_array.clear();
 }
 
 /* mk2data - generate a data statement for a two-dimensional array

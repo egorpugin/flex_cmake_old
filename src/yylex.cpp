@@ -72,7 +72,7 @@ int yylex()
     {
         if (beglin)
         {
-            fprintf(stderr, "%d\t", num_rules + 1);
+            fprintf(stderr, "%d\t", rules.size());
             beglin = 0;
         }
 
@@ -212,9 +212,7 @@ int yylex()
             break;
 
         default:
-            fprintf(stderr,
-                    _("*Something Weird* - tok: %d val: %d\n"),
-                    toktype, yylval);
+            fprintf(stderr, _("*Something Weird* - tok: %d val: %d\n"), toktype, yylval);
             break;
         }
     }

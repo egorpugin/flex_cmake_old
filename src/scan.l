@@ -80,8 +80,6 @@ std::unordered_map<String, int> ccltab;
             m4defs_buf.m4undefine(def); \
     } while(0)
 
-#define MARK_END_OF_PROLOG mark_prolog();
-
 #define YY_DECL \
 	int flexscan()
 

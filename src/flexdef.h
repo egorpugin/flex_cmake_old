@@ -134,9 +134,6 @@
  */
 #define YY_TRAILING_HEAD_MASK 0x4000
 
-/* Maximum number of rules, as outlined in the above note. */
-#define MAX_RULE (YY_TRAILING_MASK - 1)
-
 /* NIL must be 0.  If not, its special meaning when making equivalence classes
  * (it marks the representative of a given e.c.) will be unidentifiable.
  */
@@ -153,9 +150,6 @@
 /* Size of table holding members of character classes. */
 #define INITIAL_MAX_CCL_TBL_SIZE 500
 #define MAX_CCL_TBL_SIZE_INCREMENT 250
-
-#define INITIAL_MAX_RULES 100 /* default maximum number of rules */
-#define MAX_RULES_INCREMENT 100
 
 #define INITIAL_MNS 2000   /* default maximum number of nfa states */
 #define MNS_INCREMENT 1000 /* amount to bump above by if it's not enough */
@@ -349,7 +343,6 @@ extern int trace_hex;
  * input_files - array holding names of input files
  * program_name - name with which program was invoked
  * action_array - array to hold the rule actions
- * action_size - size of action_array
  * defs1_offset - index where the user's section 1 definitions start
  *	in action_array
  * prolog_offset - index where the prolog starts in action_array
@@ -369,8 +362,7 @@ extern String prefix, yyclass, extra_type;
 extern int do_stdinit, use_stdout;
 extern InputFiles input_files;
 extern String program_name;
-extern String action_array;
-extern int defs1_offset, prolog_offset, action_offset;
+extern String action_array, defs1_array, prolog_array;
 
 /* Variables for stack of states having only one out-transition:
  * onestate - state number
@@ -390,7 +382,6 @@ extern int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
  * 	rules created so far
  * num_eof_rules - number of <<EOF>> rules
  * default_rule - number of the default rule
- * current_max_rules - current maximum number of rules
  * lastnfa - last nfa state number created
  * firstst - physically the first state of a fragment
  * lastst - last physical state of fragment
@@ -416,13 +407,30 @@ extern int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
  * nlch - default eol char
  */
 
-extern int maximum_mns, current_mns, current_max_rules;
-extern int num_rules, num_eof_rules, default_rule, lastnfa;
+extern int maximum_mns, current_mns;
+extern int num_eof_rules, default_rule, lastnfa;
 extern int *firstst, *lastst, *finalst, *transchar, *trans1, *trans2;
 extern int *accptnum, *assoc_rule, *state_type;
-extern int *rule_type, *rule_linenum, *rule_useful;
-extern bool *rule_has_nl, *ccl_has_nl;
+extern bool *ccl_has_nl;
 extern int nlch;
+
+enum class RuleType
+{
+    Normal = 0,
+    Variable = 1,
+};
+
+struct Rule
+{
+    RuleType type = RuleType::Normal;
+    int linenum = 0;
+    bool useful = false;
+    bool has_nl = false;
+};
+
+using Rules = std::vector<Rule>;
+
+extern Rules rules;
 
 /* Different types of states; values are useful as masks, as well, for
  * routines like check_trailing_context().
@@ -434,9 +442,6 @@ extern int nlch;
 
 extern int current_state_type;
 
-/* Different types of rules. */
-#define RULE_NORMAL 0
-#define RULE_VARIABLE 1
 
 /* True if the input rules include a rule with both variable-length head
  * and trailing context, false otherwise.
@@ -530,7 +535,8 @@ extern int current_max_dfa_size, current_max_xpairs;
 extern int current_max_template_xpairs, current_max_dfas;
 extern int lastdfa, *nxt, *chk, *tnxt;
 extern int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss, *dfasiz;
-extern union dfaacc_union {
+extern union dfaacc_union
+{
     int *dfaacc_set;
     int dfaacc_state;
 } *dfaacc;

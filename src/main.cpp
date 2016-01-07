@@ -63,8 +63,7 @@ int printstats, syntaxerror, eofseen, ddebug, trace, nowarn, spprdflt;
 int interactive, lex_compat, posix_compat, do_yylineno,
     useecs, fulltbl, usemecs;
 int fullspd, gen_line_dirs, performance_report, backing_up_report;
-int C_plus_plus, long_align, use_read, yytext_is_array, do_yywrap,
-    csize;
+int C_plus_plus, long_align, use_read, yytext_is_array, do_yywrap, csize;
 int reentrant, bison_bridge_lval, bison_bridge_lloc;
 int yymore_used, reject, real_reject, continued_action, in_rule;
 int yymore_really_used, reject_really_used;
@@ -72,9 +71,6 @@ int trace_hex = 0;
 int datapos, dataline, linenum;
 std::ifstream skelfile;
 int skel_ind = 0;
-String action_array;
-int action_size, defs1_offset, prolog_offset, action_offset,
-    action_index;
 String infilename, headerfilename;
 String outfilename;
 int did_outfilename;
@@ -82,11 +78,10 @@ String prefix, yyclass, extra_type;
 int do_stdinit, use_stdout;
 int onestate[ONE_STACK_SIZE], onesym[ONE_STACK_SIZE];
 int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
-int maximum_mns, current_mns, current_max_rules;
-int num_rules, num_eof_rules, default_rule, lastnfa;
+int maximum_mns, current_mns;
+int num_eof_rules, default_rule, lastnfa;
 int *firstst, *lastst, *finalst, *transchar, *trans1, *trans2;
 int *accptnum, *assoc_rule, *state_type;
-int *rule_type, *rule_linenum, *rule_useful;
 int current_state_type;
 int variable_trailing_context_rules;
 int numtemps, numprots, protprev[MSP], protnext[MSP], prottbl[MSP];
@@ -114,9 +109,12 @@ int num_backing_up, bol_needed;
 FILE *backing_up_file;
 int end_of_buffer_state;
 InputFiles input_files;
-bool *rule_has_nl, *ccl_has_nl;
+bool *ccl_has_nl;
 int nlch = '\n';
 bool ansi_func_defs, ansi_func_protos;
+String action_array, defs1_array, prolog_array;
+
+Rules rules;
 
 bool tablesext, tablesverify, gentables;
 String tablesfilename, tablesname;
@@ -134,9 +132,9 @@ void usage();
  */
 String program_name = "flex";
 
-static const char outfile_template[] = "lex.%s.%s";
-static const char backing_name[] = "lex.backup";
-static const char tablesfile_template[] = "lex.%s.tables";
+static const char *outfile_template = "lex.%s.%s";
+static const char *backing_name = "lex.backup";
+static const char *tablesfile_template = "lex.%s.tables";
 
 static char outfile_path[MAXLINE];
 static String skelname;
@@ -148,8 +146,6 @@ Context processed_file; // main buffer
 
 int flex_main(int argc, char *argv[])
 {
-    int i, exit_status, child_status;
-
     flexinit(argc, argv);
 
     readin();
@@ -158,19 +154,23 @@ int flex_main(int argc, char *argv[])
     /* %% [1.5] DFA */
     ntod();
 
-    for (i = 1; i <= num_rules; ++i)
-        if (!rule_useful[i] && i != default_rule)
-            line_warning(_("rule cannot be matched"),
-                         rule_linenum[i]);
+    for (int i = 1; i < rules.size(); ++i)
+        if (!rules[i].useful && i != default_rule)
+            line_warning(_("rule cannot be matched"), rules[i].linenum);
 
-    if (spprdflt && !reject && rule_useful[default_rule])
-        line_warning(_("-s option given but default rule can be matched"),
-                     rule_linenum[default_rule]);
+    if (spprdflt && !reject && rules[default_rule].useful)
+        line_warning(_("-s option given but default rule can be matched"), rules[default_rule].linenum);
 
     /* Generate the C state transition tables from the DFA. */
     make_tables();
 
     // rest of processsing
+    auto print_lines = [](FILE *f, const auto &ctx)
+    {
+        for (auto &line : ctx.getLines())
+            fprintf(f, "%s\n", line.text.c_str());
+    };
+
     Context header_file;
     do
     {
@@ -290,11 +290,6 @@ int flex_main(int argc, char *argv[])
             fix_lines(header_file);
         }
     } while (0);
-
-    auto print_lines = [](FILE *f, const auto &ctx) {
-        for (auto &line : ctx.getLines())
-            fprintf(f, "%s\n", line.text.c_str());
-    };
 
     // write files
     {
@@ -453,8 +448,7 @@ void check_options(void)
             else
                 suffix = "c";
 
-            snprintf(outfile_path, sizeof(outfile_path), outfile_template,
-                     prefix, suffix);
+            snprintf(outfile_path, sizeof(outfile_path), outfile_template, prefix.c_str(), suffix);
 
             outfilename = outfile_path;
         }
@@ -586,8 +580,7 @@ void flexend(int exit_status)
     if (skelfile)
     {
         if (skelfile.bad())
-            lerr(_("input error reading skeleton file %s"),
-                 skelname);
+            lerr(_("input error reading skeleton file %s"), skelname);
         skelfile.close();
     }
 
@@ -614,9 +607,7 @@ void flexend(int exit_status)
 
     if (printstats)
     {
-        fprintf(stderr, _("%s version %s usage statistics:\n"),
-                program_name, flex_version);
-
+        fprintf(stderr, _("%s version %s usage statistics:\n"), program_name.c_str(), flex_version.c_str());
         fprintf(stderr, _("  scanner options: -"));
 
         if (C_plus_plus)
@@ -696,78 +687,54 @@ void flexend(int exit_status)
 
         putc('\n', stderr);
 
-        fprintf(stderr, _("  %d/%d NFA states\n"),
-                lastnfa, current_mns);
-        fprintf(stderr, _("  %d/%d DFA states (%d words)\n"),
-                lastdfa, current_max_dfas, totnst);
-        fprintf(stderr, _("  %d rules\n"),
-                num_rules + num_eof_rules -
-                    1 /* - 1 for def. rule */);
+        fprintf(stderr, _("  %d/%d NFA states\n"), lastnfa, current_mns);
+        fprintf(stderr, _("  %d/%d DFA states (%d words)\n"), lastdfa, current_max_dfas, totnst);
+        fprintf(stderr, _("  %d rules\n"), rules.size() + num_eof_rules - 1 /* - 1 for def. rule */);
 
         if (num_backing_up == 0)
             fprintf(stderr, _("  No backing up\n"));
         else if (fullspd || fulltbl)
-            fprintf(stderr,
-                    _("  %d backing-up (non-accepting) states\n"),
-                    num_backing_up);
+            fprintf(stderr, _("  %d backing-up (non-accepting) states\n"), num_backing_up);
         else
-            fprintf(stderr,
-                    _("  Compressed tables always back-up\n"));
+            fprintf(stderr, _("  Compressed tables always back-up\n"));
 
         if (bol_needed)
-            fprintf(stderr,
-                    _("  Beginning-of-line patterns used\n"));
+            fprintf(stderr, _("  Beginning-of-line patterns used\n"));
 
-        fprintf(stderr, _("  %d/%d start conditions\n"), lastsc,
-                current_max_scs);
-        fprintf(stderr,
-                _("  %d epsilon states, %d double epsilon states\n"),
-                numeps, eps2);
+        fprintf(stderr, _("  %d/%d start conditions\n"), lastsc, current_max_scs);
+        fprintf(stderr, _("  %d epsilon states, %d double epsilon states\n"), numeps, eps2);
 
         if (lastccl == 0)
             fprintf(stderr, _("  no character classes\n"));
         else
-            fprintf(stderr,
-                    _("  %d/%d character classes needed %d/%d words of storage, %d reused\n"),
+            fprintf(stderr, _("  %d/%d character classes needed %d/%d words of storage, %d reused\n"),
                     lastccl, current_maxccls,
                     cclmap[lastccl] + ccllen[lastccl],
                     current_max_ccl_tbl_size, cclreuse);
 
-        fprintf(stderr, _("  %d state/nextstate pairs created\n"),
-                numsnpairs);
-        fprintf(stderr,
-                _("  %d/%d unique/duplicate transitions\n"),
-                numuniq, numdup);
+        fprintf(stderr, _("  %d state/nextstate pairs created\n"), numsnpairs);
+        fprintf(stderr, _("  %d/%d unique/duplicate transitions\n"), numuniq, numdup);
 
         if (fulltbl)
         {
             tblsiz = lastdfa * numecs;
-            fprintf(stderr, _("  %d table entries\n"),
-                    tblsiz);
+            fprintf(stderr, _("  %d table entries\n"), tblsiz);
         }
-
         else
         {
             tblsiz = 2 * (lastdfa + numtemps) + 2 * tblend;
 
-            fprintf(stderr,
-                    _("  %d/%d base-def entries created\n"),
+            fprintf(stderr, _("  %d/%d base-def entries created\n"),
                     lastdfa + numtemps, current_max_dfas);
-            fprintf(stderr,
-                    _("  %d/%d (peak %d) nxt-chk entries created\n"),
+            fprintf(stderr, _("  %d/%d (peak %d) nxt-chk entries created\n"),
                     tblend, current_max_xpairs, peakpairs);
-            fprintf(stderr,
-                    _("  %d/%d (peak %d) template nxt-chk entries created\n"),
+            fprintf(stderr,  _("  %d/%d (peak %d) template nxt-chk entries created\n"),
                     numtemps * nummecs,
                     current_max_template_xpairs,
                     numtemps * numecs);
-            fprintf(stderr, _("  %d empty table entries\n"),
-                    nummt);
-            fprintf(stderr, _("  %d protos created\n"),
-                    numprots);
-            fprintf(stderr,
-                    _("  %d templates created, %d uses\n"),
-                    numtemps, tmpuses);
+            fprintf(stderr, _("  %d empty table entries\n"), nummt);
+            fprintf(stderr, _("  %d protos created\n"), numprots);
+            fprintf(stderr, _("  %d templates created, %d uses\n"), numtemps, tmpuses);
         }
 
         if (useecs)
@@ -786,13 +753,10 @@ void flexend(int exit_status)
                     nummecs, csize);
         }
 
-        fprintf(stderr,
-                _("  %d (%d saved) hash collisions, %d DFAs equal\n"),
+        fprintf(stderr, _("  %d (%d saved) hash collisions, %d DFAs equal\n"),
                 hshcol, hshsave, dfaeql);
-        fprintf(stderr, _("  %d sets of reallocations needed\n"),
-                num_reallocs);
-        fprintf(stderr, _("  %d total table entries needed\n"),
-                tblsiz);
+        fprintf(stderr, _("  %d sets of reallocations needed\n"), num_reallocs);
+        fprintf(stderr, _("  %d total table entries needed\n"), tblsiz);
     }
 
     FLEX_EXIT(exit_status);
@@ -829,9 +793,6 @@ void flexinit(int argc, char **argv)
     ansi_func_defs = ansi_func_protos = true;
 
     sawcmpflag = false;
-
-    /* Initialize dynamic array for holding the rule actions. */
-    defs1_offset = prolog_offset = action_offset = 0;
 
     /* Initialize any buffers. */
     m4defs_buf.addLine("m4_changequote");
@@ -1051,7 +1012,7 @@ void flexinit(int argc, char **argv)
             break;
 
         case OPT_VERSION:
-            printf(_("%s %s\n"), program_name, flex_version);
+            printf(_("%s %s\n"), program_name.c_str(), flex_version.c_str());
             FLEX_EXIT(0);
 
         case OPT_WARN:
@@ -1280,7 +1241,7 @@ void flexinit(int argc, char **argv)
         set_input_file(String());
 
     lastccl = lastsc = lastdfa = lastnfa = 0;
-    num_rules = num_eof_rules = default_rule = 0;
+    num_eof_rules = default_rule = 0;
     numas = numsnpairs = tmpuses = 0;
     numecs = numeps = eps2 = num_reallocs = hshcol = dfaeql = totnst =
         0;
@@ -1583,13 +1544,7 @@ void set_up_initial_allocations(void)
     accptnum = (decltype(accptnum))allocate_integer_array(current_mns);
     assoc_rule = (decltype(assoc_rule))allocate_integer_array(current_mns);
     state_type = (decltype(state_type))allocate_integer_array(current_mns);
-
-    current_max_rules = INITIAL_MAX_RULES;
-    rule_type = (decltype(rule_type))allocate_integer_array(current_max_rules);
-    rule_linenum = (decltype(rule_linenum))allocate_integer_array(current_max_rules);
-    rule_useful = (decltype(rule_useful))allocate_integer_array(current_max_rules);
-    rule_has_nl = (decltype(rule_has_nl))allocate_bool_array(current_max_rules);
-
+    
     current_max_scs = INITIAL_MAX_SCS;
     scset = (decltype(scset))allocate_integer_array(current_max_scs);
     scbol = (decltype(scbol))allocate_integer_array(current_max_scs);
@@ -1646,11 +1601,11 @@ void usage()
     if (!did_outfilename)
     {
         snprintf(outfile_path, sizeof(outfile_path), outfile_template,
-                 prefix, C_plus_plus ? "cc" : "c");
+                 prefix.c_str(), C_plus_plus ? "cc" : "c");
         outfilename = outfile_path;
     }
 
-    fprintf(f, _("Usage: %s [OPTIONS] [FILE]...\n"), program_name);
+    fprintf(f, _("Usage: %s [OPTIONS] [FILE]...\n"), program_name.c_str());
     fprintf(f,
             _("Generates programs that perform pattern-matching on text.\n"
               "\n"
@@ -1713,5 +1668,5 @@ void usage()
               "  -?\n"
               "  -h, --help              produce this help message\n"
               "  -V, --version           report %s version\n"),
-            backing_name, program_name, outfile_path, program_name);
+            backing_name, program_name.c_str(), outfile_path, program_name.c_str());
 }

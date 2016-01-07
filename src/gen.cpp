@@ -118,12 +118,12 @@ static struct yytbl_data *mkeoltbl(void)
     tbl = (decltype(tbl))calloc(1, sizeof(struct yytbl_data));
     yytbl_data_init(tbl, YYTD_ID_RULE_CAN_MATCH_EOL);
     tbl->td_flags = YYTD_DATA8;
-    tbl->td_lolen = num_rules + 1;
+    tbl->td_lolen = rules.size();
     tbl->td_data = tdata =
         (decltype(tdata))calloc(tbl->td_lolen, sizeof(flex_int8_t));
 
-    for (i = 1; i <= num_rules; i++)
-        tdata[i] = rule_has_nl[i] ? 1 : 0;
+    for (i = 1; i < rules.size(); i++)
+        tdata[i] = rules[i].has_nl ? 1 : 0;
 
     yydmap_buf.addLine("\t{YYTD_ID_RULE_CAN_MATCH_EOL, (void**)&yy_rule_can_match_eol, sizeof(flex_int32_t)},");
 
@@ -137,14 +137,13 @@ static void geneoltbl(void)
 
     outn("m4_ifdef( [[M4_YY_USE_LINENO]],[[");
     outn("/* Table of booleans, true if rule could match eol. */");
-    out_str_dec(get_int32_decl(), "yy_rule_can_match_eol",
-                num_rules + 1);
+    out_str_dec(get_int32_decl(), "yy_rule_can_match_eol", rules.size());
 
     if (gentables)
     {
-        for (i = 1; i <= num_rules; i++)
+        for (i = 1; i < rules.size(); i++)
         {
-            processed_file << (rule_has_nl[i] ? 1 : 0) << ", " << Context::eol;
+            processed_file << (rules[i].has_nl ? 1 : 0) << ", " << Context::eol;
             /* format nicely, 20 numbers per line. */
             if ((i % 20) == 19)
                 processed_file << "\n    ";
@@ -214,7 +213,7 @@ static struct yytbl_data *mkctbl(void)
     int i;
     struct yytbl_data *tbl = 0;
     flex_int32_t *tdata = 0, curr = 0;
-    int end_of_buffer_action = num_rules + 1;
+    int end_of_buffer_action = rules.size() + 1;
 
     yydmap_buf.addLine(String() + "\t{YYTD_ID_TRANSITION, (void**)&yy_transition, sizeof(" +
                        (((tblend + numecs + 1) >= INT16_MAX || long_align) ? "flex_int32_t" : "flex_int16_t") + ")},");
@@ -341,7 +340,7 @@ static struct yytbl_data *mkssltbl(void)
 void genctbl(void)
 {
     int i;
-    int end_of_buffer_action = num_rules + 1;
+    int end_of_buffer_action = rules.size() + 1;
 
     /* Table of verify for transition and offset to next state. */
     if (gentables)
@@ -646,7 +645,7 @@ void gen_find_action(void)
 struct yytbl_data *mkftbl(void)
 {
     int i;
-    int end_of_buffer_action = num_rules + 1;
+    int end_of_buffer_action = rules.size() + 1;
     struct yytbl_data *tbl;
     flex_int32_t *tdata = 0;
 
@@ -682,7 +681,7 @@ struct yytbl_data *mkftbl(void)
 void genftbl(void)
 {
     int i;
-    int end_of_buffer_action = num_rules + 1;
+    int end_of_buffer_action = rules.size() + 1;
 
     out_str_dec(long_align ? get_int32_decl() : get_int16_decl(),
                 "yy_accept", lastdfa + 1);
@@ -1030,18 +1029,17 @@ void gen_start_state(void)
 }
 
 /* gentabs - generate data statements for the transition tables */
-
 void gentabs(void)
 {
-    int i, j, k, *accset, nacc, *acc_array, total_states;
-    int end_of_buffer_action = num_rules + 1;
+    std::vector<int> acc_array(current_max_dfas);
+    int i, j, k, *accset, nacc, total_states;
+    int end_of_buffer_action = rules.size() + 1;
     struct yytbl_data *yyacc_tbl = 0, *yymeta_tbl = 0, *yybase_tbl = 0,
                       *yydef_tbl = 0, *yynxt_tbl = 0, *yychk_tbl = 0, *yyacclist_tbl = 0;
     flex_int32_t *yyacc_data = 0, *yybase_data = 0, *yydef_data = 0,
                  *yynxt_data = 0, *yychk_data = 0, *yyacclist_data = 0;
     flex_int32_t yybase_curr = 0, yyacclist_curr = 0, yyacc_curr = 0;
 
-    acc_array = (decltype(acc_array))allocate_integer_array(current_max_dfas);
     nummt = 0;
 
     /* The compressed table format jams by entering the "jam state",
@@ -1068,17 +1066,14 @@ void gentabs(void)
         dfaacc[end_of_buffer_state].dfaacc_set =
             EOB_accepting_list;
 
-        out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_acclist", MAX(numas,
-                                                                                        1) +
-                                                                                        1);
+        out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_acclist", MAX(numas, 1) + 1);
 
         yydmap_buf.addLine(String() + "\t{YYTD_ID_ACCLIST, (void**)&yy_acclist, sizeof(" + (long_align ? "flex_int32_t" : "flex_int16_t") + ")},");
 
         yyacclist_tbl = (decltype(yyacclist_tbl))calloc(1, sizeof(struct yytbl_data));
         yytbl_data_init(yyacclist_tbl, YYTD_ID_ACCLIST);
         yyacclist_tbl->td_lolen = MAX(numas, 1) + 1;
-        yyacclist_tbl->td_data = yyacclist_data =
-            (decltype(yyacclist_data))calloc(yyacclist_tbl->td_lolen, sizeof(flex_int32_t));
+        yyacclist_tbl->td_data = yyacclist_data = (decltype(yyacclist_data))calloc(yyacclist_tbl->td_lolen, sizeof(flex_int32_t));
         yyacclist_curr = 1;
 
         j = 1; /* index into "yy_acclist" array */
@@ -1093,9 +1088,7 @@ void gentabs(void)
                 nacc = accsiz[i];
 
                 if (trace)
-                    fprintf(stderr,
-                            _("state # %d accepts: "),
-                            i);
+                    fprintf(stderr, _("state # %d accepts: "), i);
 
                 for (k = 1; k <= nacc; ++k)
                 {
@@ -1103,7 +1096,11 @@ void gentabs(void)
 
                     ++j;
 
-                    if (variable_trailing_context_rules && !(accnum & YY_TRAILING_HEAD_MASK) && accnum > 0 && accnum <= num_rules && rule_type[accnum] == RULE_VARIABLE)
+                    if (variable_trailing_context_rules &&
+                        !(accnum & YY_TRAILING_HEAD_MASK) &&
+                        accnum > 0 &&
+                        accnum < rules.size() &&
+                        rules[accnum].type == RuleType::Variable)
                     {
                         /* Special hack to flag
 						 * accepting number as part
@@ -1117,15 +1114,12 @@ void gentabs(void)
 
                     if (trace)
                     {
-                        fprintf(stderr, "[%d]",
-                                accset[k]);
+                        fprintf(stderr, "[%d]", accset[k]);
 
                         if (k < nacc)
-                            fputs(", ",
-                                  stderr);
+                            fputs(", ", stderr);
                         else
-                            putc('\n',
-                                 stderr);
+                            putc('\n', stderr);
                     }
                 }
             }
@@ -1144,11 +1138,9 @@ void gentabs(void)
             yyacclist_tbl = NULL;
         }
     }
-
     else
     {
-        dfaacc[end_of_buffer_state].dfaacc_state =
-            end_of_buffer_action;
+        dfaacc[end_of_buffer_state].dfaacc_state = end_of_buffer_action;
 
         for (i = 1; i <= lastdfa; ++i)
             acc_array[i] = dfaacc[i].dfaacc_state;
@@ -1177,16 +1169,14 @@ void gentabs(void)
 		 */
         ++k;
 
-    out_str_dec(long_align ? get_int32_decl() : get_int16_decl(),
-                "yy_accept", k);
+    out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_accept", k);
 
     yydmap_buf.addLine(String() + "\t{YYTD_ID_ACCEPT, (void**)&yy_accept, sizeof(" + (long_align ? "flex_int32_t" : "flex_int16_t") + ")},");
 
     yyacc_tbl = (decltype(yyacc_tbl))calloc(1, sizeof(struct yytbl_data));
     yytbl_data_init(yyacc_tbl, YYTD_ID_ACCEPT);
     yyacc_tbl->td_lolen = k;
-    yyacc_tbl->td_data = yyacc_data =
-        (decltype(yyacc_data))calloc(yyacc_tbl->td_lolen, sizeof(flex_int32_t));
+    yyacc_tbl->td_data = yyacc_data = (decltype(yyacc_data))calloc(yyacc_tbl->td_lolen, sizeof(flex_int32_t));
     yyacc_curr = 1;
 
     for (i = 1; i <= lastdfa; ++i)
@@ -1195,8 +1185,7 @@ void gentabs(void)
         yyacc_data[yyacc_curr++] = acc_array[i];
 
         if (!reject && trace && acc_array[i])
-            fprintf(stderr, _("state # %d accepts: [%d]\n"),
-                    i, acc_array[i]);
+            fprintf(stderr, _("state # %d accepts: [%d]\n"), i, acc_array[i]);
     }
 
     /* Add entry for "jam" state. */
@@ -1440,8 +1429,6 @@ void gentabs(void)
         yychk_tbl = NULL;
     }
     /* End generating yy_chk */
-
-    free(acc_array);
 }
 
 /* make_tables - generate transition tables and finishes generating output file
@@ -1501,8 +1488,8 @@ void make_tables(void)
 
     /* This is where we REALLY begin generating the tables. */
 
-    processed_file << "#define YY_NUM_RULES " << num_rules << Context::eol;
-    processed_file << "#define YY_END_OF_BUFFER " << num_rules + 1 << Context::eol;
+    processed_file << "#define YY_NUM_RULES " << rules.size() << Context::eol;
+    processed_file << "#define YY_END_OF_BUFFER " << rules.size() + 1 << Context::eol;
 
     if (fullspd)
     {
@@ -1701,10 +1688,9 @@ void make_tables(void)
 
     if (ddebug)
     { /* Spit out table mapping rules to line numbers. */
-        out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_rule_linenum",
-                    num_rules);
-        for (i = 1; i < num_rules; ++i)
-            mkdata(rule_linenum[i]);
+        out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_rule_linenum", rules.size() - 1);
+        for (i = 1; i < rules.size(); i++)
+            mkdata(rules[i].linenum);
         dataend();
     }
 
@@ -1827,7 +1813,7 @@ void make_tables(void)
         }
     }
 
-    processed_file << &action_array[defs1_offset] << Context::eol;
+    processed_file << defs1_array << Context::eol;
 
     line_directive_out(true, false);
 
@@ -1900,7 +1886,7 @@ void make_tables(void)
     skelout(); /* %% [7.0] - break point in skel */
 
     /* Copy prolog to output file. */
-    processed_file << &action_array[prolog_offset] << Context::eol;
+    processed_file << prolog_array << Context::eol;
 
     line_directive_out(true, false);
 
@@ -1963,7 +1949,7 @@ void make_tables(void)
         --indent_level;
 
         //do_indent();
-        processed_file << "else if ( yy_act < " << num_rules << " )" << Context::eol;
+        processed_file << "else if ( yy_act < " << rules.size() - 1 << " )" << Context::eol;
         ++indent_level;
 
         if (C_plus_plus)
@@ -1981,7 +1967,7 @@ void make_tables(void)
         --indent_level;
 
         //do_indent();
-        processed_file << "else if ( yy_act == " << num_rules << " )" << Context::eol;
+        processed_file << "else if ( yy_act == " << rules.size() - 1 << " )" << Context::eol;
         ++indent_level;
 
         if (C_plus_plus)
@@ -1997,7 +1983,7 @@ void make_tables(void)
         --indent_level;
 
         //do_indent();
-        processed_file << "else if ( yy_act == " << num_rules + 1 << " )" << Context::eol;
+        processed_file << "else if ( yy_act == " << rules.size() << " )" << Context::eol;
         ++indent_level;
 
         indent_puts(C_plus_plus ? "std::cerr << \"--(end of buffer or a NUL)\\n\";" : "fprintf( stderr, \"--(end of buffer or a NUL)\\n\" );");
@@ -2027,7 +2013,7 @@ void make_tables(void)
     skelout(); /* %% [13.0] - break point in skel */
     ++indent_level;
     gen_bu_action();
-    processed_file << &action_array[action_offset] << Context::eol;
+    processed_file << action_array << Context::eol;
 
     line_directive_out(true, false);
 
