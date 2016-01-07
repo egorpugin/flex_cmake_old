@@ -1688,7 +1688,7 @@ void make_tables(void)
 
     if (ddebug)
     { /* Spit out table mapping rules to line numbers. */
-        out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_rule_linenum", rules.size() - 1);
+        out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_rule_linenum", rules.size());
         for (i = 1; i < rules.size(); i++)
             mkdata(rules[i].linenum);
         dataend();
