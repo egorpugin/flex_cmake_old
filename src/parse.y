@@ -74,7 +74,7 @@
 #include "ecs.h"
 
 int pat, scnum, eps, headcnt, trailcnt, lastchar, i, rulelen;
-int trlcontxt, xcluflg, currccl, cclsorted, varlength, variable_trail_rule;
+int trlcontxt, xcluflg, currccl, varlength, variable_trail_rule;
 
 int *scon_stk;
 int scon_stk_ptr;
@@ -697,14 +697,14 @@ singleton	:  singleton '*'
                     cclnegate( ccldot );
 
                     if ( useecs )
-                        mkeccl( ccltbl + ccls[ccldot].map, ccls[ccldot].len, nextecm, ecgroup, csize, csize );
+                        mkeccl( ccls[ccldot].table, nextecm, ecgroup, csize, csize );
 
 				/* Create the (?s:'.') character class. */
                     cclany = cclinit();
                     cclnegate( cclany );
 
                     if ( useecs )
-                        mkeccl( ccltbl + ccls[cclany].map, ccls[cclany].len, nextecm, ecgroup, csize, csize );
+                        mkeccl( ccls[cclany].table, nextecm, ecgroup, csize, csize );
 
 				madeany = true;
 				}
@@ -719,12 +719,8 @@ singleton	:  singleton '*'
 
 		|  fullccl
 			{
-				/* Sort characters for fast searching.
-				 */
-				qsort( ccltbl + ccls[$1].map, ccls[$1].len, sizeof(*ccltbl), cclcmp );
-
 			if ( useecs )
-				mkeccl( ccltbl + ccls[$1].map, ccls[$1].len, nextecm, ecgroup, csize, csize );
+				mkeccl( ccls[$1].table, nextecm, ecgroup, csize, csize );
 
 			++rulelen;
 
@@ -821,7 +817,6 @@ ccl		:  ccl CHAR '-' CHAR
 				/* Keep track if this ccl is staying in
 				 * alphabetical order.
 				 */
-				cclsorted = cclsorted && ($2 > lastchar);
 				lastchar = $4;
 
                 /* Do it again for upper/lowercase */
@@ -832,7 +827,6 @@ ccl		:  ccl CHAR '-' CHAR
                     for ( i = $2; i <= $4; ++i )
                         ccladd( $1, i );
 
-                    cclsorted = cclsorted && ($2 > lastchar);
                     lastchar = $4;
                 }
 
@@ -844,7 +838,6 @@ ccl		:  ccl CHAR '-' CHAR
 		|  ccl CHAR
 			{
 			ccladd( $1, $2 );
-			cclsorted = cclsorted && ($2 > lastchar);
 			lastchar = $2;
 
             /* Do it again for upper/lowercase */
@@ -852,7 +845,6 @@ ccl		:  ccl CHAR '-' CHAR
                 $2 = reverse_case ($2);
                 ccladd ($1, $2);
 
-                cclsorted = cclsorted && ($2 > lastchar);
                 lastchar = $2;
             }
 
@@ -861,14 +853,11 @@ ccl		:  ccl CHAR '-' CHAR
 
 		|  ccl ccl_expr
 			{
-			/* Too hard to properly maintain cclsorted. */
-			cclsorted = false;
 			$$ = $1;
 			}
 
 		|
 			{
-			cclsorted = true;
 			lastchar = 0;
 			currccl = $$ = cclinit();
 			}

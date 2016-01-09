@@ -207,7 +207,7 @@ void dump_transitions(FILE *file, int state[])
 
     for (i = 0; i < csize; ++i)
     {
-        ec = ABS(ecgroup[i]);
+        ec = abs(ecgroup[i]);
         out_char_set[i] = state[ec];
     }
 
@@ -930,9 +930,7 @@ int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int ha
             dfaacc[newds].dfaacc_set[i] = accset[i];
 
             if (accset[i] < rules.size())
-                /* Who knows, perhaps a REJECT can yield
-				 * this rule.
-				 */
+                /* Who knows, perhaps a REJECT can yield this rule. */
                 rules[accset[i]].useful = true;
         }
 
@@ -940,9 +938,7 @@ int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int ha
     }
     else
     {
-        /* Find lowest numbered rule so the disambiguating rule
-		 * will work.
-		 */
+        /* Find lowest numbered rule so the disambiguating rule will work. */
         j = rules.size();
 
         for (i = 1; i <= nacc; ++i)
@@ -968,54 +964,47 @@ int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int ha
  */
 int symfollowset(int ds[], int dsize, int transsym, int nset[])
 {
-    int ns, tsp, sym, i, j, lenccl, ch, numstates, ccllist;
+    int numstates = 0;
 
-    numstates = 0;
-
-    for (i = 1; i <= dsize; ++i)
-    { /* for each nfa state ns in the state set of ds */
-        ns = ds[i];
-        sym = transchar[ns];
-        tsp = trans1[ns];
+    for (int i = 1; i <= dsize; ++i)
+    {
+        /* for each nfa state ns in the state set of ds */
+        int ns = ds[i];
+        int sym = transchar[ns];
+        int tsp = trans1[ns];
 
         if (sym < 0)
-        { /* it's a character class */
+        {
+            /* it's a character class */
             sym = -sym;
-            ccllist = ccls[sym].map;
-            lenccl = ccls[sym].len;
 
-            if (ccls[sym].ng)
+            auto &ccl = ccls[sym];
+
+            if (ccl.ng)
             {
-                for (j = 0; j < lenccl; ++j)
+                for (auto ch : ccl.table)
                 {
-                    /* Loop through negated character
-					 * class.
-					 */
-                    ch = ccltbl[ccllist + j];
-
+                    /* Loop through negated character class. */
                     if (ch == 0)
                         ch = NUL_ec;
 
                     if (ch > transsym)
-                        /* Transsym isn't in negated
-						 * ccl.
-						 */
+                        /* Transsym isn't in negated ccl. */
                         break;
-
                     else if (ch == transsym)
+                    {
                         /* next 2 */
                         goto bottom;
+                    }
                 }
 
                 /* Didn't find transsym in ccl. */
                 nset[++numstates] = tsp;
             }
-
             else
-                for (j = 0; j < lenccl; ++j)
+            {
+                for (auto ch : ccl.table)
                 {
-                    ch = ccltbl[ccllist + j];
-
                     if (ch == 0)
                         ch = NUL_ec;
 
@@ -1027,13 +1016,13 @@ int symfollowset(int ds[], int dsize, int transsym, int nset[])
                         break;
                     }
                 }
+            }
         }
-
         else if (sym == SYM_EPSILON)
-        { /* do nothing */
+        {
+            /* do nothing */
         }
-
-        else if (ABS(ecgroup[sym]) == transsym)
+        else if (abs(ecgroup[sym]) == transsym)
             nset[++numstates] = tsp;
 
     bottom:;
@@ -1050,13 +1039,13 @@ int symfollowset(int ds[], int dsize, int transsym, int nset[])
  */
 void sympartition(int ds[], int numstates, int symlist[], int duplist[])
 {
-    int tch, i, j, k, ns, dupfwd[CSIZE + 1], lenccl, cclp, ich;
+    int dupfwd[CSIZE + 1];
 
     /* Partitioning is done by creating equivalence classes for those
 	 * characters which have out-transitions from the given state.  Thus
 	 * we are really creating equivalence classes of equivalence classes.
 	 */
-    for (i = 1; i <= numecs; ++i)
+    for (int i = 1; i <= numecs; ++i)
     {
         /* initialize equivalence class list */
         duplist[i] = i - 1;
@@ -1066,10 +1055,10 @@ void sympartition(int ds[], int numstates, int symlist[], int duplist[])
     duplist[1] = NIL;
     dupfwd[numecs] = NIL;
 
-    for (i = 1; i <= numstates; ++i)
+    for (int i = 1; i <= numstates; ++i)
     {
-        ns = ds[i];
-        tch = transchar[ns];
+        int ns = ds[i];
+        int tch = transchar[ns];
 
         if (tch != SYM_EPSILON)
         {
@@ -1091,19 +1080,16 @@ void sympartition(int ds[], int numstates, int symlist[], int duplist[])
                 /* character class */
                 tch = -tch;
 
-                lenccl = ccls[tch].len;
-                cclp = ccls[tch].map;
-                mkeccl(ccltbl + cclp, lenccl, dupfwd,
-                       duplist, numecs, NUL_ec);
+                auto &ccl = ccls[tch];
 
-                if (ccls[tch].ng)
+                mkeccl(ccl.table, dupfwd, duplist, numecs, NUL_ec);
+
+                if (ccl.ng)
                 {
-                    j = 0;
+                    int j = 0;
 
-                    for (k = 0; k < lenccl; ++k)
+                    for (auto ich : ccl.table)
                     {
-                        ich = ccltbl[cclp + k];
-
                         if (ich == 0)
                             ich = NUL_ec;
 
@@ -1114,17 +1100,16 @@ void sympartition(int ds[], int numstates, int symlist[], int duplist[])
                     for (++j; j <= numecs; ++j)
                         symlist[j] = 1;
                 }
-
                 else
-                    for (k = 0; k < lenccl; ++k)
+                {
+                    for (auto ich : ccl.table)
                     {
-                        ich = ccltbl[cclp + k];
-
                         if (ich == 0)
                             ich = NUL_ec;
 
                         symlist[ich] = 1;
                     }
+                }
             }
         }
     }

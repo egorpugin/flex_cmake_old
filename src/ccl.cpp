@@ -40,51 +40,30 @@
 /* return true if the chr is in the ccl. Takes negation into account. */
 bool ccl_contains(const int cclp, const int ch)
 {
-    int ind, len, i;
-
-    len = ccls[cclp].len;
-    ind = ccls[cclp].map;
-
-    for (i = 0; i < len; ++i)
-        if (ccltbl[ind + i] == ch)
-            return !ccls[cclp].ng;
-
+    auto &t = ccls[cclp].table;
+    auto p = t.find(ch);
+    if (p != t.end())
+        return !ccls[cclp].ng;
     return ccls[cclp].ng;
 }
 
 /* ccladd - add a single character to a ccl */
 void ccladd(int cclp, int ch)
 {
-    int ind, len, newpos, i;
-
     check_char(ch);
 
-    len = ccls[cclp].len;
-    ind = ccls[cclp].map;
+    auto &ccl = ccls[cclp];
+    auto &t = ccl.table;
 
     /* check to see if the character is already in the ccl */
-
-    for (i = 0; i < len; ++i)
-        if (ccltbl[ind + i] == ch)
-            return;
+    if (t.find(ch) != t.end())
+        return;
 
     /* mark newlines */
     if (ch == nlch)
-        ccls[cclp].has_nl = true;
-
-    newpos = ind + len;
-
-    if (newpos >= current_max_ccl_tbl_size)
-    {
-        current_max_ccl_tbl_size += MAX_CCL_TBL_SIZE_INCREMENT;
-
-        ++num_reallocs;
-
-        ccltbl = (uint8_t *)reallocate_Character_array(ccltbl, current_max_ccl_tbl_size);
-    }
-
-    ccls[cclp].len = len + 1;
-    ccltbl[newpos] = ch;
+        ccl.has_nl = true;
+    
+    t.insert(ch);
 }
 
 /* dump_cclp - same thing as list_character_set, but for cclps.  */
@@ -159,12 +138,10 @@ int ccl_set_union(int a, int b)
     d = cclinit();
 
     /* Add all of a */
-    for (i = 0; i < ccls[a].len; ++i)
-        ccladd(d, ccltbl[ccls[a].map + i]);
+    ccls[d].table.insert(ccls[a].table.begin(), ccls[a].table.end());
 
     /* Add all of b */
-    for (i = 0; i < ccls[b].len; ++i)
-        ccladd(d, ccltbl[ccls[b].map + i]);
+    ccls[d].table.insert(ccls[b].table.begin(), ccls[b].table.end());
 
     /* debug */
     if (0)
@@ -184,25 +161,7 @@ int ccl_set_union(int a, int b)
 /* cclinit - return an empty ccl */
 int cclinit(void)
 {
-    CharacterClass ccl;
-
-    if (ccls.size() == 1)
-        /* we're making the first ccl */
-        ccl.map = 0;
-    else
-        /* The new pointer is just past the end of the last ccl.
-		 * Since the cclmap points to the \first/ character of a
-		 * ccl, adding the length of the ccl to the cclmap pointer
-		 * will produce a cursor to the first free space.
-		 */
-        ccl.map = ccls.back().map + ccls.back().len;
-
-    ccl.len = 0;
-    ccl.ng = 0; /* ccl's start out life un-negated */
-    ccl.has_nl = false;
-
-    ccls.push_back(ccl);
-
+    ccls.emplace_back();
     return ccls.size() - 1;
 }
 

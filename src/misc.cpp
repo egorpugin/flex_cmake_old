@@ -141,17 +141,6 @@ char *xstrdup(const char *s)
     return s2;
 }
 
-/* cclcmp - compares two characters for use by qsort with '\0' sorting last. */
-int cclcmp(const void *a, const void *b)
-{
-    if (!*(const unsigned char *)a)
-        return 1;
-    else if (!*(const unsigned char *)b)
-        return -1;
-    else
-        return *(const unsigned char *)a - *(const unsigned char *)b;
-}
-
 /* dataend - finish up a block of data declarations */
 void dataend(void)
 {

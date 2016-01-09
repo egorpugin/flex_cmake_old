@@ -46,22 +46,14 @@ void ccl2ecl(void)
 		 * done, character classes will really consist of collections
 		 * of equivalence classes
 		 */
-        int newlen = 0;
-        int cclp = ccls[i].map;
-
-        for (int ccl = 0; ccl < ccls[i].len; ++ccl)
+        CharacterClass::Table new_table;
+        for (auto &c : ccls[i].table)
         {
-            int ich = ccltbl[cclp + ccl];
-            int cclmec = ecgroup[ich];
-
+            int cclmec = ecgroup[c];
             if (cclmec > 0)
-            {
-                ccltbl[cclp + newlen] = cclmec;
-                ++newlen;
-            }
+                new_table.insert(cclmec);
         }
-
-        ccls[i].len = newlen;
+        ccls[i].table = new_table;
     }
 }
 
@@ -108,57 +100,51 @@ int cre8ecs(int fwd[], int bck[], int num)
  *
  * NUL_mapping is the value which NUL (0) should be mapped to.
  */
-void mkeccl(unsigned char ccls[], int lenccl, int fwd[], int bck[], int llsiz, int NUL_mapping)
+void mkeccl(const CharacterClass::Table &table, int fwd[], int bck[], int llsiz, int NUL_mapping)
 {
-    int cclp, oldec, newec;
-    int cclm, i, j;
-    static unsigned char cclflags[CSIZE]; /* initialized to all '\0' */
+    static unsigned char cclflags[CSIZE] = { 0 };
 
     /* Note that it doesn't matter whether or not the character class is
 	 * negated.  The same results will be obtained in either case.
 	 */
-
-    cclp = 0;
-
-    while (cclp < lenccl)
+    for (auto iter = table.begin(); iter != table.end();)
     {
-        cclm = ccls[cclp];
+        auto cclm = *iter;
 
         if (NUL_mapping && cclm == 0)
             cclm = NUL_mapping;
 
-        oldec = bck[cclm];
-        newec = cclm;
+        int oldec = bck[cclm];
+        int newec = cclm;
 
-        j = cclp + 1;
+        auto j = std::next(iter);
 
-        for (i = fwd[cclm]; i != NIL && i <= llsiz; i = fwd[i])
-        { /* look for the symbol in the character class */
-            for (; j < lenccl; ++j)
+        for (int i = fwd[cclm]; i != NIL && i <= llsiz; i = fwd[i])
+        {
+            /* look for the symbol in the character class */
+            for (; j != table.end(); ++j)
             {
-                int ccl_char;
+                auto ccl_char = *j;
 
-                if (NUL_mapping && ccls[j] == 0)
+                if (NUL_mapping && ccl_char == 0)
                     ccl_char = NUL_mapping;
-                else
-                    ccl_char = ccls[j];
 
                 if (ccl_char > i)
                     break;
 
-                if (ccl_char == i && !cclflags[j])
+                auto d = std::distance(table.begin(), j);
+                if (ccl_char == i && !cclflags[d])
                 {
                     /* We found an old companion of cclm
 					 * in the ccl.  Link it into the new
 					 * equivalence class and flag it as
 					 * having been processed.
 					 */
-
                     bck[i] = newec;
                     fwd[newec] = i;
                     newec = i;
                     /* Set flag so we don't reprocess. */
-                    cclflags[j] = 1;
+                    cclflags[d] = 1;
 
                     /* Get next equivalence class member. */
                     /* continue 2 */
@@ -169,7 +155,6 @@ void mkeccl(unsigned char ccls[], int lenccl, int fwd[], int bck[], int llsiz, i
             /* Symbol isn't in character class.  Put it in the old
 			 * equivalence class.
 			 */
-
             bck[i] = oldec;
 
             if (oldec != NIL)
@@ -189,12 +174,17 @@ void mkeccl(unsigned char ccls[], int lenccl, int fwd[], int bck[], int llsiz, i
         fwd[newec] = NIL;
 
         /* Find next ccl member to process. */
-
-        for (++cclp; cclp < lenccl && cclflags[cclp]; ++cclp)
+        for (++iter; iter != table.end(); ++iter)
         {
+            auto d = std::distance(table.begin(), iter);
+            if (!cclflags[d])
+                break;
+
             /* Reset "doesn't need processing" flag. */
-            cclflags[cclp] = 0;
+            cclflags[d] = 0;
         }
+        if (iter == table.end())
+            break;
     }
 }
 
@@ -204,7 +194,6 @@ void mkechar(int tch, int fwd[], int bck[])
     /* If until now the character has been a proper subset of
 	 * an equivalence class, break it away to create a new ec
 	 */
-
     if (fwd[tch] != NIL)
         bck[fwd[tch]] = bck[tch];
 

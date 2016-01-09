@@ -303,8 +303,8 @@ int link_machines(int first, int last)
     {
         mkxtion(finalst[first], last);
         finalst[first] = finalst[last];
-        lastst[first] = MAX(lastst[first], lastst[last]);
-        firstst[first] = MIN(firstst[first], firstst[last]);
+        lastst[first] = std::max(lastst[first], lastst[last]);
+        firstst[first] = std::min(firstst[first], firstst[last]);
 
         return first;
     }
@@ -618,10 +618,8 @@ int mkstate(int sym)
 		 * first time.
 		 */
     }
-
     else if (sym == SYM_EPSILON)
         ++numeps;
-
     else
     {
         check_char(sym);

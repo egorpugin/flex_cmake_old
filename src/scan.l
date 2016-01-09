@@ -59,9 +59,6 @@ const String escaped_qend = "[[]]M4""_YY_NOOP]M4""_YY_NOOP]M4""_YY_NOOP[[]]";
 // ndtbl - name-definition symbol table
 std::unordered_map<String, String> ndtbl;
 
-// ccltab - character class text symbol table
-std::unordered_map<String, int> ccltab;
-
 #define ACTION_ECHO add_action( yytext )
 #define ACTION_IFDEF(def, should_define) \
 	{ \
@@ -603,50 +600,15 @@ M4QEND      "]]"
 			}
 
 	"["({FIRST_CCL_CHAR}|{CCL_EXPR})({CCL_CHAR}|{CCL_EXPR})*	{
-			int cclval;
-
 			nmstr = yytext;
+            
+                /* Push back everything but the leading bracket
+                 * so the ccl can be rescanned.
+                 */
+                yyless( 1 );
 
-			/* Check to see if we've already encountered this
-			 * ccl.
-			 */
-			if (0 /* <--- This "0" effectively disables the reuse of a
-                   * character class (purely based on its source text).
-                   * The reason it was disabled is so yacc/bison can parse
-                   * ccl operations, such as ccl difference and union.
-                   */
-                &&  ccltab.find(nmstr) != ccltab.end()
-                && (cclval = ccltab.find(nmstr)->second) != 0 )
-				{
-                char c =
-#ifdef __cplusplus
-                yyinput()
-#else
-                input()
-#endif
-                ;
-				if ( c != ']' )
-					synerr( _( "bad character class" ) );
-
-				yylval = cclval;
-				++cclreuse;
-				return PREVCCL;
-				}
-			else
-				{
-				/* We fudge a bit.  We know that this ccl will
-				 * soon be numbered as lastccl + 1 by cclinit.
-				 */
-                ccltab[nmstr] = ccls.size();
-
-				/* Push back everything but the leading bracket
-				 * so the ccl can be rescanned.
-				 */
-				yyless( 1 );
-
-				BEGIN(FIRSTCCL);
-				return '[';
-				}
+                BEGIN(FIRSTCCL);
+                return '[';
 			}
     "{-}"       return CCL_OP_DIFF;
     "{+}"       return CCL_OP_UNION;

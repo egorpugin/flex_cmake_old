@@ -112,9 +112,6 @@ int lastdfa, *nxt, *chk, *tnxt;
 int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss, *dfasiz;
 union dfaacc_union *dfaacc;
 
-int current_max_ccl_tbl_size;
-unsigned char *ccltbl;
-int cclreuse;
 CharacterClasses ccls(1);
 
 int num_eof_rules, default_rule, lastnfa;
@@ -325,6 +322,11 @@ int flex_main(int argc, char *argv[])
     return 0; /* keep compilers/lint happy */
 }
 
+void flex_exit(int code)
+{
+    exit(code);
+}
+
 /* Wrapper around flex_main, so flex_main can be built as a library. */
 int main(int argc, char *argv[])
 {
@@ -531,14 +533,14 @@ void check_options(void)
         Context tmpbuf;
         for (int i = 1; i < start_conditions.size(); i++)
             tmpbuf.addLine("#define " + start_conditions[i].name + " " + std::to_string(i - 1));
-        m4defs_buf.m4define("M4_YY_SC_DEFS", tmpbuf.getText().c_str());
+        m4defs_buf.m4define("M4_YY_SC_DEFS", tmpbuf.getText());
     }
 
     /* This is where we begin writing to the file. */
 
     /* Dump the %top code. */
     if (!top_buf.empty())
-        outn((char *)top_buf.getText().c_str());
+        outn(top_buf.getText());
 
     /* Dump the m4 definitions. */
     processed_file += m4defs_buf;
@@ -548,7 +550,7 @@ void check_options(void)
 
     /* Dump the user defined preproc directives. */
     if (!userdef_buf.empty())
-        outn((char *)(userdef_buf.getText().c_str()));
+        outn(userdef_buf.getText());
 
     skelout();
     /* %% [1.0] */
@@ -695,11 +697,7 @@ void flexend(int exit_status)
         fprintf(stderr, _("  %d start conditions\n"), start_conditions.size() - 1);
         fprintf(stderr, _("  %d epsilon states, %d double epsilon states\n"), numeps, eps2);
 
-        if (ccls.size() - 1 == 0)
-            fprintf(stderr, _("  no character classes\n"));
-        else
-            fprintf(stderr, _("  %d character classes needed %d/%d words of storage, %d reused\n"),
-                ccls.size() - 1, ccls.back().map + ccls.back().len, current_max_ccl_tbl_size, cclreuse);
+        fprintf(stderr, _("  %d character classes\n"), ccls.size() - 1);
 
         fprintf(stderr, _("  %d state/nextstate pairs created\n"), numsnpairs);
         fprintf(stderr, _("  %d/%d unique/duplicate transitions\n"), numuniq, numdup);
@@ -749,11 +747,6 @@ void flexend(int exit_status)
     }
 
     flex_exit(exit_status);
-}
-
-void flex_exit(int code)
-{
-    exit(code);
 }
 
 /* flexinit - initialize flex */
@@ -1507,7 +1500,7 @@ void readin(void)
 
     /* Now map the equivalence class for NUL to its expected place. */
     ecgroup[0] = ecgroup[csize];
-    NUL_ec = ABS(ecgroup[0]);
+    NUL_ec = abs(ecgroup[0]);
 
     if (useecs)
         ccl2ecl();
@@ -1527,9 +1520,6 @@ void set_up_initial_allocations(void)
     accptnum = (decltype(accptnum))allocate_integer_array(current_mns);
     assoc_rule = (decltype(assoc_rule))allocate_integer_array(current_mns);
     state_type = (decltype(state_type))allocate_integer_array(current_mns);
-
-    current_max_ccl_tbl_size = INITIAL_MAX_CCL_TBL_SIZE;
-    ccltbl = (decltype(ccltbl))allocate_Character_array(current_max_ccl_tbl_size);
 
     current_max_dfa_size = INITIAL_MAX_DFA_SIZE;
 

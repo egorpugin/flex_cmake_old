@@ -458,7 +458,7 @@ struct yytbl_data *mkecstbl(void)
 
     for (i = 1; i < csize; ++i)
     {
-        ecgroup[i] = ABS(ecgroup[i]);
+        ecgroup[i] = abs(ecgroup[i]);
         tdata[i] = ecgroup[i];
     }
 
@@ -478,7 +478,7 @@ void genecs(void)
 
     for (i = 1; i < csize; ++i)
     {
-        ecgroup[i] = ABS(ecgroup[i]);
+        ecgroup[i] = abs(ecgroup[i]);
         mkdata(ecgroup[i]);
     }
 
@@ -1065,13 +1065,13 @@ void gentabs(void)
         dfaacc[end_of_buffer_state].dfaacc_set =
             EOB_accepting_list;
 
-        out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_acclist", MAX(numas, 1) + 1);
+        out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_acclist", std::max(numas, 1) + 1);
 
         yydmap_buf.addLine(String() + "\t{YYTD_ID_ACCLIST, (void**)&yy_acclist, sizeof(" + (long_align ? "flex_int32_t" : "flex_int16_t") + ")},");
 
         yyacclist_tbl = (decltype(yyacclist_tbl))calloc(1, sizeof(struct yytbl_data));
         yytbl_data_init(yyacclist_tbl, YYTD_ID_ACCLIST);
-        yyacclist_tbl->td_lolen = MAX(numas, 1) + 1;
+        yyacclist_tbl->td_lolen = std::max(numas, 1) + 1;
         yyacclist_tbl->td_data = yyacclist_data = (decltype(yyacclist_data))calloc(yyacclist_tbl->td_lolen, sizeof(flex_int32_t));
         yyacclist_curr = 1;
 
@@ -1251,11 +1251,10 @@ void gentabs(void)
         for (i = 1; i <= numecs; ++i)
         {
             if (trace)
-                fprintf(stderr, "%d = %d\n",
-                        i, ABS(tecbck[i]));
+                fprintf(stderr, "%d = %d\n", i, abs(tecbck[i]));
 
-            mkdata(ABS(tecbck[i]));
-            yymecs_data[i] = ABS(tecbck[i]);
+            mkdata(abs(tecbck[i]));
+            yymecs_data[i] = abs(tecbck[i]);
         }
 
         dataend();

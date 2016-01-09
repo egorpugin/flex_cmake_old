@@ -39,7 +39,6 @@
 #include "dfa.h"
 
 /* declarations for functions that have forward references */
-
 void mkentry(int *, int, int, int, int);
 void mkprot(int[], int, int);
 void mktemplate(int[], int, int);
@@ -80,7 +79,6 @@ int tbldiff(int[], int, int[]);
  * hand, go to the common state on EVERY transition character, and therefore
  * cost only one difference.
  */
-
 void bldtbl(int state[], int statenum, int totaltrans, int comstate, int comfreq)
 {
     int extptr, extrct[2][CSIZE + 1];
@@ -232,7 +230,6 @@ void bldtbl(int state[], int statenum, int totaltrans, int comstate, int comfreq
  * classes which always appear together in templates - really meta-equivalence
  * classes.
  */
-
 void cmptmps(void)
 {
     int tmpstorage[CSIZE + 1];
@@ -304,7 +301,6 @@ void cmptmps(void)
 }
 
 /* expand_nxt_chk - expand the next check arrays */
-
 void expand_nxt_chk(void)
 {
     int old_max = current_max_xpairs;
@@ -465,7 +461,6 @@ void inittbl(void)
 }
 
 /* mkdeftbl - make the default, "jam" table entries */
-
 void mkdeftbl(void)
 {
     int i;
@@ -514,9 +509,7 @@ void mkdeftbl(void)
  * the tables are searched for an interior spot that will accommodate the
  * state array.
  */
-
-void mkentry(int *state, int numchars, int statenum, int deflink,
-             int totaltrans)
+void mkentry(int *state, int numchars, int statenum, int deflink, int totaltrans)
 {
     int minec, maxec, i, baseaddr;
     int tblbase, tbllast;
@@ -610,7 +603,7 @@ void mkentry(int *state, int numchars, int statenum, int deflink,
         /* Ensure that the base address we eventually generate is
 		 * non-negative.
 		 */
-        baseaddr = MAX(tblend + 1, minec);
+        baseaddr = std::max(tblend + 1, minec);
     }
 
     tblbase = baseaddr - minec;
@@ -635,13 +628,12 @@ void mkentry(int *state, int numchars, int statenum, int deflink,
         for (++firstfree; chk[firstfree] != 0; ++firstfree)
             ;
 
-    tblend = MAX(tblend, tbllast);
+    tblend = std::max(tblend, tbllast);
 }
 
 /* mk1tbl - create table entries for a state (or state fragment) which
  *            has only one out-transition
  */
-
 void mk1tbl(int state, int sym, int onenxt, int onedef)
 {
     if (firstfree < sym)
@@ -666,7 +658,6 @@ void mk1tbl(int state, int sym, int onenxt, int onedef)
 }
 
 /* mkprot - create new proto entry */
-
 void mkprot(int state[], int statenum, int comstate)
 {
     int i, slot, tblbase;
@@ -703,23 +694,20 @@ void mkprot(int state[], int statenum, int comstate)
 /* mktemplate - create a template entry based on a state, and connect the state
  *              to it
  */
-
 void mktemplate(int state[], int statenum, int comstate)
 {
-    int i, numdiff, tmpbase, tmp[CSIZE + 1];
-    unsigned char transset[CSIZE + 1];
-    int tsptr;
+    int tmp[CSIZE + 1];
+    CharacterTable transset;
 
     ++numtemps;
 
-    tsptr = 0;
+    int tsptr = 0;
 
     /* Calculate where we will temporarily store the transition table
 	 * of the template in the tnxt[] array.  The final transition table
 	 * gets created by cmptmps().
 	 */
-
-    tmpbase = numtemps * numecs;
+    int tmpbase = numtemps * numecs;
 
     if (tmpbase + numecs >= current_max_template_xpairs)
     {
@@ -732,30 +720,30 @@ void mktemplate(int state[], int statenum, int comstate)
                                                         current_max_template_xpairs);
     }
 
-    for (i = 1; i <= numecs; ++i)
+    for (int i = 1; i <= numecs; ++i)
+    {
         if (state[i] == 0)
             tnxt[tmpbase + i] = 0;
         else
         {
-            transset[tsptr++] = i;
+            transset.insert(i);
             tnxt[tmpbase + i] = comstate;
         }
+    }
 
     if (usemecs)
-        mkeccl(transset, tsptr, tecfwd, tecbck, numecs, 0);
+        mkeccl(transset, tecfwd, tecbck, numecs, 0);
 
     mkprot(tnxt + tmpbase, -numtemps, comstate);
 
     /* We rely on the fact that mkprot adds things to the beginning
 	 * of the proto queue.
 	 */
-
-    numdiff = tbldiff(state, firstprot, tmp);
+    int numdiff = tbldiff(state, firstprot, tmp);
     mkentry(tmp, numecs, statenum, -numtemps, numdiff);
 }
 
 /* mv2front - move proto queue element to front of queue */
-
 void mv2front(int qelm)
 {
     if (firstprot != qelm)
@@ -781,7 +769,6 @@ void mv2front(int qelm)
  * gives the number of the state to enter for a given equivalence class.
  * Transnum is the number of out-transitions for the state.
  */
-
 void place_state(int *state, int statenum, int transnum)
 {
     int i;
@@ -823,7 +810,6 @@ void place_state(int *state, int statenum, int transnum)
  * state is pushed onto it, to be processed later by mk1tbl.  If there's
  * no room, we process the sucker right now.
  */
-
 void stack1(int statenum, int sym, int nextstate, int deflink)
 {
     if (onesp >= ONE_STACK_SIZE - 1)
@@ -852,7 +838,6 @@ void stack1(int statenum, int sym, int nextstate, int deflink)
  * between "state" and "pr" is returned as function value.  Note that this
  * number is "numecs" minus the number of "SAME_TRANS" entries in "ext".
  */
-
 int tbldiff(int state[], int pr, int ext[])
 {
     int i, *sp = state, *ep = ext, *protp;

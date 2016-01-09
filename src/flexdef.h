@@ -67,16 +67,6 @@
 /* Maximum line length we'll have to deal with. */
 #define MAXLINE 2048
 
-#ifndef MIN
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-#endif
-#ifndef MAX
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-#endif
-#ifndef ABS
-#define ABS(x) ((x) < 0 ? -(x) : (x))
-#endif
-
 #define unspecified -1
 
 /* Special chk[] values marking the slots taking by end-of-buffer and action
@@ -511,28 +501,6 @@ extern int end_of_buffer_state;
 
 
 
-/* Variables for ccl information:
- * current_max_ccl_tbl_size - current limit on number of characters needed
- *	to represent the unique ccl's
- * ccltbl - holds the characters in each ccl - indexed by cclmap
- * cclreuse - counts how many times a ccl is re-used
- */
-
-struct CharacterClass
-{
-    int map;        // maps a ccl index to its set pointer
-    int len;        // gives the length of a ccl
-    bool ng;        // true for a given ccl if the ccl is negated
-    bool has_nl;    // true if current ccl could match a newline
-};
-
-using CharacterClasses = std::vector<CharacterClass>;
-
-extern CharacterClasses ccls;
-
-extern int cclreuse;
-extern int current_max_ccl_tbl_size;
-extern unsigned char *ccltbl;
 
 
 
@@ -716,40 +684,9 @@ inline bool replace_all(String &str, const String &from, const String &to)
 #define indent_puts outn
 
 
-// rules
-enum class RuleType
-{
-    Normal = 0,
-    Variable = 1,
-};
-
-struct Rule
-{
-    RuleType type = RuleType::Normal;
-    int linenum = 0;
-    bool useful = false;
-    bool has_nl = false;
-};
-
-using Rules = std::vector<Rule>;
 
 extern Rules rules;
+extern StartConditions start_conditions;
+extern CharacterClasses ccls;
 
 #define EOB_ACTION rules.size()
-
-
-
-
-// start condiftions
-struct StartCondition
-{
-    String name;
-    int set; // set of rules active in start condition
-    int bol; // set of rules active only at the beginning of line in a s.c.
-    bool xclu; // true if start condition is exclusive
-    bool eof; // true if start condition has EOF rule
-};
-
-using StartConditions = std::vector<StartCondition>;
-
-extern StartConditions start_conditions;

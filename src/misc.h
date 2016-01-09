@@ -26,9 +26,6 @@ unsigned char clower(int);
 /* strdup() that fails fatally on allocation failures. */
 char *xstrdup(const char *);
 
-/* Compare two characters for use by qsort with '\0' sorting last. */
-int cclcmp(const void *, const void *);
-
 /* Finish up a block of data declarations. */
 void dataend();
 
