@@ -257,7 +257,7 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
     */
 //#define MARKER_DIFFERENCE (maximum_mns + 2)
 //#define MARKER_DIFFERENCE (nfas.size() + 2)
-#define MARKER_DIFFERENCE (INT_MAX / 4)
+#define MARKER_DIFFERENCE (1'000'000'000)
 
 #define MARK_STATE(state)                                  \
     do                                                     \
