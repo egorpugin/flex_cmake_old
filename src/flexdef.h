@@ -400,7 +400,6 @@ extern int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
  * rule_linenum - line number associated with rule
  * rule_useful - true if we've determined that the rule can be matched
  * rule_has_nl - true if rule could possibly match a newline
- * ccl_has_nl - true if current ccl could match a newline
  * nlch - default eol char
  */
 
@@ -408,7 +407,6 @@ extern int maximum_mns, current_mns;
 extern int num_eof_rules, default_rule, lastnfa;
 extern int *firstst, *lastst, *finalst, *transchar, *trans1, *trans2;
 extern int *accptnum, *assoc_rule, *state_type;
-extern bool *ccl_has_nl;
 extern int nlch;
 
 /* Different types of states; values are useful as masks, as well, for
@@ -510,23 +508,34 @@ extern int *accsiz, *dhash, numas;
 extern int numsnpairs, jambase, jamstate;
 extern int end_of_buffer_state;
 
+
+
+
 /* Variables for ccl information:
- * lastccl - ccl index of the last created ccl
- * current_maxccls - current limit on the maximum number of unique ccl's
- * cclmap - maps a ccl index to its set pointer
- * ccllen - gives the length of a ccl
- * cclng - true for a given ccl if the ccl is negated
- * cclreuse - counts how many times a ccl is re-used
  * current_max_ccl_tbl_size - current limit on number of characters needed
  *	to represent the unique ccl's
  * ccltbl - holds the characters in each ccl - indexed by cclmap
+ * cclreuse - counts how many times a ccl is re-used
  */
 
+struct CharacterClass
+{
+    int map;        // maps a ccl index to its set pointer
+    int len;        // gives the length of a ccl
+    bool ng;        // true for a given ccl if the ccl is negated
+    bool has_nl;    // true if current ccl could match a newline
+};
 
+using CharacterClasses = std::vector<CharacterClass>;
 
-extern int lastccl, *cclmap, *ccllen, *cclng, cclreuse;
-extern int current_maxccls, current_max_ccl_tbl_size;
+extern CharacterClasses ccls;
+
+extern int cclreuse;
+extern int current_max_ccl_tbl_size;
 extern unsigned char *ccltbl;
+
+
+
 
 /* Variables for miscellaneous information:
  * nmstr - last NAME scanned by the scanner

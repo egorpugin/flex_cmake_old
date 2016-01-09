@@ -31,15 +31,14 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
+#include "ecs.h"
+
 #include "flexdef.h"
 
 /* ccl2ecl - convert character classes to set of equivalence classes */
-
 void ccl2ecl(void)
 {
-    int i, ich, newlen, cclp, ccls, cclmec;
-
-    for (i = 1; i <= lastccl; ++i)
+    for (int i = 1; i < ccls.size(); ++i)
     {
         /* We loop through each character class, and for each character
 		 * in the class, add the character's equivalence class to the
@@ -47,14 +46,13 @@ void ccl2ecl(void)
 		 * done, character classes will really consist of collections
 		 * of equivalence classes
 		 */
+        int newlen = 0;
+        int cclp = ccls[i].map;
 
-        newlen = 0;
-        cclp = cclmap[i];
-
-        for (ccls = 0; ccls < ccllen[i]; ++ccls)
+        for (int ccl = 0; ccl < ccls[i].len; ++ccl)
         {
-            ich = ccltbl[cclp + ccls];
-            cclmec = ecgroup[ich];
+            int ich = ccltbl[cclp + ccl];
+            int cclmec = ecgroup[ich];
 
             if (cclmec > 0)
             {
@@ -63,7 +61,7 @@ void ccl2ecl(void)
             }
         }
 
-        ccllen[i] = newlen;
+        ccls[i].len = newlen;
     }
 }
 
@@ -74,7 +72,6 @@ void ccl2ecl(void)
  *
  * Returned is the number of classes.
  */
-
 int cre8ecs(int fwd[], int bck[], int num)
 {
     int i, j, numcl;
@@ -111,7 +108,6 @@ int cre8ecs(int fwd[], int bck[], int num)
  *
  * NUL_mapping is the value which NUL (0) should be mapped to.
  */
-
 void mkeccl(unsigned char ccls[], int lenccl, int fwd[], int bck[], int llsiz, int NUL_mapping)
 {
     int cclp, oldec, newec;
@@ -203,7 +199,6 @@ void mkeccl(unsigned char ccls[], int lenccl, int fwd[], int bck[], int llsiz, i
 }
 
 /* mkechar - create equivalence class for single character */
-
 void mkechar(int tch, int fwd[], int bck[])
 {
     /* If until now the character has been a proper subset of

@@ -697,18 +697,14 @@ singleton	:  singleton '*'
                     cclnegate( ccldot );
 
                     if ( useecs )
-                        mkeccl( ccltbl + cclmap[ccldot],
-                            ccllen[ccldot], nextecm,
-                            ecgroup, csize, csize );
+                        mkeccl( ccltbl + ccls[ccldot].map, ccls[ccldot].len, nextecm, ecgroup, csize, csize );
 
 				/* Create the (?s:'.') character class. */
                     cclany = cclinit();
                     cclnegate( cclany );
 
                     if ( useecs )
-                        mkeccl( ccltbl + cclmap[cclany],
-                            ccllen[cclany], nextecm,
-                            ecgroup, csize, csize );
+                        mkeccl( ccltbl + ccls[cclany].map, ccls[cclany].len, nextecm, ecgroup, csize, csize );
 
 				madeany = true;
 				}
@@ -725,15 +721,14 @@ singleton	:  singleton '*'
 			{
 				/* Sort characters for fast searching.
 				 */
-				qsort( ccltbl + cclmap[$1], ccllen[$1], sizeof (*ccltbl), cclcmp );
+				qsort( ccltbl + ccls[$1].map, ccls[$1].len, sizeof(*ccltbl), cclcmp );
 
 			if ( useecs )
-				mkeccl( ccltbl + cclmap[$1], ccllen[$1],
-					nextecm, ecgroup, csize, csize );
+				mkeccl( ccltbl + ccls[$1].map, ccls[$1].len, nextecm, ecgroup, csize, csize );
 
 			++rulelen;
 
-			if (ccl_has_nl[$1])
+			if (ccls[$1].has_nl)
 				rules[rules.size() - 1].has_nl = true;
 
 			$$ = mkstate( -$1 );
@@ -743,7 +738,7 @@ singleton	:  singleton '*'
 			{
 			++rulelen;
 
-			if (ccl_has_nl[$1])
+			if (ccls[$1].has_nl)
 				rules[rules.size() - 1].has_nl = true;
 
 			$$ = mkstate( -$1 );

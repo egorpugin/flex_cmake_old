@@ -112,10 +112,10 @@ int lastdfa, *nxt, *chk, *tnxt;
 int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss, *dfasiz;
 union dfaacc_union *dfaacc;
 
-int lastccl, *cclmap, *ccllen, *cclng, cclreuse;
-int current_maxccls, current_max_ccl_tbl_size;
+int current_max_ccl_tbl_size;
 unsigned char *ccltbl;
-bool *ccl_has_nl;
+int cclreuse;
+CharacterClasses ccls(1);
 
 int num_eof_rules, default_rule, lastnfa;
 int variable_trailing_context_rules;
@@ -695,13 +695,11 @@ void flexend(int exit_status)
         fprintf(stderr, _("  %d start conditions\n"), start_conditions.size() - 1);
         fprintf(stderr, _("  %d epsilon states, %d double epsilon states\n"), numeps, eps2);
 
-        if (lastccl == 0)
+        if (ccls.size() - 1 == 0)
             fprintf(stderr, _("  no character classes\n"));
         else
-            fprintf(stderr, _("  %d/%d character classes needed %d/%d words of storage, %d reused\n"),
-                    lastccl, current_maxccls,
-                    cclmap[lastccl] + ccllen[lastccl],
-                    current_max_ccl_tbl_size, cclreuse);
+            fprintf(stderr, _("  %d character classes needed %d/%d words of storage, %d reused\n"),
+                ccls.size() - 1, ccls.back().map + ccls.back().len, current_max_ccl_tbl_size, cclreuse);
 
         fprintf(stderr, _("  %d state/nextstate pairs created\n"), numsnpairs);
         fprintf(stderr, _("  %d/%d unique/duplicate transitions\n"), numuniq, numdup);
@@ -1227,7 +1225,7 @@ void flexinit(int argc, char **argv)
     else
         set_input_file(String());
 
-    lastccl = lastdfa = lastnfa = 0;
+    lastdfa = lastnfa = 0;
     num_eof_rules = default_rule = 0;
     numas = numsnpairs = tmpuses = 0;
     numecs = numeps = eps2 = num_reallocs = hshcol = dfaeql = totnst =
@@ -1529,12 +1527,6 @@ void set_up_initial_allocations(void)
     accptnum = (decltype(accptnum))allocate_integer_array(current_mns);
     assoc_rule = (decltype(assoc_rule))allocate_integer_array(current_mns);
     state_type = (decltype(state_type))allocate_integer_array(current_mns);
-
-    current_maxccls = INITIAL_MAX_CCLS;
-    cclmap = (decltype(cclmap))allocate_integer_array(current_maxccls);
-    ccllen = (decltype(ccllen))allocate_integer_array(current_maxccls);
-    cclng = (decltype(cclng))allocate_integer_array(current_maxccls);
-    ccl_has_nl = (decltype(ccl_has_nl))allocate_bool_array(current_maxccls);
 
     current_max_ccl_tbl_size = INITIAL_MAX_CCL_TBL_SIZE;
     ccltbl = (decltype(ccltbl))allocate_Character_array(current_max_ccl_tbl_size);

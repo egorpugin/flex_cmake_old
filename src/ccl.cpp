@@ -42,26 +42,25 @@ bool ccl_contains(const int cclp, const int ch)
 {
     int ind, len, i;
 
-    len = ccllen[cclp];
-    ind = cclmap[cclp];
+    len = ccls[cclp].len;
+    ind = ccls[cclp].map;
 
     for (i = 0; i < len; ++i)
         if (ccltbl[ind + i] == ch)
-            return !cclng[cclp];
+            return !ccls[cclp].ng;
 
-    return cclng[cclp];
+    return ccls[cclp].ng;
 }
 
 /* ccladd - add a single character to a ccl */
-
 void ccladd(int cclp, int ch)
 {
     int ind, len, newpos, i;
 
     check_char(ch);
 
-    len = ccllen[cclp];
-    ind = cclmap[cclp];
+    len = ccls[cclp].len;
+    ind = ccls[cclp].map;
 
     /* check to see if the character is already in the ccl */
 
@@ -71,7 +70,7 @@ void ccladd(int cclp, int ch)
 
     /* mark newlines */
     if (ch == nlch)
-        ccl_has_nl[cclp] = true;
+        ccls[cclp].has_nl = true;
 
     newpos = ind + len;
 
@@ -81,17 +80,15 @@ void ccladd(int cclp, int ch)
 
         ++num_reallocs;
 
-        ccltbl = (uint8_t *)reallocate_Character_array(ccltbl,
-                                                       current_max_ccl_tbl_size);
+        ccltbl = (uint8_t *)reallocate_Character_array(ccltbl, current_max_ccl_tbl_size);
     }
 
-    ccllen[cclp] = len + 1;
+    ccls[cclp].len = len + 1;
     ccltbl[newpos] = ch;
 }
 
 /* dump_cclp - same thing as list_character_set, but for cclps.  */
-
-static void dump_cclp(FILE *file, int cclp)
+void dump_cclp(FILE *file, int cclp)
 {
     int i;
 
@@ -162,12 +159,12 @@ int ccl_set_union(int a, int b)
     d = cclinit();
 
     /* Add all of a */
-    for (i = 0; i < ccllen[a]; ++i)
-        ccladd(d, ccltbl[cclmap[a] + i]);
+    for (i = 0; i < ccls[a].len; ++i)
+        ccladd(d, ccltbl[ccls[a].map + i]);
 
     /* Add all of b */
-    for (i = 0; i < ccllen[b]; ++i)
-        ccladd(d, ccltbl[cclmap[b] + i]);
+    for (i = 0; i < ccls[b].len; ++i)
+        ccladd(d, ccltbl[ccls[b].map + i]);
 
     /* debug */
     if (0)
@@ -185,51 +182,35 @@ int ccl_set_union(int a, int b)
 }
 
 /* cclinit - return an empty ccl */
-
 int cclinit(void)
 {
-    if (++lastccl >= current_maxccls)
-    {
-        current_maxccls += MAX_CCLS_INCREMENT;
+    CharacterClass ccl;
 
-        ++num_reallocs;
-
-        cclmap =
-            (int *)reallocate_integer_array(cclmap, current_maxccls);
-        ccllen =
-            (int *)reallocate_integer_array(ccllen, current_maxccls);
-        cclng = (int *)reallocate_integer_array(cclng, current_maxccls);
-        ccl_has_nl =
-            (bool *)reallocate_bool_array(ccl_has_nl,
-                                          current_maxccls);
-    }
-
-    if (lastccl == 1)
+    if (ccls.size() == 1)
         /* we're making the first ccl */
-        cclmap[lastccl] = 0;
-
+        ccl.map = 0;
     else
         /* The new pointer is just past the end of the last ccl.
 		 * Since the cclmap points to the \first/ character of a
 		 * ccl, adding the length of the ccl to the cclmap pointer
 		 * will produce a cursor to the first free space.
 		 */
-        cclmap[lastccl] =
-            cclmap[lastccl - 1] + ccllen[lastccl - 1];
+        ccl.map = ccls.back().map + ccls.back().len;
 
-    ccllen[lastccl] = 0;
-    cclng[lastccl] = 0; /* ccl's start out life un-negated */
-    ccl_has_nl[lastccl] = false;
+    ccl.len = 0;
+    ccl.ng = 0; /* ccl's start out life un-negated */
+    ccl.has_nl = false;
 
-    return lastccl;
+    ccls.push_back(ccl);
+
+    return ccls.size() - 1;
 }
 
 /* cclnegate - negate the given ccl */
-
 void cclnegate(int cclp)
 {
-    cclng[cclp] = 1;
-    ccl_has_nl[cclp] = !ccl_has_nl[cclp];
+    ccls[cclp].ng = 1;
+    ccls[cclp].has_nl = !ccls[cclp].has_nl;
 }
 
 /* list_character_set - list the members of a set of characters in CCL form
@@ -238,7 +219,6 @@ void cclnegate(int cclp)
  * characters present in the given CCL.  A character is present if it
  * has a non-zero value in the cset array.
  */
-
 void list_character_set(FILE *file, int cset[])
 {
     int i;

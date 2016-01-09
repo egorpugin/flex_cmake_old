@@ -981,10 +981,10 @@ int symfollowset(int ds[], int dsize, int transsym, int nset[])
         if (sym < 0)
         { /* it's a character class */
             sym = -sym;
-            ccllist = cclmap[sym];
-            lenccl = ccllen[sym];
+            ccllist = ccls[sym].map;
+            lenccl = ccls[sym].len;
 
-            if (cclng[sym])
+            if (ccls[sym].ng)
             {
                 for (j = 0; j < lenccl; ++j)
                 {
@@ -1056,9 +1056,9 @@ void sympartition(int ds[], int numstates, int symlist[], int duplist[])
 	 * characters which have out-transitions from the given state.  Thus
 	 * we are really creating equivalence classes of equivalence classes.
 	 */
-
     for (i = 1; i <= numecs; ++i)
-    { /* initialize equivalence class list */
+    {
+        /* initialize equivalence class list */
         duplist[i] = i - 1;
         dupfwd[i] = i + 1;
     }
@@ -1073,29 +1073,30 @@ void sympartition(int ds[], int numstates, int symlist[], int duplist[])
 
         if (tch != SYM_EPSILON)
         {
-            if (tch < -lastccl || tch >= csize)
+            if (tch < -((int)ccls.size() - 1) || tch >= csize)
             {
                 flexfatal(_("bad transition character detected in sympartition()"));
             }
 
             if (tch >= 0)
-            { /* character transition */
+            {
+                /* character transition */
                 int ec = ecgroup[tch];
 
                 mkechar(ec, dupfwd, duplist);
                 symlist[ec] = 1;
             }
-
             else
-            { /* character class */
+            {
+                /* character class */
                 tch = -tch;
 
-                lenccl = ccllen[tch];
-                cclp = cclmap[tch];
+                lenccl = ccls[tch].len;
+                cclp = ccls[tch].map;
                 mkeccl(ccltbl + cclp, lenccl, dupfwd,
                        duplist, numecs, NUL_ec);
 
-                if (cclng[tch])
+                if (ccls[tch].ng)
                 {
                     j = 0;
 

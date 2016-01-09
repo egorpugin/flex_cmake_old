@@ -637,7 +637,7 @@ M4QEND      "]]"
 				/* We fudge a bit.  We know that this ccl will
 				 * soon be numbered as lastccl + 1 by cclinit.
 				 */
-                ccltab[nmstr] = lastccl + 1;
+                ccltab[nmstr] = ccls.size();
 
 				/* Push back everything but the leading bracket
 				 * so the ccl can be rescanned.
