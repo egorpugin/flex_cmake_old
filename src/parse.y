@@ -236,7 +236,7 @@ initforrule	:
 			/* Initialize for a parse of one rule. */
 			trlcontxt = variable_trail_rule = varlength = false;
 			trailcnt = headcnt = rulelen = 0;
-			current_state_type = STATE_NORMAL;
+			current_state_type = StateType::Normal;
 			previous_continued_action = continued_action;
 			in_rule = true;
 
@@ -378,16 +378,15 @@ sconname	:  NAME
 
 rule		:  re2 re
 			{
-			if ( transchar[lastst[$2]] != SYM_EPSILON )
+			if ( nfas[nfas[$2].lastst].transchar != SYM_EPSILON )
 				/* Provide final transition \now/ so it
 				 * will be marked as a trailing context
 				 * state.
 				 */
-				$2 = link_machines( $2,
-						mkstate( SYM_EPSILON ) );
+				$2 = link_machines( $2, mkstate( SYM_EPSILON ) );
 
 			mark_beginning_as_normal( $2 );
-			current_state_type = STATE_NORMAL;
+			current_state_type = StateType::Normal;
 
 			if ( previous_continued_action )
 				{
@@ -441,7 +440,7 @@ rule		:  re2 re
 			rulelen = 1;
 			varlength = false;
 
-			current_state_type = STATE_TRAILING_CONTEXT;
+			current_state_type = StateType::TrailingContext;
 
 			if ( trlcontxt )
 				{
@@ -527,7 +526,7 @@ re2		:  re '/'
 
 			rulelen = 0;
 
-			current_state_type = STATE_TRAILING_CONTEXT;
+			current_state_type = StateType::TrailingContext;
 			$$ = $1;
 			}
 		;

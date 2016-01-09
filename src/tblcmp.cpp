@@ -93,24 +93,19 @@ void bldtbl(int state[], int statenum, int totaltrans, int comstate, int comfreq
 	 * best difference to date can be kept around and also a difference
 	 * just created by checking against a candidate "best" proto.
 	 */
-
     extptr = 0;
 
     /* If the state has too few out-transitions, don't bother trying to
 	 * compact its tables.
 	 */
-
     if ((totaltrans * 100) < (numecs * PROTO_SIZE_PERCENTAGE))
         mkentry(state, numecs, statenum, JAMSTATE, totaltrans);
-
     else
     {
         /* "checkcom" is true if we should only check "state" against
 		 * protos which have the same "comstate" value.
 		 */
-        int checkcom =
-
-            comfreq * 100 > totaltrans * CHECK_COM_PERCENTAGE;
+        int checkcom = comfreq * 100 > totaltrans * CHECK_COM_PERCENTAGE;
 
         minprot = firstprot;
         mindiff = totaltrans;
@@ -127,7 +122,6 @@ void bldtbl(int state[], int statenum, int totaltrans, int comstate, int comfreq
                     break;
                 }
         }
-
         else
         {
             /* Since we've decided that the most common destination
@@ -151,9 +145,7 @@ void bldtbl(int state[], int statenum, int totaltrans, int comstate, int comfreq
 		 * we don't want to bother scanning the rest of the proto list
 		 * to see if we have any other reasonable matches.
 		 */
-
-        if (mindiff * 100 >
-            totaltrans * FIRST_MATCH_DIFF_PERCENTAGE)
+        if (mindiff * 100 > totaltrans * FIRST_MATCH_DIFF_PERCENTAGE)
         {
             /* Not a good enough match.  Scan the rest of the
 			 * protos.
@@ -173,20 +165,14 @@ void bldtbl(int state[], int statenum, int totaltrans, int comstate, int comfreq
         /* Check if the proto we've decided on as our best bet is close
 		 * enough to the state we want to match to be usable.
 		 */
-
-        if (mindiff * 100 >
-            totaltrans * ACCEPTABLE_DIFF_PERCENTAGE)
+        if (mindiff * 100 > totaltrans * ACCEPTABLE_DIFF_PERCENTAGE)
         {
             /* No good.  If the state is homogeneous enough,
 			 * we make a template out of it.  Otherwise, we
 			 * make a proto.
 			 */
-
-            if (comfreq * 100 >=
-                totaltrans * TEMPLATE_SAME_PERCENTAGE)
-                mktemplate(state, statenum,
-                           comstate);
-
+            if (comfreq * 100 >= totaltrans * TEMPLATE_SAME_PERCENTAGE)
+                mktemplate(state, statenum, comstate);
             else
             {
                 mkprot(state, statenum, comstate);
@@ -194,7 +180,6 @@ void bldtbl(int state[], int statenum, int totaltrans, int comstate, int comfreq
                         JAMSTATE, totaltrans);
             }
         }
-
         else
         { /* use the proto */
             mkentry(extrct[extptr], numecs, statenum,
@@ -671,7 +656,6 @@ void mkprot(int state[], int statenum, int comstate)
         lastprot = protprev[lastprot];
         protnext[lastprot] = NIL;
     }
-
     else
         slot = numprots;
 

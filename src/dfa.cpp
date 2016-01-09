@@ -118,14 +118,14 @@ void check_trailing_context(int *nfa_states, int num_states, std::vector<int> &a
     for (i = 1; i <= num_states; ++i)
     {
         int ns = nfa_states[i];
-        int type = state_type[ns];
-        int ar = assoc_rule[ns];
+        auto type = nfas[ns].state_type;
+        int ar = nfas[ns].assoc_rule;
 
-        if (type == STATE_NORMAL || rules[ar].type != RuleType::Variable)
-        { /* do nothing */
+        if (type == StateType::Normal || rules[ar].type != RuleType::Variable)
+        {
+            /* do nothing */
         }
-
-        else if (type == STATE_TRAILING_CONTEXT)
+        else if (type == StateType::TrailingContext)
         {
             /* Potential trouble.  Scan set of accepting numbers
 			 * for the one marking the end of the "head".  We
@@ -161,7 +161,7 @@ void dump_associated_rules(FILE *file, int ds)
 
     for (i = 1; i <= size; ++i)
     {
-        int rule_num = rules[assoc_rule[dset[i]]].linenum;
+        int rule_num = rules[nfas[dset[i]].assoc_rule].linenum;
 
         for (j = 1; j <= num_associated_rules; ++j)
             if (rule_num == rule_set[j])
@@ -252,24 +252,31 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
     int stkend, nstate;
     static int did_stk_init = false, *stk;
 
+    /* Enough so that if it's subtracted from an NFA state number, the result
+    * is guaranteed to be negative.
+    */
+//#define MARKER_DIFFERENCE (maximum_mns + 2)
+//#define MARKER_DIFFERENCE (nfas.size() + 2)
+#define MARKER_DIFFERENCE (INT_MAX / 4)
+
 #define MARK_STATE(state)                                  \
     do                                                     \
     {                                                      \
-        trans1[state] = trans1[state] - MARKER_DIFFERENCE; \
+        nfas[state].trans1 = nfas[state].trans1 - MARKER_DIFFERENCE; \
     } while (0)
 
-#define IS_MARKED(state) (trans1[state] < 0)
+#define IS_MARKED(state) (nfas[state].trans1 < 0)
 
 #define UNMARK_STATE(state)                                \
     do                                                     \
     {                                                      \
-        trans1[state] = trans1[state] + MARKER_DIFFERENCE; \
+        nfas[state].trans1 = nfas[state].trans1 + MARKER_DIFFERENCE; \
     } while (0)
 
 #define CHECK_ACCEPT(state)            \
     do                                 \
     {                                  \
-        nfaccnum = accptnum[state];    \
+        nfaccnum = nfas[state].accptnum;    \
         if (nfaccnum != NIL)           \
             accset[++nacc] = nfaccnum; \
     } while (0)
@@ -306,7 +313,7 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
     {                                                           \
         PUT_ON_STACK(state);                                    \
         CHECK_ACCEPT(state);                                    \
-        if (nfaccnum != NIL || transchar[state] != SYM_EPSILON) \
+        if (nfaccnum != NIL || nfas[state].transchar != SYM_EPSILON) \
             ADD_STATE(state);                                   \
     } while (0)
 
@@ -336,18 +343,18 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
     for (stkpos = 1; stkpos <= stkend; ++stkpos)
     {
         ns = stk[stkpos];
-        transsym = transchar[ns];
+        transsym = nfas[ns].transchar;
 
         if (transsym == SYM_EPSILON)
         {
-            tsp = trans1[ns] + MARKER_DIFFERENCE;
+            tsp = nfas[ns].trans1 + MARKER_DIFFERENCE;
 
             if (tsp != NO_TRANSITION)
             {
                 if (!IS_MARKED(tsp))
                     STACK_STATE(tsp);
 
-                tsp = trans2[ns];
+                tsp = nfas[ns].trans2;
 
                 if (tsp != NO_TRANSITION && !IS_MARKED(tsp))
                     STACK_STATE(tsp);
@@ -970,8 +977,8 @@ int symfollowset(int ds[], int dsize, int transsym, int nset[])
     {
         /* for each nfa state ns in the state set of ds */
         int ns = ds[i];
-        int sym = transchar[ns];
-        int tsp = trans1[ns];
+        int sym = nfas[ns].transchar;
+        int tsp = nfas[ns].trans1;
 
         if (sym < 0)
         {
@@ -1058,7 +1065,7 @@ void sympartition(int ds[], int numstates, int symlist[], int duplist[])
     for (int i = 1; i <= numstates; ++i)
     {
         int ns = ds[i];
-        int tch = transchar[ns];
+        int tch = nfas[ns].transchar;
 
         if (tch != SYM_EPSILON)
         {

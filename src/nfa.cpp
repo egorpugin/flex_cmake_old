@@ -54,16 +54,14 @@ void add_accept(int mach, int accepting_number)
 	 * will accept BEFORE it makes that transition, i.e., one character
 	 * too soon.
 	 */
-
-    if (transchar[finalst[mach]] == SYM_EPSILON)
-        accptnum[finalst[mach]] = accepting_number;
-
+    auto f = nfas[mach].finalst;
+    if (nfas[f].transchar == SYM_EPSILON)
+        nfas[f].accptnum = accepting_number;
     else
     {
         int astate = mkstate(SYM_EPSILON);
-
-        accptnum[astate] = accepting_number;
-        (void)link_machines(mach, astate);
+        nfas[astate].accptnum = accepting_number;
+        link_machines(mach, astate);
     }
 }
 
@@ -103,14 +101,14 @@ void dumpnfa(int state1)
 	 */
 
     /* for ( ns = firstst[state1]; ns <= lastst[state1]; ++ns ) */
-    for (ns = 1; ns <= lastnfa; ++ns)
+    for (ns = 1; ns < nfas.size(); ++ns)
     {
         fprintf(stderr, _("state # %4d\t"), ns);
 
-        sym = transchar[ns];
-        tsp1 = trans1[ns];
-        tsp2 = trans2[ns];
-        anum = accptnum[ns];
+        sym = nfas[ns].transchar;
+        tsp1 = nfas[ns].trans1;
+        tsp2 = nfas[ns].trans2;
+        anum = nfas[ns].accptnum;
 
         fprintf(stderr, "%3d:  %4d, %4d", sym, tsp1, tsp2);
 
@@ -143,21 +141,21 @@ int dupmachine(int mach)
 {
     int i, init, state_offset;
     int state = 0;
-    int last = lastst[mach];
+    int last = nfas[mach].lastst;
 
-    for (i = firstst[mach]; i <= last; ++i)
+    for (i = nfas[mach].firstst; i <= last; ++i)
     {
-        state = mkstate(transchar[i]);
+        state = mkstate(nfas[i].transchar);
 
-        if (trans1[i] != NO_TRANSITION)
+        if (nfas[i].trans1 != NO_TRANSITION)
         {
-            mkxtion(finalst[state], trans1[i] + state - i);
+            mkxtion(nfas[state].finalst, nfas[i].trans1 + state - i);
 
-            if (transchar[i] == SYM_EPSILON && trans2[i] != NO_TRANSITION)
-                mkxtion(finalst[state], trans2[i] + state - i);
+            if (nfas[i].transchar == SYM_EPSILON && nfas[i].trans2 != NO_TRANSITION)
+                mkxtion(nfas[state].finalst, nfas[i].trans2 + state - i);
         }
 
-        accptnum[state] = accptnum[i];
+        nfas[state].accptnum = nfas[i].accptnum;
     }
 
     if (state == 0)
@@ -166,9 +164,9 @@ int dupmachine(int mach)
     state_offset = state - i + 1;
 
     init = mach + state_offset;
-    firstst[init] = firstst[mach] + state_offset;
-    finalst[init] = finalst[mach] + state_offset;
-    lastst[init] = lastst[mach] + state_offset;
+    nfas[init].firstst = nfas[mach].firstst + state_offset;
+    nfas[init].finalst = nfas[mach].finalst + state_offset;
+    nfas[init].lastst = nfas[mach].lastst + state_offset;
 
     return init;
 }
@@ -301,10 +299,10 @@ int link_machines(int first, int last)
 
     else
     {
-        mkxtion(finalst[first], last);
-        finalst[first] = finalst[last];
-        lastst[first] = std::max(lastst[first], lastst[last]);
-        firstst[first] = std::min(firstst[first], firstst[last]);
+        mkxtion(nfas[first].finalst, last);
+        nfas[first].finalst = nfas[last].finalst;
+        nfas[first].lastst = std::max(nfas[first].lastst, nfas[last].lastst);
+        nfas[first].firstst = std::min(nfas[first].firstst, nfas[last].firstst);
 
         return first;
     }
@@ -318,25 +316,23 @@ int link_machines(int first, int last)
  */
 void mark_beginning_as_normal(int mach)
 {
-    switch (state_type[mach])
+    switch (nfas[mach].state_type)
     {
-    case STATE_NORMAL:
+    case StateType::Normal:
         /* Oh, we've already visited here. */
         return;
+    case StateType::TrailingContext:
+        nfas[mach].state_type = StateType::Normal;
 
-    case STATE_TRAILING_CONTEXT:
-        state_type[mach] = STATE_NORMAL;
-
-        if (transchar[mach] == SYM_EPSILON)
+        if (nfas[mach].transchar == SYM_EPSILON)
         {
-            if (trans1[mach] != NO_TRANSITION)
-                mark_beginning_as_normal(trans1[mach]);
+            if (nfas[mach].trans1 != NO_TRANSITION)
+                mark_beginning_as_normal(nfas[mach].trans1);
 
-            if (trans2[mach] != NO_TRANSITION)
-                mark_beginning_as_normal(trans2[mach]);
+            if (nfas[mach].trans2 != NO_TRANSITION)
+                mark_beginning_as_normal(nfas[mach].trans2);
         }
         break;
-
     default:
         flexerror(_("bad state type in mark_beginning_as_normal()"));
         break;
@@ -403,7 +399,7 @@ int mkopt(int mach)
 {
     int eps;
 
-    if (!SUPER_FREE_EPSILON(finalst[mach]))
+    if (!SUPER_FREE_EPSILON(nfas[mach].finalst))
     {
         eps = mkstate(SYM_EPSILON);
         mach = link_machines(mach, eps);
@@ -416,7 +412,7 @@ int mkopt(int mach)
     eps = mkstate(SYM_EPSILON);
     mach = link_machines(eps, mach);
 
-    mkxtion(mach, finalst[mach]);
+    mkxtion(mach, nfas[mach].finalst);
 
     return mach;
 }
@@ -455,32 +451,28 @@ int mkor(int first, int second)
 
         mkxtion(first, second);
 
-        if (SUPER_FREE_EPSILON(finalst[first]) &&
-            accptnum[finalst[first]] == NIL)
+        if (SUPER_FREE_EPSILON(nfas[first].finalst) && nfas[nfas[first].finalst].accptnum == NIL)
         {
-            orend = finalst[first];
-            mkxtion(finalst[second], orend);
+            orend = nfas[first].finalst;
+            mkxtion(nfas[second].finalst, orend);
         }
-
-        else if (SUPER_FREE_EPSILON(finalst[second]) &&
-                 accptnum[finalst[second]] == NIL)
+        else if (SUPER_FREE_EPSILON(nfas[second].finalst) && nfas[nfas[second].finalst].accptnum == NIL)
         {
-            orend = finalst[second];
-            mkxtion(finalst[first], orend);
+            orend = nfas[second].finalst;
+            mkxtion(nfas[first].finalst, orend);
         }
-
         else
         {
             eps = mkstate(SYM_EPSILON);
 
             first = link_machines(first, eps);
-            orend = finalst[first];
+            orend = nfas[first].finalst;
 
-            mkxtion(finalst[second], orend);
+            mkxtion(nfas[second].finalst, orend);
         }
     }
 
-    finalst[first] = orend;
+    nfas[first].finalst = orend;
     return first;
 }
 
@@ -495,9 +487,9 @@ int mkposcl(int state)
 {
     int eps;
 
-    if (SUPER_FREE_EPSILON(finalst[state]))
+    if (SUPER_FREE_EPSILON(nfas[state].finalst))
     {
-        mkxtion(finalst[state], state);
+        mkxtion(nfas[state].finalst, state);
         return state;
     }
 
@@ -569,38 +561,19 @@ int mkrep(int mach, int lb, int ub)
  */
 int mkstate(int sym)
 {
-    if (++lastnfa >= current_mns)
-    {
-        if ((current_mns += MNS_INCREMENT) >= maximum_mns)
-            lerr(_("input rules are too complicated (>= %d NFA states)"),
-                 current_mns);
+    Nfa nfa;
 
-        ++num_reallocs;
+    nfa.firstst = nfas.size();
+    nfa.finalst = nfas.size();
+    nfa.lastst = nfas.size();
+    nfa.transchar = sym;
+    nfa.trans1 = NO_TRANSITION;
+    nfa.trans2 = NO_TRANSITION;
+    nfa.accptnum = NIL;
+    nfa.assoc_rule = rules.size() - 1;
+    nfa.state_type = current_state_type;
 
-        firstst = (decltype(firstst))reallocate_integer_array(firstst, current_mns);
-        lastst = (decltype(lastst))reallocate_integer_array(lastst, current_mns);
-        finalst = (decltype(finalst))reallocate_integer_array(finalst, current_mns);
-        transchar =
-            (decltype(transchar))reallocate_integer_array(transchar, current_mns);
-        trans1 = (decltype(trans1))reallocate_integer_array(trans1, current_mns);
-        trans2 = (decltype(trans2))reallocate_integer_array(trans2, current_mns);
-        accptnum =
-            (decltype(accptnum))reallocate_integer_array(accptnum, current_mns);
-        assoc_rule =
-            (decltype(assoc_rule))reallocate_integer_array(assoc_rule, current_mns);
-        state_type =
-            (decltype(state_type))reallocate_integer_array(state_type, current_mns);
-    }
-
-    firstst[lastnfa] = lastnfa;
-    finalst[lastnfa] = lastnfa;
-    lastst[lastnfa] = lastnfa;
-    transchar[lastnfa] = sym;
-    trans1[lastnfa] = NO_TRANSITION;
-    trans2[lastnfa] = NO_TRANSITION;
-    accptnum[lastnfa] = NIL;
-    assoc_rule[lastnfa] = rules.size() - 1;
-    state_type[lastnfa] = current_state_type;
+    nfas.push_back(nfa);
 
     /* Fix up equivalence classes base on this transition.  Note that any
 	 * character which has its own transition gets its own equivalence
@@ -610,7 +583,6 @@ int mkstate(int sym)
 	 * puts them in the same equivalence class (barring other differences
 	 * elsewhere in the input).
 	 */
-
     if (sym < 0)
     {
         /* We don't have to update the equivalence classes since
@@ -629,7 +601,7 @@ int mkstate(int sym)
             mkechar(sym ? sym : csize, nextecm, ecgroup);
     }
 
-    return lastnfa;
+    return nfas.size() - 1;
 }
 
 /* mkxtion - make a transition from one state to another
@@ -643,17 +615,16 @@ int mkstate(int sym)
  */
 void mkxtion(int statefrom, int stateto)
 {
-    if (trans1[statefrom] == NO_TRANSITION)
-        trans1[statefrom] = stateto;
-
-    else if ((transchar[statefrom] != SYM_EPSILON) ||
-             (trans2[statefrom] != NO_TRANSITION))
+    if (nfas[statefrom].trans1 == NO_TRANSITION)
+        nfas[statefrom].trans1 = stateto;
+    else if ((nfas[statefrom].transchar != SYM_EPSILON) ||
+             (nfas[statefrom].trans2 != NO_TRANSITION))
         flexfatal(_("found too many transitions in mkxtion()"));
-
     else
-    { /* second out-transition for an epsilon state */
+    {
+        /* second out-transition for an epsilon state */
         ++eps2;
-        trans2[statefrom] = stateto;
+        nfas[statefrom].trans2 = stateto;
     }
 }
 

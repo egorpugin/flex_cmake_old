@@ -98,8 +98,8 @@
  * and both slots are free
  */
 #define SUPER_FREE_EPSILON(state)       \
-    (transchar[state] == SYM_EPSILON && \
-     trans1[state] == NO_TRANSITION)
+    (nfas[state].transchar == SYM_EPSILON && \
+     nfas[state].trans1 == NO_TRANSITION)
 
 /* Maximum number of NFA states that can comprise a DFA state.  It's real
  * big because if there's a lot of rules, the initial state will have a
@@ -152,11 +152,6 @@
 /* Maximum number of NFA states. */
 #define MAXIMUM_MNS 31999
 #define MAXIMUM_MNS_LONG 1999999999
-
-/* Enough so that if it's subtracted from an NFA state number, the result
- * is guaranteed to be negative.
- */
-#define MARKER_DIFFERENCE (maximum_mns + 2)
 
 /* Maximum number of nxt/chk pairs for non-templates. */
 #define INITIAL_MAX_XPAIRS 2000
@@ -362,52 +357,56 @@ extern String action_array, defs1_array, prolog_array;
 extern int onestate[ONE_STACK_SIZE], onesym[ONE_STACK_SIZE];
 extern int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
 
+
+
+
 /* Variables for nfa machine data:
- * maximum_mns - maximal number of NFA states supported by tables
- * current_mns - current maximum on number of NFA states
- * num_rules - number of the last accepting state; also is number of
- * 	rules created so far
  * num_eof_rules - number of <<EOF>> rules
  * default_rule - number of the default rule
- * lastnfa - last nfa state number created
- * firstst - physically the first state of a fragment
- * lastst - last physical state of fragment
- * finalst - last logical state of fragment
- * transchar - transition character
- * trans1 - transition state
- * trans2 - 2nd transition state for epsilons
- * accptnum - accepting number
- * assoc_rule - rule associated with this NFA state (or 0 if none)
- * state_type - a STATE_xxx type identifying whether the state is part
- * 	of a normal rule, the leading state in a trailing context
- * 	rule (i.e., the state which marks the transition from
- * 	recognizing the text-to-be-matched to the beginning of
- * 	the trailing context), or a subsequent state in a trailing
- * 	context rule
- * rule_type - a RULE_xxx type identifying whether this a ho-hum
- * 	normal rule or one which has variable head & trailing
- * 	context
- * rule_linenum - line number associated with rule
- * rule_useful - true if we've determined that the rule can be matched
- * rule_has_nl - true if rule could possibly match a newline
- * nlch - default eol char
  */
-
-extern int maximum_mns, current_mns;
-extern int num_eof_rules, default_rule, lastnfa;
-extern int *firstst, *lastst, *finalst, *transchar, *trans1, *trans2;
-extern int *accptnum, *assoc_rule, *state_type;
-extern int nlch;
 
 /* Different types of states; values are useful as masks, as well, for
- * routines like check_trailing_context().
- */
-#define STATE_NORMAL 0x1
-#define STATE_TRAILING_CONTEXT 0x2
+* routines like check_trailing_context().
+*/
+enum class StateType
+{
+    Normal = 1,
+    TrailingContext = 2,
+};
+
+struct Nfa
+{
+    int firstst; // physically the first state of a fragment
+    int lastst; // last physical state of fragment
+    int finalst; // last logical state of fragment
+    int transchar; // transition character
+    int trans1; // transition state
+    int trans2; // 2nd transition state for epsilons
+    int accptnum; // accepting number
+
+    int assoc_rule; // rule associated with this NFA state (or 0 if none)
+    // make ptr here
+
+    /* a STATE_xxx type identifying whether the state is part
+     * 	of a normal rule, the leading state in a trailing context
+     * 	rule (i.e., the state which marks the transition from
+     * 	recognizing the text-to-be-matched to the beginning of
+     * 	the trailing context), or a subsequent state in a trailing
+     * 	context rule
+     */
+    StateType state_type;
+};
+
+using Nfas = std::vector<Nfa>;
+
+extern Nfas nfas;
 
 /* Global holding current type of state we're making. */
+extern StateType current_state_type;
 
-extern int current_state_type;
+
+
+
 
 
 /* True if the input rules include a rule with both variable-length head
@@ -529,6 +528,11 @@ extern String nmstr;
 extern int sectnum, nummt, hshcol, dfaeql, numeps, eps2, num_reallocs;
 extern int tmpuses, totnst, peakpairs, numuniq, numdup, hshsave;
 extern int num_backing_up, bol_needed;
+
+extern int nlch; // nlch - default eol char
+
+
+
 
 void *allocate_array(int, size_t);
 void *reallocate_array(void *, int, size_t);
@@ -690,3 +694,5 @@ extern StartConditions start_conditions;
 extern CharacterClasses ccls;
 
 #define EOB_ACTION rules.size()
+
+extern int num_eof_rules, default_rule;

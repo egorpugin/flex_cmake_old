@@ -78,7 +78,6 @@ String prefix, yyclass, extra_type;
 int do_stdinit, use_stdout;
 int onestate[ONE_STACK_SIZE], onesym[ONE_STACK_SIZE];
 int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
-int maximum_mns, current_mns;
 int numtemps, numprots, protprev[MSP], protnext[MSP], prottbl[MSP];
 int protcomst[MSP], firstprot, lastprot, protsave[PROT_SAVE_SIZE];
 int numecs;
@@ -100,9 +99,8 @@ int nlch = '\n';
 bool ansi_func_defs, ansi_func_protos;
 String action_array, defs1_array, prolog_array;
 
-int *firstst, *lastst, *finalst, *transchar, *trans1, *trans2;
-int *accptnum, *assoc_rule, *state_type;
-int current_state_type;
+Nfas nfas(1);
+StateType current_state_type;
 
 StartConditions start_conditions(1);
 
@@ -114,7 +112,7 @@ union dfaacc_union *dfaacc;
 
 CharacterClasses ccls(1);
 
-int num_eof_rules, default_rule, lastnfa;
+int num_eof_rules, default_rule;
 int variable_trailing_context_rules;
 Rules rules(1); // make one dummy rule at 0 position
 
@@ -679,7 +677,7 @@ void flexend(int exit_status)
 
         putc('\n', stderr);
 
-        fprintf(stderr, _("  %d/%d NFA states\n"), lastnfa, current_mns);
+        fprintf(stderr, _("  %d NFA states\n"), nfas.size() - 1);
         fprintf(stderr, _("  %d/%d DFA states (%d words)\n"), lastdfa, current_max_dfas, totnst);
         fprintf(stderr, _("  %d rules\n"),
             rules.size() - 1 /* - 1 for dummy rule */ + num_eof_rules - 1 /* - 1 for def. rule */);
@@ -1218,11 +1216,10 @@ void flexinit(int argc, char **argv)
     else
         set_input_file(String());
 
-    lastdfa = lastnfa = 0;
+    lastdfa = 0;
     num_eof_rules = default_rule = 0;
     numas = numsnpairs = tmpuses = 0;
-    numecs = numeps = eps2 = num_reallocs = hshcol = dfaeql = totnst =
-        0;
+    numecs = numeps = eps2 = num_reallocs = hshcol = dfaeql = totnst = 0;
     numuniq = numdup = hshsave = eofseen = datapos = dataline = 0;
     num_backing_up = onesp = numprots = 0;
     variable_trailing_context_rules = bol_needed = false;
@@ -1509,18 +1506,6 @@ void readin(void)
 /* set_up_initial_allocations - allocate memory for internal tables */
 void set_up_initial_allocations(void)
 {
-    maximum_mns = (long_align ? MAXIMUM_MNS_LONG : MAXIMUM_MNS);
-    current_mns = INITIAL_MNS;
-    firstst = (decltype(firstst))allocate_integer_array(current_mns);
-    lastst = (decltype(lastst))allocate_integer_array(current_mns);
-    finalst = (decltype(finalst))allocate_integer_array(current_mns);
-    transchar = (decltype(transchar))allocate_integer_array(current_mns);
-    trans1 = (decltype(trans1))allocate_integer_array(current_mns);
-    trans2 = (decltype(trans2))allocate_integer_array(current_mns);
-    accptnum = (decltype(accptnum))allocate_integer_array(current_mns);
-    assoc_rule = (decltype(assoc_rule))allocate_integer_array(current_mns);
-    state_type = (decltype(state_type))allocate_integer_array(current_mns);
-
     current_max_dfa_size = INITIAL_MAX_DFA_SIZE;
 
     current_max_xpairs = INITIAL_MAX_XPAIRS;
