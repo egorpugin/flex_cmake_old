@@ -667,13 +667,13 @@ void flexend(int exit_status)
             putc('r', stderr);
 
         if (did_outfilename)
-            fprintf(stderr, " -o%s", outfilename);
+            fprintf(stderr, " -o%s", outfilename.c_str());
 
         if (!skelname.empty())
             fprintf(stderr, " -S%s", skelname.c_str());
 
         if (prefix != "yy")
-            fprintf(stderr, " -P%s", prefix);
+            fprintf(stderr, " -P%s", prefix.c_str());
 
         putc('\n', stderr);
 

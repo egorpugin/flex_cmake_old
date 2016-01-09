@@ -522,6 +522,8 @@ extern int end_of_buffer_state;
  * ccltbl - holds the characters in each ccl - indexed by cclmap
  */
 
+
+
 extern int lastccl, *cclmap, *ccllen, *cclng, cclreuse;
 extern int current_maxccls, current_max_ccl_tbl_size;
 extern unsigned char *ccltbl;

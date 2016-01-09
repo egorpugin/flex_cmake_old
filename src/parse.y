@@ -360,9 +360,7 @@ namelist2	:  namelist2 ',' sconname
 sconname	:  NAME
 			{
 			if ( (scnum = sclookup( nmstr )) == 0 )
-				format_pinpoint_message(
-					"undeclared start condition %s",
-					nmstr );
+				format_pinpoint_message("undeclared start condition %s", nmstr );
 			else
 				{
 				for ( i = 1; i <= scon_stk_ptr; ++i )

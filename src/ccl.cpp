@@ -38,8 +38,7 @@
 #include "misc.h"
 
 /* return true if the chr is in the ccl. Takes negation into account. */
-static bool
-ccl_contains(const int cclp, const int ch)
+bool ccl_contains(const int cclp, const int ch)
 {
     int ind, len, i;
 
@@ -261,8 +260,7 @@ void list_character_set(FILE *file, int cset[])
 
             if (i - 1 > start_char)
                 /* this was a run */
-                fprintf(file, "-%s",
-                        readable_form(i - 1));
+                fprintf(file, "-%s", readable_form(i - 1));
 
             putc(' ', file);
         }
