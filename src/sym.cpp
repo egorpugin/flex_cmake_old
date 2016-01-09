@@ -47,22 +47,6 @@
 
 std::unordered_map<String, int> sctbl;
 
-
-
-/* scextend - increase the maximum number of start conditions */
-void scextend()
-{
-    current_max_scs += MAX_SCS_INCREMENT;
-
-    ++num_reallocs;
-
-    scset = (decltype(scset))reallocate_integer_array(scset, current_max_scs);
-    scbol = (decltype(scbol))reallocate_integer_array(scbol, current_max_scs);
-    scxclu = (decltype(scxclu))reallocate_integer_array(scxclu, current_max_scs);
-    sceof = (decltype(sceof))reallocate_integer_array(sceof, current_max_scs);
-    scname = (decltype(scname))reallocate_char_ptr_array(scname, current_max_scs);
-}
-
 /* scinstal - make a start condition
  *
  * NOTE
@@ -70,20 +54,20 @@ void scextend()
  */
 void scinstal(const String& str, int xcluflg)
 {
-    if (++lastsc >= current_max_scs)
-        scextend();
-
-    scname[lastsc] = xstrdup(str.c_str());
+    StartCondition sc;
+    sc.name = str;
 
     auto i = sctbl.find(str);
     if (i != sctbl.end())
         format_pinpoint_message(_("start condition %s declared twice"), str.c_str());
-    sctbl[scname[lastsc]] = lastsc;
+    sctbl[sc.name] = start_conditions.size();
 
-    scset[lastsc] = mkstate(SYM_EPSILON);
-    scbol[lastsc] = mkstate(SYM_EPSILON);
-    scxclu[lastsc] = xcluflg;
-    sceof[lastsc] = false;
+    sc.set = mkstate(SYM_EPSILON);
+    sc.bol = mkstate(SYM_EPSILON);
+    sc.xclu = xcluflg;
+    sc.eof = false;
+
+    start_conditions.push_back(sc);
 }
 
 /* sclookup - lookup the number associated with a start condition

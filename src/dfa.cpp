@@ -440,7 +440,7 @@ void ntod(void)
     
     if (trace)
     {
-        dumpnfa(scset[1]);
+        dumpnfa(start_conditions[1].set);
         fputs(_("\n\nDFA Dump:\n\n"), stderr);
     }
 
@@ -574,7 +574,7 @@ void ntod(void)
         /* Generate 0 entries for state #0. */
         for (i = 0; i < num_full_table_rows; ++i)
         {
-            mk2data(0);
+            mkdata(0);
             yynxt_data[yynxt_curr++] = 0;
         }
 
@@ -585,7 +585,7 @@ void ntod(void)
 
     /* Create the first states. */
 
-    num_start_states = lastsc * 2;
+    num_start_states = (start_conditions.size() - 1) * 2;
 
     for (i = 1; i <= num_start_states; ++i)
     {
@@ -596,10 +596,9 @@ void ntod(void)
 		 * one for the case when we're not.
 		 */
         if (i % 2 == 1)
-            nset[numstates] = scset[(i / 2) + 1];
+            nset[numstates] = start_conditions[(i / 2) + 1].set;
         else
-            nset[numstates] =
-                mkbranch(scbol[i / 2], scset[i / 2]);
+            nset[numstates] = mkbranch(start_conditions[i / 2].bol, start_conditions[i / 2].set);
 
         nset = epsclosure(nset, &numstates, accset, &nacc, &hashval);
 
@@ -745,13 +744,13 @@ void ntod(void)
             /* Supply array's 0-element. */
             if (ds == end_of_buffer_state)
             {
-                mk2data(-end_of_buffer_state);
+                mkdata(-end_of_buffer_state);
                 yynxt_data[yynxt_curr++] =
                     -end_of_buffer_state;
             }
             else
             {
-                mk2data(end_of_buffer_state);
+                mkdata(end_of_buffer_state);
                 yynxt_data[yynxt_curr++] =
                     end_of_buffer_state;
             }
@@ -761,7 +760,7 @@ void ntod(void)
                 /* Jams are marked by negative of state
 				 * number.
 				 */
-                mk2data(state[i] ? state[i] : -ds);
+                mkdata(state[i] ? state[i] : -ds);
                 yynxt_data[yynxt_curr++] =
                     state[i] ? state[i] : -ds;
             }

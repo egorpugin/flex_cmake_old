@@ -3,16 +3,16 @@
 #include "common.h"
 
 /* Add a #define to the action file. */
-void action_define(const char *defname, int value);
+void action_define(const String &defname, int value);
 
 /* Add the given text to the stored actions. */
 void add_action(const String &new_text);
 
 /* True if a string is all lower case. */
-int all_lower(char *);
+bool is_all_lower(const String &);
 
 /* True if a string is all upper case. */
-int all_upper(char *);
+bool is_all_upper(const String &);
 
 /* Compare two integers for use by qsort. */
 int intcmp(const void *, const void *);
@@ -30,16 +30,16 @@ char *xstrdup(const char *);
 int cclcmp(const void *, const void *);
 
 /* Finish up a block of data declarations. */
-void dataend(void);
+void dataend();
 
 /* Flush generated data statements. */
-void dataflush(void);
+void dataflush();
 
 /* Report an error message and terminate. */
-void flexerror(const char *);
+void flexerror(const String &);
 
 /* Report a fatal error message and terminate. */
-void flexfatal(const char *);
+void flexfatal(const String &);
 
 /* Report a fatal error with a pinpoint, and terminate */
 #if HAVE_DECL___FUNC__
@@ -88,9 +88,6 @@ void mark_defs1(void);
 
 /* Mark the current position in the action array as the end of the prolog. */
 void mark_prolog(void);
-
-/* Generate a data statment for a two-dimensional array. */
-void mk2data(int);
 
 void mkdata(int); /* generate a data statement */
 

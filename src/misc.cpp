@@ -32,6 +32,7 @@
 /*  PURPOSE. */
 
 #include <fstream>
+#include <iostream>
 #include <iomanip>
 #include <stack>
 
@@ -61,13 +62,9 @@
 extern std::ifstream skelfile;
 
 /* Append "#define defname value\n" to the running buffer. */
-void action_define(const char *defname, int value)
+void action_define(const String &defname, int value)
 {
-    String s = "#define ";
-    s += defname;
-    s += " " + std::to_string(value) + "\n";
-
-    add_action(s);
+    add_action("#define " + defname + " " + std::to_string(value) + "\n");
 }
 
 /* Append "new_text" to the running buffer. */
@@ -89,30 +86,22 @@ void *allocate_array(int size, size_t element_size)
     return mem;
 }
 
-/* all_lower - true if a string is all lower-case */
-int all_lower(char *str)
+/* is_all_lower - true if a string is all lower-case */
+bool is_all_lower(const String &s)
 {
-    while (*str)
-    {
-        if (!isascii((unsigned char)*str) || !islower((unsigned char)*str))
-            return 0;
-        ++str;
-    }
-
-    return 1;
+    for (auto &c : s)
+        if (!isascii(c) || !islower(c))
+            return false;
+    return true;
 }
 
-/* all_upper - true if a string is all upper-case */
-int all_upper(char *str)
+/* is_all_upper - true if a string is all upper-case */
+bool is_all_upper(const String &s)
 {
-    while (*str)
-    {
-        if (!isascii((unsigned char)*str) || !isupper((unsigned char)*str))
-            return 0;
-        ++str;
-    }
-
-    return 1;
+    for (auto &c : s)
+        if (!isascii(c) || !isupper(c))
+            return false;
+    return true;
 }
 
 /* intcmp - compares two integers for use by qsort. */
@@ -203,16 +192,16 @@ void dataflush(void)
 }
 
 /* flexerror - report an error message and terminate */
-void flexerror(const char *msg)
+void flexerror(const String &msg)
 {
-    fprintf(stderr, "%s: %s\n", program_name.c_str(), msg);
+    std::cerr << program_name << ": " << " " << msg << "\n";
     flexend(1);
 }
 
 /* flexfatal - report a fatal error message and terminate */
-void flexfatal(const char *msg)
+void flexfatal(const String &msg)
 {
-    fprintf(stderr, _("%s: fatal internal error, %s\n"), program_name.c_str(), msg);
+    std::cerr << program_name << ": " << _("fatal internal error") << ", " << msg << "\n";
     flex_exit(1);
 }
 
@@ -243,8 +232,6 @@ void lerr_fatal(const char *msg, ...)
 /* line_directive_out - spit out a "#line" statement */
 void line_directive_out(bool print, bool do_infile)
 {
-    static const char *line_fmt = "#line %d \"%s\"\n";
-
     if (!gen_line_dirs)
         return;
 
@@ -286,34 +273,6 @@ void mark_prolog(void)
     action_array.clear();
 }
 
-/* mk2data - generate a data statement for a two-dimensional array
- *
- * Generates a data statement initializing the current 2-D array to "value".
- */
-void mk2data(int value)
-{
-    /* short circuit any output */
-    if (!gentables)
-        return;
-
-    if (datapos >= NUMDATAITEMS)
-    {
-        processed_file << ',';
-        dataflush();
-    }
-
-    if (datapos == 0)
-        /* Indent. */
-        processed_file << "    ";
-
-    else
-        processed_file << ',';
-
-    ++datapos;
-
-    processed_file << std::setw(5) << value;
-}
-
 /* mkdata - generate a data statement
  *
  * Generates a data statement initializing the current array element to
@@ -332,7 +291,6 @@ void mkdata(int value)
     }
 
     if (datapos == 0)
-        /* Indent. */
         processed_file << "    ";
     else
         processed_file << ',';
@@ -421,12 +379,10 @@ unsigned char myesc(unsigned char array[])
     }
 }
 
-
 /* readable_form - return the the human-readable form of a character
  *
  * The returned string is in static storage.
  */
-
 char *readable_form(int c)
 {
     static char rform[20];
@@ -644,10 +600,8 @@ void skelout(void)
  * outputs the yy_trans_info structure with the two elements, element_v and
  * element_n.  Formats the output with spaces and carriage returns.
  */
-
 void transition_struct_out(int element_v, int element_n)
 {
-
     /* short circuit any output */
     if (!gentables)
         return;
@@ -665,25 +619,4 @@ void transition_struct_out(int element_v, int element_n)
 
         datapos = 0;
     }
-}
-
-/* Remove all '\n' and '\r' characters, if any, from the end of str.
- * str can be any null-terminated string, or NULL.
- * returns str. */
-char *chomp(char *str)
-{
-    char *p = str;
-
-    if (!str || !*str) /* s is null or empty string */
-        return str;
-
-    /* find end of string minus one */
-    while (*p)
-        ++p;
-    --p;
-
-    /* eat newlines */
-    while (p >= str && (*p == '\r' || *p == '\n'))
-        *p-- = 0;
-    return str;
 }

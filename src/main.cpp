@@ -104,9 +104,7 @@ int *firstst, *lastst, *finalst, *transchar, *trans1, *trans2;
 int *accptnum, *assoc_rule, *state_type;
 int current_state_type;
 
-int lastsc, *scset, *scbol, *scxclu, *sceof;
-int current_max_scs;
-char **scname;
+StartConditions start_conditions(1);
 
 int current_max_dfa_size, current_max_xpairs;
 int current_max_template_xpairs, current_max_dfas;
@@ -341,11 +339,8 @@ int main(int argc, char *argv[])
 }
 
 /* check_options - check user-specified options */
-
 void check_options(void)
 {
-    int i;
-
     if (lex_compat)
     {
         if (C_plus_plus)
@@ -416,7 +411,7 @@ void check_options(void)
 		 */
         ecgroup[1] = NIL;
 
-        for (i = 2; i <= csize; ++i)
+        for (int i = 2; i <= csize; ++i)
         {
             ecgroup[i] = i - 1;
             nextecm[i - 1] = i;
@@ -428,7 +423,7 @@ void check_options(void)
     else
     {
         /* Put everything in its own equivalence class. */
-        for (i = 1; i <= csize; ++i)
+        for (int i = 1; i <= csize; ++i)
         {
             ecgroup[i] = i;
             nextecm[i] = BAD_SUBSCRIPT; /* to catch errors */
@@ -534,19 +529,8 @@ void check_options(void)
     /* Define the start condition macros. */
     {
         Context tmpbuf;
-        for (i = 1; i <= lastsc; i++)
-        {
-            char *str, *fmt = "#define %s %d\n";
-            size_t strsz;
-
-            strsz = strlen(fmt) + strlen(scname[i]) + (int)(1 + log10(i)) + 2;
-            str = (decltype(str))malloc(strsz);
-            if (!str)
-                flexfatal(_("allocation of macro definition failed"));
-            snprintf(str, strsz, fmt, scname[i], i - 1);
-            tmpbuf.addText(str);
-            free(str);
-        }
+        for (int i = 1; i < start_conditions.size(); i++)
+            tmpbuf.addLine("#define " + start_conditions[i].name + " " + std::to_string(i - 1));
         m4defs_buf.m4define("M4_YY_SC_DEFS", tmpbuf.getText().c_str());
     }
 
@@ -708,7 +692,7 @@ void flexend(int exit_status)
         if (bol_needed)
             fprintf(stderr, _("  Beginning-of-line patterns used\n"));
 
-        fprintf(stderr, _("  %d/%d start conditions\n"), lastsc, current_max_scs);
+        fprintf(stderr, _("  %d start conditions\n"), start_conditions.size() - 1);
         fprintf(stderr, _("  %d epsilon states, %d double epsilon states\n"), numeps, eps2);
 
         if (lastccl == 0)
@@ -775,7 +759,6 @@ void flex_exit(int code)
 }
 
 /* flexinit - initialize flex */
-
 void flexinit(int argc, char **argv)
 {
     int i, sawcmpflag, rv, optind;
@@ -1244,7 +1227,7 @@ void flexinit(int argc, char **argv)
     else
         set_input_file(String());
 
-    lastccl = lastsc = lastdfa = lastnfa = 0;
+    lastccl = lastdfa = lastnfa = 0;
     num_eof_rules = default_rule = 0;
     numas = numsnpairs = tmpuses = 0;
     numecs = numeps = eps2 = num_reallocs = hshcol = dfaeql = totnst =
@@ -1265,7 +1248,6 @@ void flexinit(int argc, char **argv)
 }
 
 /* readin - read in the rules section of the input file(s) */
-
 void readin(void)
 {
     static char yy_stdinit[] = "FILE *yyin = stdin, *yyout = stdout;";
@@ -1534,7 +1516,6 @@ void readin(void)
 }
 
 /* set_up_initial_allocations - allocate memory for internal tables */
-
 void set_up_initial_allocations(void)
 {
     maximum_mns = (long_align ? MAXIMUM_MNS_LONG : MAXIMUM_MNS);
@@ -1548,13 +1529,6 @@ void set_up_initial_allocations(void)
     accptnum = (decltype(accptnum))allocate_integer_array(current_mns);
     assoc_rule = (decltype(assoc_rule))allocate_integer_array(current_mns);
     state_type = (decltype(state_type))allocate_integer_array(current_mns);
-    
-    current_max_scs = INITIAL_MAX_SCS;
-    scset = (decltype(scset))allocate_integer_array(current_max_scs);
-    scbol = (decltype(scbol))allocate_integer_array(current_max_scs);
-    scxclu = (decltype(scxclu))allocate_integer_array(current_max_scs);
-    sceof = (decltype(sceof))allocate_integer_array(current_max_scs);
-    scname = (decltype(scname))allocate_char_ptr_array(current_max_scs);
 
     current_maxccls = INITIAL_MAX_CCLS;
     cclmap = (decltype(cclmap))allocate_integer_array(current_maxccls);

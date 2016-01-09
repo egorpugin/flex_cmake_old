@@ -148,8 +148,8 @@ goal		:  initlex sect1 sect1end sect2 initforrule
 
 			finish_rule( def_rule, false, 0, 0, 0);
 
-			for ( i = 1; i <= lastsc; ++i )
-				scset[i] = mkbranch( scset[i], def_rule );
+			for ( i = 1; i < start_conditions.size(); ++i )
+				start_conditions[i].set = mkbranch( start_conditions[i].set, def_rule );
 
 			if ( spprdflt )
 				add_action("YY_FATAL_ERROR( \"flex scanner jammed\" )" );
@@ -178,7 +178,7 @@ sect1		:  sect1 startconddecl namelist1
 sect1end	:  SECTEND
 			{
 			check_options();
-			scon_stk = (decltype(scon_stk))allocate_integer_array( lastsc + 1 );
+			scon_stk = (decltype(scon_stk))allocate_integer_array( start_conditions.size() );
 			scon_stk_ptr = 0;
 			}
 		;
@@ -253,9 +253,7 @@ flexrule	:  '^' rule
 			if ( scon_stk_ptr > 0 )
 				{
 				for ( i = 1; i <= scon_stk_ptr; ++i )
-					scbol[scon_stk[i]] =
-						mkbranch( scbol[scon_stk[i]],
-								pat );
+					start_conditions[scon_stk[i]].bol = mkbranch( start_conditions[scon_stk[i]].bol, pat );
 				}
 
 			else
@@ -264,10 +262,9 @@ flexrule	:  '^' rule
 				 * including the default (0) start condition.
 				 */
 
-				for ( i = 1; i <= lastsc; ++i )
-					if ( ! scxclu[i] )
-						scbol[i] = mkbranch( scbol[i],
-									pat );
+				for ( i = 1; i < start_conditions.size(); ++i )
+					if ( ! start_conditions[i].xclu )
+						start_conditions[i].bol = mkbranch( start_conditions[i].bol, pat );
 				}
 
 			if ( ! bol_needed )
@@ -283,24 +280,19 @@ flexrule	:  '^' rule
 		|  rule
 			{
 			pat = $1;
-			finish_rule( pat, variable_trail_rule,
-				headcnt, trailcnt , previous_continued_action);
+			finish_rule( pat, variable_trail_rule, headcnt, trailcnt , previous_continued_action);
 
 			if ( scon_stk_ptr > 0 )
 				{
 				for ( i = 1; i <= scon_stk_ptr; ++i )
-					scset[scon_stk[i]] =
-						mkbranch( scset[scon_stk[i]],
-								pat );
+					start_conditions[scon_stk[i]].set = mkbranch( start_conditions[scon_stk[i]].set, pat );
 				}
 
 			else
 				{
-				for ( i = 1; i <= lastsc; ++i )
-					if ( ! scxclu[i] )
-						scset[i] =
-							mkbranch( scset[i],
-								pat );
+				for ( i = 1; i < start_conditions.size(); ++i )
+					if ( ! start_conditions[i].xclu )
+						start_conditions[i].set = mkbranch( start_conditions[i].set, pat );
 				}
 			}
 
@@ -314,14 +306,12 @@ flexrule	:  '^' rule
 				/* This EOF applies to all start conditions
 				 * which don't already have EOF actions.
 				 */
-				for ( i = 1; i <= lastsc; ++i )
-					if ( ! sceof[i] )
+				for ( i = 1; i < start_conditions.size(); ++i )
+					if ( ! start_conditions[i].eof )
 						scon_stk[++scon_stk_ptr] = i;
 
 				if ( scon_stk_ptr == 0 )
-					warn(
-			"all start conditions already have <<EOF>> rules" );
-
+					warn("all start conditions already have <<EOF>> rules" );
 				else
 					build_eof_action();
 				}
@@ -342,7 +332,7 @@ scon		:  '<' scon_stk_ptr namelist2 '>'
 			{
 			$$ = scon_stk_ptr;
 
-			for ( i = 1; i <= lastsc; ++i )
+			for ( i = 1; i < start_conditions.size(); ++i )
 				{
 				int j;
 
@@ -378,9 +368,7 @@ sconname	:  NAME
 				for ( i = 1; i <= scon_stk_ptr; ++i )
 					if ( scon_stk[i] == scnum )
 						{
-						format_warn(
-							"<%s> specified twice",
-							scname[scnum] );
+						format_warn("<%s> specified twice", start_conditions[scnum].name.c_str());
 						break;
 						}
 
@@ -972,16 +960,16 @@ void build_eof_action(void)
 
 	for ( i = 1; i <= scon_stk_ptr; ++i )
 		{
-		if ( sceof[scon_stk[i]] )
-			format_pinpoint_message("multiple <<EOF>> rules for start condition %s", scname[scon_stk[i]] );
+		if ( start_conditions[scon_stk[i]].eof )
+			format_pinpoint_message("multiple <<EOF>> rules for start condition %s", start_conditions[scon_stk[i]].name.c_str());
 		else
 			{
-			sceof[scon_stk[i]] = true;
+			start_conditions[scon_stk[i]].eof = true;
 
 			if (previous_continued_action /* && previous action was regular */)
 				add_action("YY_RULE_SETUP\n");
 
-			snprintf( action_text, sizeof(action_text), "case YY_STATE_EOF(%s):\n", scname[scon_stk[i]] );
+			snprintf( action_text, sizeof(action_text), "case YY_STATE_EOF(%s):\n", start_conditions[scon_stk[i]].name.c_str());
 			add_action( action_text );
 			}
 		}

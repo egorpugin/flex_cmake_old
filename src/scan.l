@@ -96,11 +96,11 @@ std::unordered_map<String, int> ccltab;
 		unput((str)[i])
 
 #define CHECK_REJECT(str) \
-	if ( all_upper( str ) ) \
+	if ( is_all_upper( str ) ) \
 		reject = true;
 
 #define CHECK_YYMORE(str) \
-	if ( all_lower( str ) ) \
+	if ( is_all_lower( str ) ) \
 		yymore_used = true;
 
 #define YY_USER_INIT \

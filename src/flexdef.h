@@ -178,9 +178,6 @@
 
 #define SYM_EPSILON (CSIZE + 1) /* to mark transitions on the symbol epsilon */
 
-#define INITIAL_MAX_SCS 40   /* maximum number of start conditions */
-#define MAX_SCS_INCREMENT 40 /* amount to bump by if it's not enough */
-
 #define ONE_STACK_SIZE 500 /* stack of states with only one out-transition */
 #define SAME_TRANS -1      /* transition is the same as "default" entry for state */
 
@@ -414,26 +411,6 @@ extern int *accptnum, *assoc_rule, *state_type;
 extern bool *ccl_has_nl;
 extern int nlch;
 
-enum class RuleType
-{
-    Normal = 0,
-    Variable = 1,
-};
-
-struct Rule
-{
-    RuleType type = RuleType::Normal;
-    int linenum = 0;
-    bool useful = false;
-    bool has_nl = false;
-};
-
-using Rules = std::vector<Rule>;
-
-extern Rules rules;
-
-#define EOB_ACTION rules.size()
-
 /* Different types of states; values are useful as masks, as well, for
  * routines like check_trailing_context().
  */
@@ -489,19 +466,6 @@ extern int numecs, nextecm[CSIZE + 1], ecgroup[CSIZE + 1], nummecs;
  */
 extern int tecfwd[CSIZE + 1], tecbck[CSIZE + 1];
 
-/* Variables for start conditions:
- * lastsc - last start condition created
- * current_max_scs - current limit on number of start conditions
- * scset - set of rules active in start condition
- * scbol - set of rules active only at the beginning of line in a s.c.
- * scxclu - true if start condition is exclusive
- * sceof - true if start condition has EOF rule
- * scname - start condition name
- */
-
-extern int lastsc, *scset, *scbol, *scxclu, *sceof;
-extern int current_max_scs;
-extern char **scname;
 
 /* Variables for dfa machine data:
  * current_max_dfa_size - current maximum number of NFA states in DFA
@@ -697,9 +661,6 @@ int flexscan(void);
 
 void flex_exit(int code);
 
-/* Removes all \n and \r chars from tail of str. returns str. */
-extern char *chomp(char *str);
-
 /* ctype functions forced to return boolean */
 #define b_islower(c) (islower(c) ? true : false)
 #define b_isupper(c) (isupper(c) ? true : false)
@@ -742,3 +703,42 @@ inline bool replace_all(String &str, const String &from, const String &to)
 
 #define outn(x) processed_file << (x) << Context::eol
 #define indent_puts outn
+
+
+// rules
+enum class RuleType
+{
+    Normal = 0,
+    Variable = 1,
+};
+
+struct Rule
+{
+    RuleType type = RuleType::Normal;
+    int linenum = 0;
+    bool useful = false;
+    bool has_nl = false;
+};
+
+using Rules = std::vector<Rule>;
+
+extern Rules rules;
+
+#define EOB_ACTION rules.size()
+
+
+
+
+// start condiftions
+struct StartCondition
+{
+    String name;
+    int set; // set of rules active in start condition
+    int bol; // set of rules active only at the beginning of line in a s.c.
+    bool xclu; // true if start condition is exclusive
+    bool eof; // true if start condition has EOF rule
+};
+
+using StartConditions = std::vector<StartCondition>;
+
+extern StartConditions start_conditions;

@@ -321,12 +321,12 @@ static struct yytbl_data *mkssltbl(void)
     yytbl_data_init(tbl, YYTD_ID_START_STATE_LIST);
     tbl->td_flags = YYTD_DATA32 | YYTD_PTRANS;
     tbl->td_hilen = 0;
-    tbl->td_lolen = lastsc * 2 + 1;
+    tbl->td_lolen = (start_conditions.size() - 1) * 2 + 1;
 
     tbl->td_data = tdata =
         (decltype(tdata))calloc(tbl->td_lolen, sizeof(flex_int32_t));
 
-    for (i = 0; i <= lastsc * 2; ++i)
+    for (i = 0; i <= (start_conditions.size() - 1) * 2; ++i)
         tdata[i] = base[i];
 
     yydmap_buf.addLine("\t{YYTD_ID_START_STATE_LIST, (void**)&yy_start_state_list, sizeof(struct yy_trans_info*)},");
@@ -421,7 +421,7 @@ void genctbl(void)
 
     /* Table of pointers to start states. */
     if (gentables)
-        processed_file << "static yyconst struct yy_trans_info *yy_start_state_list[" << (lastsc * 2 + 1) << "] =" << Context::eol;
+        processed_file << "static yyconst struct yy_trans_info *yy_start_state_list[" << ((start_conditions.size() - 1) * 2 + 1) << "] =" << Context::eol;
     else
         outn("static yyconst struct yy_trans_info **yy_start_state_list =0;");
 
@@ -429,7 +429,7 @@ void genctbl(void)
     {
         outn("    {");
 
-        for (i = 0; i <= lastsc * 2; ++i)
+        for (i = 0; i <= (start_conditions.size() - 1) * 2; ++i)
             processed_file << "    &yy_transition[" << base[i] << "]," << Context::eol;
 
         dataend();
@@ -2017,11 +2017,11 @@ void make_tables(void)
     line_directive_out(true, false);
 
     /* generate cases for any missing EOF rules */
-    for (i = 1; i <= lastsc; ++i)
-        if (!sceof[i])
+    for (i = 1; i < start_conditions.size(); ++i)
+        if (!start_conditions[i].eof)
         {
             //do_indent ();
-            processed_file << "case YY_STATE_EOF(" << scname[i] << "):" << Context::eol;
+            processed_file << "case YY_STATE_EOF(" << start_conditions[i].name << "):" << Context::eol;
             did_eof_rule = true;
         }
 
