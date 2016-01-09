@@ -47,7 +47,6 @@ void mkxtion(int, int);
  *
  * accepting_number becomes mach's accepting number.
  */
-
 void add_accept(int mach, int accepting_number)
 {
     /* Hang the accepting number off an epsilon state.  if it is associated
@@ -78,7 +77,6 @@ void add_accept(int mach, int accepting_number)
  *     singl  - a singleton machine
  *     num    - the number of copies of singl to be present in newsng
  */
-
 int copysingl(int singl, int num)
 {
     int copy, i;
@@ -92,7 +90,6 @@ int copysingl(int singl, int num)
 }
 
 /* dumpnfa - debugging routine to write out an nfa */
-
 void dumpnfa(int state1)
 {
     int sym, tsp1, tsp2, anum, ns;
@@ -142,7 +139,6 @@ void dumpnfa(int state1)
  * also note that the original MUST be contiguous, with its low and high
  * states accessible by the arrays firstst and lastst
  */
-
 int dupmachine(int mach)
 {
     int i, init, state_offset;
@@ -188,34 +184,33 @@ int dupmachine(int mach)
  * trailing context characters in the pattern, or zero if the trailing
  * context has variable length.
  */
-
 void finish_rule(int mach, int variable_trail_rule, int headcnt, int trailcnt, int pcont_act)
 {
     char action_text[MAXLINE];
-    auto rule_id = rules.size();
+    auto rule_id = EOB_ACTION - 1;
 
     add_accept(mach, rule_id);
 
     /* We did this in new_rule(), but it often gets the wrong
 	 * number because we do it before we start parsing the current rule.
 	 */
-    rules[rule_id - 1].linenum = linenum;
+    rules[rule_id].linenum = linenum;
 
     /* If this is a continued action, then the line-number has already
 	 * been updated, giving us the wrong number.
 	 */
     if (continued_action)
-        --rules[rule_id - 1].linenum;
+        --rules[rule_id].linenum;
 
     /* If the previous rule was continued action, then we inherit the
 	 * previous newline flag, possibly overriding the current one.
 	 */
-    if (pcont_act && rules[rule_id - 2].has_nl)
-        rules[rule_id - 1].has_nl = true;
+    if (pcont_act && rules[rule_id - 1].has_nl)
+        rules[rule_id].has_nl = true;
 
     snprintf(action_text, sizeof(action_text), "case %d:\n", rule_id);
     add_action(action_text);
-    if (rules[rule_id - 1].has_nl)
+    if (rules[rule_id].has_nl)
     {
         snprintf(action_text, sizeof(action_text), "/* rule %d can match eol */\n", rule_id);
         add_action(action_text);
@@ -223,16 +218,16 @@ void finish_rule(int mach, int variable_trail_rule, int headcnt, int trailcnt, i
 
     if (variable_trail_rule)
     {
-        rules[rule_id - 1].type = RuleType::Variable;
+        rules[rule_id].type = RuleType::Variable;
 
         if (performance_report > 0)
-            fprintf(stderr, _("Variable trailing context rule at line %d\n"), rules[rule_id - 1].linenum);
+            fprintf(stderr, _("Variable trailing context rule at line %d\n"), rules[rule_id].linenum);
 
         variable_trailing_context_rules = true;
     }
     else
     {
-        rules[rule_id - 1].type = RuleType::Normal;
+        rules[rule_id].type = RuleType::Normal;
 
         if (headcnt > 0 || trailcnt > 0)
         {
@@ -246,7 +241,7 @@ void finish_rule(int mach, int variable_trail_rule, int headcnt, int trailcnt, i
 
             if (headcnt > 0)
             {
-                if (rules[rule_id - 1].has_nl)
+                if (rules[rule_id].has_nl)
                 {
                     snprintf(action_text, sizeof(action_text), "YY_LINENO_REWIND_TO(%s + %d);\n", scanner_bp, headcnt);
                     add_action(action_text);
@@ -256,7 +251,7 @@ void finish_rule(int mach, int variable_trail_rule, int headcnt, int trailcnt, i
             }
             else
             {
-                if (rules[rule_id - 1].has_nl)
+                if (rules[rule_id].has_nl)
                 {
                     snprintf(action_text, sizeof(action_text), "YY_LINENO_REWIND_TO(yy_cp - %d);\n", trailcnt);
                     add_action(action_text);
@@ -296,7 +291,6 @@ void finish_rule(int mach, int variable_trail_rule, int headcnt, int trailcnt, i
  *  and then last, and will fail if either of the sub-patterns fails.
  *  FIRST is set to new by the operation.  last is unmolested.
  */
-
 int link_machines(int first, int last)
 {
     if (first == NIL)
@@ -322,7 +316,6 @@ int link_machines(int first, int last)
  *
  * The "beginning" states are the epsilon closure of the first state
  */
-
 void mark_beginning_as_normal(int mach)
 {
     switch (state_type[mach])
@@ -363,7 +356,6 @@ void mark_beginning_as_normal(int mach)
  * the resulting machine CANNOT be used with any other "mk" operation except
  * more mkbranch's.  Compare with mkor()
  */
-
 int mkbranch(int first, int second)
 {
     int eps;
@@ -389,7 +381,6 @@ int mkbranch(int first, int second)
  *
  * new - a new state which matches the closure of "state"
  */
-
 int mkclos(int state)
 {
     return mkopt(mkposcl(state));
@@ -408,7 +399,6 @@ int mkclos(int state)
  *     1. mach must be the last machine created
  *     2. mach is destroyed by the call
  */
-
 int mkopt(int mach)
 {
     int eps;
@@ -444,7 +434,6 @@ int mkopt(int mach)
  * the code is rather convoluted because an attempt is made to minimize
  * the number of epsilon states needed
  */
-
 int mkor(int first, int second)
 {
     int eps, orend;
@@ -502,7 +491,6 @@ int mkor(int first, int second)
  *
  *    new - a machine matching the positive closure of "state"
  */
-
 int mkposcl(int state)
 {
     int eps;
@@ -532,7 +520,6 @@ int mkposcl(int state)
  * note
  *   if "ub" is INFINITE_REPEAT then "new" matches "lb" or more occurrences of "mach"
  */
-
 int mkrep(int mach, int lb, int ub)
 {
     int base_mach, tail, copy, i;
@@ -580,7 +567,6 @@ int mkrep(int mach, int lb, int ub)
  * CONTIGUOUS.  Change it and you will have to rewrite DUPMACHINE (kludge
  * that it admittedly is)
  */
-
 int mkstate(int sym)
 {
     if (++lastnfa >= current_mns)
@@ -657,7 +643,6 @@ int mkstate(int sym)
  *     statefrom - the state from which the transition is to be made
  *     stateto   - the state to which the transition is to be made
  */
-
 void mkxtion(int statefrom, int stateto)
 {
     if (trans1[statefrom] == NO_TRANSITION)
@@ -675,7 +660,6 @@ void mkxtion(int statefrom, int stateto)
 }
 
 /* new_rule - initialize for a new rule */
-
 void new_rule()
 {
     Rule r;

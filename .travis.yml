@@ -47,4 +47,4 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake .. && make -j2 && ctest
+  - cmake .. -DWITH_TESTS=1 && make -j2 && ctest

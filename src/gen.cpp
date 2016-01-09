@@ -42,7 +42,6 @@
 #include "misc.h"
 
 /* declare functions that have forward references */
-
 void gen_next_state(int);
 void genecs(void);
 
@@ -213,7 +212,7 @@ static struct yytbl_data *mkctbl(void)
     int i;
     struct yytbl_data *tbl = 0;
     flex_int32_t *tdata = 0, curr = 0;
-    int end_of_buffer_action = rules.size() + 1;
+    int end_of_buffer_action = EOB_ACTION;
 
     yydmap_buf.addLine(String() + "\t{YYTD_ID_TRANSITION, (void**)&yy_transition, sizeof(" +
                        (((tblend + numecs + 1) >= INT16_MAX || long_align) ? "flex_int32_t" : "flex_int16_t") + ")},");
@@ -340,7 +339,7 @@ static struct yytbl_data *mkssltbl(void)
 void genctbl(void)
 {
     int i;
-    int end_of_buffer_action = rules.size() + 1;
+    int end_of_buffer_action = EOB_ACTION;
 
     /* Table of verify for transition and offset to next state. */
     if (gentables)
@@ -645,7 +644,7 @@ void gen_find_action(void)
 struct yytbl_data *mkftbl(void)
 {
     int i;
-    int end_of_buffer_action = rules.size() + 1;
+    int end_of_buffer_action = EOB_ACTION;
     struct yytbl_data *tbl;
     flex_int32_t *tdata = 0;
 
@@ -681,7 +680,7 @@ struct yytbl_data *mkftbl(void)
 void genftbl(void)
 {
     int i;
-    int end_of_buffer_action = rules.size() + 1;
+    int end_of_buffer_action = EOB_ACTION;
 
     out_str_dec(long_align ? get_int32_decl() : get_int16_decl(),
                 "yy_accept", lastdfa + 1);
@@ -1033,7 +1032,7 @@ void gentabs(void)
 {
     std::vector<int> acc_array(current_max_dfas);
     int i, j, k, *accset, nacc, total_states;
-    int end_of_buffer_action = rules.size() + 1;
+    int end_of_buffer_action = EOB_ACTION;
     struct yytbl_data *yyacc_tbl = 0, *yymeta_tbl = 0, *yybase_tbl = 0,
                       *yydef_tbl = 0, *yynxt_tbl = 0, *yychk_tbl = 0, *yyacclist_tbl = 0;
     flex_int32_t *yyacc_data = 0, *yybase_data = 0, *yydef_data = 0,
@@ -1488,8 +1487,8 @@ void make_tables(void)
 
     /* This is where we REALLY begin generating the tables. */
 
-    processed_file << "#define YY_NUM_RULES " << rules.size() << Context::eol;
-    processed_file << "#define YY_END_OF_BUFFER " << rules.size() + 1 << Context::eol;
+    processed_file << "#define YY_NUM_RULES " << (EOB_ACTION - 1) << Context::eol;
+    processed_file << "#define YY_END_OF_BUFFER " << EOB_ACTION << Context::eol;
 
     if (fullspd)
     {

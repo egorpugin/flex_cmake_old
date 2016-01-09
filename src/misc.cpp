@@ -205,7 +205,7 @@ void dataflush(void)
 /* flexerror - report an error message and terminate */
 void flexerror(const char *msg)
 {
-    fprintf(stderr, "%s: %s\n", program_name, msg);
+    fprintf(stderr, "%s: %s\n", program_name.c_str(), msg);
     flexend(1);
 }
 

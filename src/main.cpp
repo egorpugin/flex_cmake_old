@@ -60,14 +60,14 @@ static String basename2(String path);
 
 /* these globals are all defined and commented in flexdef.h */
 int printstats, syntaxerror, eofseen, ddebug, trace, nowarn, spprdflt;
-int interactive, lex_compat, posix_compat, do_yylineno,
-    useecs, fulltbl, usemecs;
+int interactive, lex_compat, posix_compat, do_yylineno, useecs, fulltbl, usemecs;
 int fullspd, gen_line_dirs, performance_report, backing_up_report;
 int C_plus_plus, long_align, use_read, yytext_is_array, do_yywrap, csize;
 int reentrant, bison_bridge_lval, bison_bridge_lloc;
 int yymore_used, reject, real_reject, continued_action, in_rule;
 int yymore_really_used, reject_really_used;
 int trace_hex = 0;
+
 int datapos, dataline, linenum;
 std::ifstream skelfile;
 int skel_ind = 0;
@@ -79,29 +79,16 @@ int do_stdinit, use_stdout;
 int onestate[ONE_STACK_SIZE], onesym[ONE_STACK_SIZE];
 int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
 int maximum_mns, current_mns;
-int num_eof_rules, default_rule, lastnfa;
-int *firstst, *lastst, *finalst, *transchar, *trans1, *trans2;
-int *accptnum, *assoc_rule, *state_type;
-int current_state_type;
-int variable_trailing_context_rules;
 int numtemps, numprots, protprev[MSP], protnext[MSP], prottbl[MSP];
 int protcomst[MSP], firstprot, lastprot, protsave[PROT_SAVE_SIZE];
-int numecs, nextecm[CSIZE + 1], ecgroup[CSIZE + 1], nummecs,
-    tecfwd[CSIZE + 1];
+int numecs;
+int nextecm[CSIZE + 1];
+int ecgroup[CSIZE + 1];
+int nummecs;
+int tecfwd[CSIZE + 1];
 int tecbck[CSIZE + 1];
-int lastsc, *scset, *scbol, *scxclu, *sceof;
-int current_max_scs;
-char **scname;
-int current_max_dfa_size, current_max_xpairs;
-int current_max_template_xpairs, current_max_dfas;
-int lastdfa, *nxt, *chk, *tnxt;
-int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss, *dfasiz;
-union dfaacc_union *dfaacc;
 int *accsiz, *dhash, numas;
 int numsnpairs, jambase, jamstate;
-int lastccl, *cclmap, *ccllen, *cclng, cclreuse;
-int current_maxccls, current_max_ccl_tbl_size;
-unsigned char *ccltbl;
 String nmstr;
 int sectnum, nummt, hshcol, dfaeql, numeps, eps2, num_reallocs;
 int tmpuses, totnst, peakpairs, numuniq, numdup, hshsave;
@@ -109,12 +96,32 @@ int num_backing_up, bol_needed;
 FILE *backing_up_file;
 int end_of_buffer_state;
 InputFiles input_files;
-bool *ccl_has_nl;
 int nlch = '\n';
 bool ansi_func_defs, ansi_func_protos;
 String action_array, defs1_array, prolog_array;
 
-Rules rules;
+int *firstst, *lastst, *finalst, *transchar, *trans1, *trans2;
+int *accptnum, *assoc_rule, *state_type;
+int current_state_type;
+
+int lastsc, *scset, *scbol, *scxclu, *sceof;
+int current_max_scs;
+char **scname;
+
+int current_max_dfa_size, current_max_xpairs;
+int current_max_template_xpairs, current_max_dfas;
+int lastdfa, *nxt, *chk, *tnxt;
+int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss, *dfasiz;
+union dfaacc_union *dfaacc;
+
+int lastccl, *cclmap, *ccllen, *cclng, cclreuse;
+int current_maxccls, current_max_ccl_tbl_size;
+unsigned char *ccltbl;
+bool *ccl_has_nl;
+
+int num_eof_rules, default_rule, lastnfa;
+int variable_trailing_context_rules;
+Rules rules(1); // make one dummy rule at 0 position
 
 bool tablesext, tablesverify, gentables;
 String tablesfilename, tablesname;
@@ -568,7 +575,6 @@ void check_options(void)
  * note
  *    This routine does not return.
  */
-
 void flexend(int exit_status)
 {
     static int called_before = -1; /* prevent infinite recursion. */
@@ -689,7 +695,8 @@ void flexend(int exit_status)
 
         fprintf(stderr, _("  %d/%d NFA states\n"), lastnfa, current_mns);
         fprintf(stderr, _("  %d/%d DFA states (%d words)\n"), lastdfa, current_max_dfas, totnst);
-        fprintf(stderr, _("  %d rules\n"), rules.size() + num_eof_rules - 1 /* - 1 for def. rule */);
+        fprintf(stderr, _("  %d rules\n"),
+            rules.size() - 1 /* - 1 for dummy rule */ + num_eof_rules - 1 /* - 1 for def. rule */);
 
         if (num_backing_up == 0)
             fprintf(stderr, _("  No backing up\n"));

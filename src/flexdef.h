@@ -432,6 +432,8 @@ using Rules = std::vector<Rule>;
 
 extern Rules rules;
 
+#define EOB_ACTION rules.size()
+
 /* Different types of states; values are useful as masks, as well, for
  * routines like check_trailing_context().
  */

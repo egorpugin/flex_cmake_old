@@ -975,7 +975,7 @@ void set_input_file(const String &file)
         yyin = fopen(infilename.c_str(), "r");
 
         if (yyin == NULL)
-            lerr(_("can't open %s"), file);
+            lerr(_("can't open %s"), file.c_str());
     }
     else
     {

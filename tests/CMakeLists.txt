@@ -13,6 +13,10 @@ set(SOLUTION_FOLDER Tests)
 set(generate_suffix _generate)
 set(build_suffix _build)
 set(run_suffix _run)
+set(compare_suffix _compare)
+
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/empty_file.txt)
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/nodefault_warn.err.txt0 "nodefault_warn.l:7: warning, -s option given but default rule can be matched\n")
 
 ################################################################################
 
@@ -240,13 +244,13 @@ function(add_test_compare name files lang)
     )
     test_depends(${name}${run_suffix}_2 ${name}${build_suffix})
 
-    add_test(NAME ${name}${run_suffix}_compare
+    add_test(NAME ${name}${run_suffix}${compare_suffix}
         COMMAND ${CMAKE_COMMAND} -E compare_files
             ${CMAKE_CURRENT_BINARY_DIR}/${name}.txt.1
             ${CMAKE_CURRENT_BINARY_DIR}/${name}.txt.2
     )
-    test_depends(${name}${run_suffix}_compare ${name}${run_suffix}_1)
-    test_depends(${name}${run_suffix}_compare ${name}${run_suffix}_2)
+    test_depends(${name}${run_suffix}${compare_suffix} ${name}${run_suffix}_1)
+    test_depends(${name}${run_suffix}${compare_suffix} ${name}${run_suffix}_2)
 endfunction(add_test_compare)
 
 ########################################
@@ -274,7 +278,8 @@ test_simple_m4(1 13)
 ########################################
 
 add_test(NAME invoke_help COMMAND flex --help)
-add_test(NAME invoke_verbose COMMAND flex -v -L ${CMAKE_CURRENT_SOURCE_DIR}/alloc_extra.l
+add_test(NAME invoke_verbose
+    COMMAND flex -v -L - ${CMAKE_CURRENT_SOURCE_DIR}/invoke_verbose.c ${CMAKE_CURRENT_SOURCE_DIR}/alloc_extra.l
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 set(flex_tests_simple
@@ -340,6 +345,31 @@ add_test_flex_build(bison_yylval bison_yylval_scanner.l c
     bison_yylval_parser.y
 )
 add_test_run_with_input(bison_yylval bison_yylval.txt)
+
+########################################
+
+# default
+add_test(NAME nodefault${generate_suffix}
+    COMMAND ${CMAKE_COMMAND}
+        -DEXE=$<TARGET_FILE:flex>
+        -DBDIR=${CMAKE_CURRENT_BINARY_DIR}
+        -DSDIR=${CMAKE_CURRENT_SOURCE_DIR}
+        -DFN=nodefault
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/nodefault.cmake
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_test(NAME nodefault_warn${generate_suffix}
+    COMMAND ${CMAKE_COMMAND}
+        -DEXE=$<TARGET_FILE:flex>
+        -DBDIR=${CMAKE_CURRENT_BINARY_DIR}
+        -DSDIR=${CMAKE_CURRENT_SOURCE_DIR}
+        -DFAIL=1
+        -DFN=nodefault_warn
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/nodefault.cmake
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+set_tests_properties(nodefault_warn${generate_suffix} PROPERTIES WILL_FAIL True)
 
 ########################################
 
