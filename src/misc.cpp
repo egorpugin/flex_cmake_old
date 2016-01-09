@@ -212,9 +212,8 @@ void flexerror(const char *msg)
 /* flexfatal - report a fatal error message and terminate */
 void flexfatal(const char *msg)
 {
-    fprintf(stderr, _("%s: fatal internal error, %s\n"),
-            program_name, msg);
-    FLEX_EXIT(1);
+    fprintf(stderr, _("%s: fatal internal error, %s\n"), program_name.c_str(), msg);
+    flex_exit(1);
 }
 
 /* lerr - report an error message */

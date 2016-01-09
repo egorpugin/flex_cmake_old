@@ -581,7 +581,7 @@ void flexend(int exit_status)
     int tblsiz;
 
     if (++called_before)
-        FLEX_EXIT(exit_status);
+        flex_exit(exit_status);
 
     if (skelfile)
     {
@@ -766,7 +766,7 @@ void flexend(int exit_status)
         fprintf(stderr, _("  %d total table entries needed\n"), tblsiz);
     }
 
-    FLEX_EXIT(exit_status);
+    flex_exit(exit_status);
 }
 
 void flex_exit(int code)
@@ -818,9 +818,8 @@ void flexinit(int argc, char **argv)
     if (!sopt)
     {
         /* This will only happen when flexopts array is altered. */
-        fprintf(stderr,
-                _("Internal error. flexopts are malformed.\n"));
-        FLEX_EXIT(1);
+        fprintf(stderr, _("Internal error. flexopts are malformed.\n"));
+        flex_exit(1);
     }
 
     while ((rv = scanopt(sopt, &arg, &optind)) != 0)
@@ -829,10 +828,8 @@ void flexinit(int argc, char **argv)
         if (rv < 0)
         {
             /* Scanopt has already printed an option-specific error message. */
-            fprintf(stderr,
-                    _("Try `%s --help' for more information.\n"),
-                    program_name);
-            FLEX_EXIT(1);
+            fprintf(stderr, _("Try `%s --help' for more information.\n"), program_name.c_str());
+            flex_exit(1);
         }
 
         switch ((enum flexopt_flag_t)rv)
@@ -915,7 +912,7 @@ void flexinit(int argc, char **argv)
 
         case OPT_HELP:
             usage();
-            FLEX_EXIT(0);
+            flex_exit(0);
 
         case OPT_INTERACTIVE:
             interactive = true;
@@ -1020,7 +1017,7 @@ void flexinit(int argc, char **argv)
 
         case OPT_VERSION:
             printf(_("%s %s\n"), program_name.c_str(), flex_version.c_str());
-            FLEX_EXIT(0);
+            flex_exit(0);
 
         case OPT_WARN:
             nowarn = false;

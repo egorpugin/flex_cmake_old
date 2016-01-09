@@ -696,7 +696,6 @@ int flexscan(void);
 #define OUT_END_CODE() outn("]])")
 
 void flex_exit(int code);
-#define FLEX_EXIT(status) flex_exit(status)
 
 /* Removes all \n and \r chars from tail of str. returns str. */
 extern char *chomp(char *str);

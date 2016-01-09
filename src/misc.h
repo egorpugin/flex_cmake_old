@@ -50,7 +50,7 @@ void flexfatal(const char *);
                 _("%s: fatal internal error at %s:%d (%s): %s\n"), \
                 program_name, __FILE__, (int)__LINE__,             \
                 __func__, msg);                                    \
-        FLEX_EXIT(1);                                              \
+        flex_exit(1);                                              \
     } while (0)
 #else /* ! HAVE_DECL___FUNC__ */
 #define flex_die(msg)                                        \
@@ -60,7 +60,7 @@ void flexfatal(const char *);
                 _("%s: fatal internal error at %s:%d %s\n"), \
                 program_name, __FILE__, (int)__LINE__,       \
                 msg);                                        \
-        FLEX_EXIT(1);                                        \
+        flex_exit(1);                                        \
     } while (0)
 #endif /* ! HAVE_DECL___func__ */
 
