@@ -258,8 +258,7 @@ yytbl_data *mkctbl(void)
     /* Make sure every state has an end-of-buffer transition and an
 	 * action #.
 	 */
-    // TODO: start from 1?
-    for (i = 0; i < dfas.size(); ++i)
+    for (i = 1; i < dfas.size(); ++i)
     {
         int anum = dfas[i].acc_state;
         int offset = dfas[i].base;
@@ -384,8 +383,7 @@ void genctbl(void)
     /* Make sure every state has an end-of-buffer transition and an
 	 * action #.
      */
-     // TODO: start from 1?
-    for (i = 0; i < dfas.size(); ++i)
+    for (i = 1; i < dfas.size(); ++i)
     {
         int anum = dfas[i].acc_state;
         int offset = dfas[i].base;

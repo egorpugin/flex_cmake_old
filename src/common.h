@@ -141,14 +141,7 @@ struct Dfa
     int nultrans;               // NUL transition for each state
     std::vector<int> dss;       // nfa state set for each dfa
     AccSetPtr acc_set;          // accepting set for each dfa state (if using REJECT)
-//private:
     int acc_state;              // or accepting number, if not
-/*public:
-    void set_acc_state(int acc_state)
-    {
-        this->acc_state = acc_state;
-        acc_set.reset();
-    }*/
 };
 
 using Dfas = CapacityVector<Dfa>;

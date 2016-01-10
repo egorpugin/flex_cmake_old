@@ -63,7 +63,6 @@ int yylex()
             sectnum = 2;
             toktype = SECTEND;
         }
-
         else
             toktype = 0;
     }
