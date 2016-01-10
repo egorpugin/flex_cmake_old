@@ -130,7 +130,7 @@ int yylex()
             break;
 
         case NAME:
-            fprintf(stderr, "'%s'", nmstr);
+            fprintf(stderr, "'%s'", nmstr.c_str());
             break;
 
         case CHAR:

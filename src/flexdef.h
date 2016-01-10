@@ -360,49 +360,6 @@ extern int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
 
 
 
-/* Variables for nfa machine data:
- * num_eof_rules - number of <<EOF>> rules
- * default_rule - number of the default rule
- */
-
-/* Different types of states; values are useful as masks, as well, for
-* routines like check_trailing_context().
-*/
-enum class StateType
-{
-    Normal = 1,
-    TrailingContext = 2,
-};
-
-struct Nfa
-{
-    int firstst; // physically the first state of a fragment
-    int lastst; // last physical state of fragment
-    int finalst; // last logical state of fragment
-    int transchar; // transition character
-    int trans1; // transition state
-    int trans2; // 2nd transition state for epsilons
-    int accptnum; // accepting number
-
-    int assoc_rule; // rule associated with this NFA state (or 0 if none)
-    // make ptr here
-
-    /* a STATE_xxx type identifying whether the state is part
-     * 	of a normal rule, the leading state in a trailing context
-     * 	rule (i.e., the state which marks the transition from
-     * 	recognizing the text-to-be-matched to the beginning of
-     * 	the trailing context), or a subsequent state in a trailing
-     * 	context rule
-     */
-    StateType state_type;
-};
-
-using Nfas = std::vector<Nfa>;
-
-extern Nfas nfas;
-
-/* Global holding current type of state we're making. */
-extern StateType current_state_type;
 
 
 
@@ -463,18 +420,9 @@ extern int tecfwd[CSIZE + 1], tecbck[CSIZE + 1];
  * nxt - state to enter upon reading character
  * chk - check value to see if "nxt" applies
  * tnxt - internal nxt table for templates
- * base - offset into "nxt" for given state
- * def - where to go if "chk" disallows "nxt" entry
- * nultrans - NUL transition for each state
  * NUL_ec - equivalence class of the NUL character
  * tblend - last "nxt/chk" table entry being used
  * firstfree - first empty entry in "nxt/chk" table
- * dss - nfa state set for each dfa
- * dfasiz - size of nfa state set for each dfa
- * dfaacc - accepting set for each dfa state (if using REJECT), or accepting
- *	number, if not
- * accsiz - size of accepting set for each dfa state
- * dhash - dfa state hash value
  * numas - number of DFA accepting states created; note that this
  *	is not necessarily the same value as num_rules, which is the analogous
  *	value for the NFA
@@ -484,23 +432,15 @@ extern int tecfwd[CSIZE + 1], tecbck[CSIZE + 1];
  * end_of_buffer_state - end-of-buffer dfa state number
  */
 
+extern int NUL_ec, firstfree, tblend;
 extern int current_max_dfa_size, current_max_xpairs;
-extern int current_max_template_xpairs, current_max_dfas;
-extern int lastdfa, *nxt, *chk, *tnxt;
-extern int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss, *dfasiz;
-extern union dfaacc_union
-{
-    int *dfaacc_set;
-    int dfaacc_state;
-} *dfaacc;
-extern int *accsiz, *dhash, numas;
+extern int current_max_template_xpairs;
+extern int *nxt, *chk, *tnxt;
+extern int numas;
 extern int numsnpairs, jambase, jamstate;
 extern int end_of_buffer_state;
-
-
-
-
-
+extern bool nultrans;
+extern Dfas dfas;
 
 
 
@@ -692,7 +632,12 @@ inline bool replace_all(String &str, const String &from, const String &to)
 extern Rules rules;
 extern StartConditions start_conditions;
 extern CharacterClasses ccls;
+extern Nfas nfas;
 
 #define EOB_ACTION rules.size()
 
-extern int num_eof_rules, default_rule;
+extern int num_eof_rules; // number of <<EOF>> rules
+extern int default_rule; // number of the default rule
+
+/* Global holding current type of state we're making. */
+extern StateType current_state_type;

@@ -215,7 +215,7 @@ void bldtbl(int state[], int statenum, int totaltrans, int comstate, int comfreq
  * classes which always appear together in templates - really meta-equivalence
  * classes.
  */
-void cmptmps(void)
+void cmptmps()
 {
     int tmpstorage[CSIZE + 1];
     int *tmp = tmpstorage, i, j;
@@ -225,20 +225,18 @@ void cmptmps(void)
 
     if (usemecs)
     {
-        /* Create equivalence classes based on data gathered on
-		 * template transitions.
-		 */
+        /* Create equivalence classes based on data gathered on template transitions. */
         nummecs = cre8ecs(tecfwd, tecbck, numecs);
     }
-
     else
         nummecs = numecs;
 
-    while (lastdfa + numtemps + 1 >= current_max_dfas)
-        increase_max_dfas();
+    if (dfas.size() + numtemps + 1 > dfas.capacity())
+    {
+        dfas.reserve(dfas.size() + numtemps + 1);
+    }
 
     /* Loop through each template. */
-
     for (i = 1; i <= numtemps; ++i)
     {
         /* Number of non-jam transitions out of this template. */
@@ -262,7 +260,6 @@ void cmptmps(void)
                         ++totaltrans;
                 }
             }
-
             else
             {
                 tmp[j] = trans;
@@ -280,8 +277,7 @@ void cmptmps(void)
 		 */
 
         /* Leave room for the jam-state after the last real state. */
-        mkentry(tmp, nummecs, lastdfa + i + 1, JAMSTATE,
-                totaltrans);
+        mkentry(tmp, nummecs, dfas.size() + i, JAMSTATE, totaltrans);
     }
 }
 
@@ -450,7 +446,7 @@ void mkdeftbl(void)
 {
     int i;
 
-    jamstate = lastdfa + 1;
+    jamstate = dfas.size();
 
     ++tblend; /* room for transition on end-of-buffer character */
 
@@ -469,8 +465,8 @@ void mkdeftbl(void)
 
     jambase = tblend;
 
-    base[jamstate] = jambase;
-    def[jamstate] = 0;
+    dfas[jamstate].base = jambase;
+    dfas[jamstate].def = 0;
 
     tblend += numecs;
     ++numtemps;
@@ -500,13 +496,14 @@ void mkentry(int *state, int numchars, int statenum, int deflink, int totaltrans
     int tblbase, tbllast;
 
     if (totaltrans == 0)
-    { /* there are no out-transitions */
+    {
+        /* there are no out-transitions */
         if (deflink == JAMSTATE)
-            base[statenum] = JAMSTATE;
+            dfas[statenum].base = JAMSTATE;
         else
-            base[statenum] = 0;
+            dfas[statenum].base = 0;
 
-        def[statenum] = deflink;
+        dfas[statenum].def = deflink;
         return;
     }
 
@@ -561,28 +558,25 @@ void mkentry(int *state, int numchars, int statenum, int deflink, int totaltrans
             expand_nxt_chk();
 
         for (i = minec; i <= maxec; ++i)
+        {
             if (state[i] != SAME_TRANS &&
                 (state[i] != 0 || deflink != JAMSTATE) &&
                 chk[baseaddr + i - minec] != 0)
-            { /* baseaddr unsuitable - find another */
-                for (++baseaddr;
-                     baseaddr < current_max_xpairs &&
-                     chk[baseaddr] != 0;
-                     ++baseaddr)
+            {
+                /* baseaddr unsuitable - find another */
+                for (++baseaddr; baseaddr < current_max_xpairs && chk[baseaddr] != 0; ++baseaddr)
                     ;
 
-                while (baseaddr + maxec - minec + 1 >=
-                       current_max_xpairs)
+                while (baseaddr + maxec - minec + 1 >= current_max_xpairs)
                     expand_nxt_chk();
 
                 /* Reset the loop counter so we'll start all
-				 * over again next time it's incremented.
-				 */
-
+                 * over again next time it's incremented.
+                 */
                 i = minec - 1;
             }
+        }
     }
-
     else
     {
         /* Ensure that the base address we eventually generate is
@@ -597,21 +591,27 @@ void mkentry(int *state, int numchars, int statenum, int deflink, int totaltrans
     while (tbllast + 1 >= current_max_xpairs)
         expand_nxt_chk();
 
-    base[statenum] = tblbase;
-    def[statenum] = deflink;
+    dfas[statenum].base = tblbase;
+    dfas[statenum].def = deflink;
 
     for (i = minec; i <= maxec; ++i)
+    {
         if (state[i] != SAME_TRANS)
+        {
             if (state[i] != 0 || deflink != JAMSTATE)
             {
                 nxt[tblbase + i] = state[i];
                 chk[tblbase + i] = statenum;
             }
+        }
+    }
 
     if (baseaddr == firstfree)
+    {
         /* Find next free slot in tables. */
         for (++firstfree; chk[firstfree] != 0; ++firstfree)
             ;
+    }
 
     tblend = std::max(tblend, tbllast);
 }
@@ -628,8 +628,8 @@ void mk1tbl(int state, int sym, int onenxt, int onedef)
         if (++firstfree >= current_max_xpairs)
             expand_nxt_chk();
 
-    base[state] = firstfree - sym;
-    def[state] = onedef;
+    dfas[state].base = firstfree - sym;
+    dfas[state].def = onedef;
     chk[firstfree] = state;
     nxt[firstfree] = onenxt;
 
@@ -760,7 +760,7 @@ void place_state(int *state, int statenum, int transnum)
     int position = find_table_space(state, transnum);
 
     /* "base" is the table of start positions. */
-    base[statenum] = position;
+    dfas[statenum].base = position;
 
     /* Put in action number marker; this non-zero number makes sure that
 	 * find_table_space() knows that this position in chk/nxt is taken
@@ -798,7 +798,6 @@ void stack1(int statenum, int sym, int nextstate, int deflink)
 {
     if (onesp >= ONE_STACK_SIZE - 1)
         mk1tbl(statenum, sym, nextstate, deflink);
-
     else
     {
         ++onesp;

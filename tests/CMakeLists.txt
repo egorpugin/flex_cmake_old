@@ -281,6 +281,9 @@ add_test(NAME invoke_help COMMAND flex --help)
 add_test(NAME invoke_verbose
     COMMAND flex -v -L -o ${CMAKE_CURRENT_BINARY_DIR}/invoke_verbose.c ${CMAKE_CURRENT_SOURCE_DIR}/alloc_extra.l
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+add_test(NAME invoke_trace
+    COMMAND flex -T -o ${CMAKE_CURRENT_BINARY_DIR}/invoke_trace.c ${CMAKE_CURRENT_SOURCE_DIR}/alloc_extra.l
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 set(flex_tests_simple
 	alloc_extra.l

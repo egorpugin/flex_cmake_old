@@ -86,7 +86,7 @@ int ecgroup[CSIZE + 1];
 int nummecs;
 int tecfwd[CSIZE + 1];
 int tecbck[CSIZE + 1];
-int *accsiz, *dhash, numas;
+int numas;
 int numsnpairs, jambase, jamstate;
 String nmstr;
 int sectnum, nummt, hshcol, dfaeql, numeps, eps2, num_reallocs;
@@ -105,10 +105,11 @@ StateType current_state_type;
 StartConditions start_conditions(1);
 
 int current_max_dfa_size, current_max_xpairs;
-int current_max_template_xpairs, current_max_dfas;
-int lastdfa, *nxt, *chk, *tnxt;
-int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss, *dfasiz;
-union dfaacc_union *dfaacc;
+int current_max_template_xpairs;
+int *nxt, *chk, *tnxt;
+int NUL_ec, tblend, firstfree;
+bool nultrans = false;
+Dfas dfas(1);
 
 CharacterClasses ccls(1);
 
@@ -678,7 +679,7 @@ void flexend(int exit_status)
         putc('\n', stderr);
 
         fprintf(stderr, _("  %d NFA states\n"), nfas.size() - 1);
-        fprintf(stderr, _("  %d/%d DFA states (%d words)\n"), lastdfa, current_max_dfas, totnst);
+        fprintf(stderr, _("  %d DFA states (%d words)\n"), dfas.size() - 1, totnst);
         fprintf(stderr, _("  %d rules\n"),
             rules.size() - 1 /* - 1 for dummy rule */ + num_eof_rules - 1 /* - 1 for def. rule */);
 
@@ -702,15 +703,15 @@ void flexend(int exit_status)
 
         if (fulltbl)
         {
-            tblsiz = lastdfa * numecs;
+            tblsiz = (dfas.size() - 1) * numecs;
             fprintf(stderr, _("  %d table entries\n"), tblsiz);
         }
         else
         {
-            tblsiz = 2 * (lastdfa + numtemps) + 2 * tblend;
+            tblsiz = 2 * ((dfas.size() - 1) + numtemps) + 2 * tblend;
 
-            fprintf(stderr, _("  %d/%d base-def entries created\n"),
-                    lastdfa + numtemps, current_max_dfas);
+            fprintf(stderr, _("  %d base-def entries created\n"),
+                (dfas.size() - 1) + numtemps);
             fprintf(stderr, _("  %d/%d (peak %d) nxt-chk entries created\n"),
                     tblend, current_max_xpairs, peakpairs);
             fprintf(stderr,  _("  %d/%d (peak %d) template nxt-chk entries created\n"),
@@ -1216,7 +1217,6 @@ void flexinit(int argc, char **argv)
     else
         set_input_file(String());
 
-    lastdfa = 0;
     num_eof_rules = default_rule = 0;
     numas = numsnpairs = tmpuses = 0;
     numecs = numeps = eps2 = num_reallocs = hshcol = dfaeql = totnst = 0;
@@ -1514,17 +1514,6 @@ void set_up_initial_allocations(void)
 
     current_max_template_xpairs = INITIAL_MAX_TEMPLATE_XPAIRS;
     tnxt = (decltype(tnxt))allocate_integer_array(current_max_template_xpairs);
-
-    current_max_dfas = INITIAL_MAX_DFAS;
-    base = (decltype(base))allocate_integer_array(current_max_dfas);
-    def = (decltype(def))allocate_integer_array(current_max_dfas);
-    dfasiz = (decltype(dfasiz))allocate_integer_array(current_max_dfas);
-    accsiz = (decltype(accsiz))allocate_integer_array(current_max_dfas);
-    dhash = (decltype(dhash))allocate_integer_array(current_max_dfas);
-    dss = (decltype(dss))allocate_int_ptr_array(current_max_dfas);
-    dfaacc = (decltype(dfaacc))allocate_dfaacc_union(current_max_dfas);
-
-    nultrans = NULL;
 }
 
 /* extracts basename from path, optionally stripping the extension "\.*"

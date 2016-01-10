@@ -54,7 +54,6 @@ static int indent_level = 0; /* each level is 8 spaces */
  * to this is that the fast table representation generally uses the
  * 0 elements of its arrays, too.)
  */
-
 static const char *get_int16_decl(void)
 {
     return (gentables)
@@ -96,7 +95,6 @@ static const char *get_yy_char_decl(void)
                ? "static yyconst YY_CHAR %s[%d] =\n    {   0,\n"
                : "static yyconst YY_CHAR * %s = 0;\n";
 }
-
 
 void out_str_dec(const char *fmt, const char str[], int n)
 {
@@ -153,7 +151,6 @@ static void geneoltbl(void)
 }
 
 /* Generate the code to keep backing-up information. */
-
 void gen_backing_up(void)
 {
     if (reject || num_backing_up == 0)
@@ -173,7 +170,6 @@ void gen_backing_up(void)
 }
 
 /* Generate the code to perform the backing up. */
-
 void gen_bu_action(void)
 {
     if (reject || num_backing_up == 0)
@@ -206,8 +202,7 @@ void gen_bu_action(void)
  * Then, I think, mkecstbl(). Arrrg.
  * @return the newly allocated trans table
  */
-
-static struct yytbl_data *mkctbl(void)
+yytbl_data *mkctbl(void)
 {
     int i;
     struct yytbl_data *tbl = 0;
@@ -247,10 +242,12 @@ static struct yytbl_data *mkctbl(void)
     while (tblend + 2 >= current_max_xpairs)
         expand_nxt_chk();
 
-    while (lastdfa + 1 >= current_max_dfas)
-        increase_max_dfas();
+    if (dfas.size() + 1 > dfas.capacity())
+    {
+        dfas.reserve(dfas.size() + 1);
+    }
 
-    base[lastdfa + 1] = tblend + 2;
+    dfas[dfas.size()].base = tblend + 2;
     nxt[tblend + 1] = end_of_buffer_action;
     chk[tblend + 1] = numecs + 1;
     chk[tblend + 2] = 1; /* anything but EOB */
@@ -261,10 +258,11 @@ static struct yytbl_data *mkctbl(void)
     /* Make sure every state has an end-of-buffer transition and an
 	 * action #.
 	 */
-    for (i = 0; i <= lastdfa; ++i)
+    // TODO: start from 1?
+    for (i = 0; i < dfas.size(); ++i)
     {
-        int anum = dfaacc[i].dfaacc_state;
-        int offset = base[i];
+        int anum = dfas[i].acc_state;
+        int offset = dfas[i].base;
 
         chk[offset] = EOB_POSITION;
         chk[offset - 1] = ACTION_POSITION;
@@ -276,7 +274,7 @@ static struct yytbl_data *mkctbl(void)
         if (chk[i] == EOB_POSITION)
         {
             tdata[curr++] = 0;
-            tdata[curr++] = base[lastdfa + 1] - i;
+            tdata[curr++] = dfas[dfas.size()].base - i;
         }
 
         else if (chk[i] == ACTION_POSITION)
@@ -294,7 +292,7 @@ static struct yytbl_data *mkctbl(void)
         { /* verify, transition */
 
             tdata[curr++] = chk[i];
-            tdata[curr++] = base[nxt[i]] - (i - chk[i]);
+            tdata[curr++] = dfas[nxt[i]].base - (i - chk[i]);
         }
     }
 
@@ -327,7 +325,7 @@ static struct yytbl_data *mkssltbl(void)
         (decltype(tdata))calloc(tbl->td_lolen, sizeof(flex_int32_t));
 
     for (i = 0; i <= (start_conditions.size() - 1) * 2; ++i)
-        tdata[i] = base[i];
+        tdata[i] = dfas[i].base;
 
     yydmap_buf.addLine("\t{YYTD_ID_START_STATE_LIST, (void**)&yy_start_state_list, sizeof(struct yy_trans_info*)},");
 
@@ -335,7 +333,6 @@ static struct yytbl_data *mkssltbl(void)
 }
 
 /* genctbl - generates full speed compressed transition table */
-
 void genctbl(void)
 {
     int i;
@@ -371,10 +368,12 @@ void genctbl(void)
     while (tblend + 2 >= current_max_xpairs)
         expand_nxt_chk();
 
-    while (lastdfa + 1 >= current_max_dfas)
-        increase_max_dfas();
+    if (dfas.size() + 1 > dfas.capacity())
+    {
+        dfas.reserve(dfas.size() + 1);
+    }
 
-    base[lastdfa + 1] = tblend + 2;
+    dfas[dfas.size()].base = tblend + 2;
     nxt[tblend + 1] = end_of_buffer_action;
     chk[tblend + 1] = numecs + 1;
     chk[tblend + 2] = 1; /* anything but EOB */
@@ -384,11 +383,12 @@ void genctbl(void)
 
     /* Make sure every state has an end-of-buffer transition and an
 	 * action #.
-	 */
-    for (i = 0; i <= lastdfa; ++i)
+     */
+     // TODO: start from 1?
+    for (i = 0; i < dfas.size(); ++i)
     {
-        int anum = dfaacc[i].dfaacc_state;
-        int offset = base[i];
+        int anum = dfas[i].acc_state;
+        int offset = dfas[i].base;
 
         chk[offset] = EOB_POSITION;
         chk[offset - 1] = ACTION_POSITION;
@@ -398,18 +398,13 @@ void genctbl(void)
     for (i = 0; i <= tblend; ++i)
     {
         if (chk[i] == EOB_POSITION)
-            transition_struct_out(0, base[lastdfa + 1] - i);
-
+            transition_struct_out(0, dfas[dfas.size()].base - i);
         else if (chk[i] == ACTION_POSITION)
             transition_struct_out(0, nxt[i]);
-
         else if (chk[i] > numecs || chk[i] == 0)
             transition_struct_out(0, 0); /* unused slot */
-
         else /* verify, transition */
-            transition_struct_out(chk[i],
-                                  base[nxt[i]] - (i -
-                                                  chk[i]));
+            transition_struct_out(chk[i], dfas[nxt[i]].base - (i - chk[i]));
     }
 
     /* Here's the final, end-of-buffer state. */
@@ -430,7 +425,7 @@ void genctbl(void)
         outn("    {");
 
         for (i = 0; i <= (start_conditions.size() - 1) * 2; ++i)
-            processed_file << "    &yy_transition[" << base[i] << "]," << Context::eol;
+            processed_file << "    &yy_transition[" << dfas[i].base << "]," << Context::eol;
 
         dataend();
     }
@@ -440,7 +435,6 @@ void genctbl(void)
 }
 
 /* mkecstbl - Make equivalence-class tables.  */
-
 struct yytbl_data *mkecstbl(void)
 {
     int i;
@@ -468,7 +462,6 @@ struct yytbl_data *mkecstbl(void)
 }
 
 /* Generate equivalence-class tables. */
-
 void genecs(void)
 {
     int i, j;
@@ -506,7 +499,6 @@ void genecs(void)
 }
 
 /* Generate the code to find the action number. */
-
 void gen_find_action(void)
 {
     if (fullspd)
@@ -640,7 +632,6 @@ void gen_find_action(void)
 /* mkftbl - make the full table and return the struct .
  * you should call mkecstbl() after this.
  */
-
 struct yytbl_data *mkftbl(void)
 {
     int i;
@@ -652,22 +643,21 @@ struct yytbl_data *mkftbl(void)
     yytbl_data_init(tbl, YYTD_ID_ACCEPT);
     tbl->td_flags |= YYTD_DATA32;
     tbl->td_hilen = 0; /* it's a one-dimensional array */
-    tbl->td_lolen = lastdfa + 1;
+    tbl->td_lolen = dfas.size();
 
     tbl->td_data = tdata =
         (decltype(tdata))calloc(tbl->td_lolen, sizeof(flex_int32_t));
 
-    dfaacc[end_of_buffer_state].dfaacc_state = end_of_buffer_action;
+    dfas[end_of_buffer_state].acc_state = end_of_buffer_action;
 
-    for (i = 1; i <= lastdfa; ++i)
+    for (i = 1; i < dfas.size(); ++i)
     {
-        int anum = dfaacc[i].dfaacc_state;
+        int anum = dfas[i].acc_state;
 
         tdata[i] = anum;
 
         if (trace && anum)
-            fprintf(stderr, _("state # %d accepts: [%d]\n"),
-                    i, anum);
+            fprintf(stderr, _("state # %d accepts: [%d]\n"), i, anum);
     }
 
     yydmap_buf.addLine(String() + "\t{YYTD_ID_ACCEPT, (void**)&yy_accept, sizeof(" + (long_align ? "flex_int32_t" : "flex_int16_t") + ")},");
@@ -676,26 +666,23 @@ struct yytbl_data *mkftbl(void)
 }
 
 /* genftbl - generate full transition table */
-
 void genftbl(void)
 {
     int i;
     int end_of_buffer_action = EOB_ACTION;
 
-    out_str_dec(long_align ? get_int32_decl() : get_int16_decl(),
-                "yy_accept", lastdfa + 1);
+    out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_accept", dfas.size());
 
-    dfaacc[end_of_buffer_state].dfaacc_state = end_of_buffer_action;
+    dfas[end_of_buffer_state].acc_state = end_of_buffer_action;
 
-    for (i = 1; i <= lastdfa; ++i)
+    for (i = 1; i < dfas.size(); ++i)
     {
-        int anum = dfaacc[i].dfaacc_state;
+        int anum = dfas[i].acc_state;
 
         mkdata(anum);
 
         if (trace && anum)
-            fprintf(stderr, _("state # %d accepts: [%d]\n"),
-                    i, anum);
+            fprintf(stderr, _("state # %d accepts: [%d]\n"), i, anum);
     }
 
     dataend();
@@ -709,7 +696,6 @@ void genftbl(void)
 }
 
 /* Generate the code to find the next compressed-table state. */
-
 void gen_next_compressed_state(char *char_map)
 {
     processed_file << "YY_CHAR yy_c = " << char_map << ";" << Context::eol;
@@ -736,8 +722,8 @@ void gen_next_compressed_state(char *char_map)
 		 */
         //do_indent ();
 
-        /* lastdfa + 2 is the beginning of the templates */
-        processed_file << "if ( yy_current_state >= " << (lastdfa + 2) << " )" << Context::eol;
+        /* dfas.size() + 1 is the beginning of the templates */
+        processed_file << "if ( yy_current_state >= " << (dfas.size() + 1) << " )" << Context::eol;
 
         ++indent_level;
         indent_puts("yy_c = yy_meta[(unsigned int) yy_c];");
@@ -751,7 +737,6 @@ void gen_next_compressed_state(char *char_map)
 }
 
 /* Generate the code to find the next match. */
-
 void gen_next_match(void)
 {
     /* NOTE - changes in here should be reflected in gen_next_state() and
@@ -850,7 +835,6 @@ void gen_next_match(void)
 }
 
 /* Generate the code to find the next state. */
-
 void gen_next_state(int worry_about_NULs)
 { /* NOTE - changes in here should be reflected in gen_next_match() */
     char char_map[256];
@@ -912,7 +896,6 @@ void gen_next_state(int worry_about_NULs)
 }
 
 /* Generate the code to make a NUL transition. */
-
 void gen_NUL_trans(void)
 { /* NOTE - changes in here should be reflected in gen_next_match() */
     /* Only generate a definition for "yy_cp" if we'll generate code
@@ -996,7 +979,6 @@ void gen_NUL_trans(void)
 }
 
 /* Generate the code to find the start state. */
-
 void gen_start_state(void)
 {
     if (fullspd)
@@ -1028,10 +1010,10 @@ void gen_start_state(void)
 }
 
 /* gentabs - generate data statements for the transition tables */
-void gentabs(void)
+void gentabs()
 {
-    std::vector<int> acc_array(current_max_dfas);
-    int i, j, k, *accset, nacc, total_states;
+    std::vector<int> acc_array(dfas.size() + 2);
+    int i, j, k, nacc, total_states;
     int end_of_buffer_action = EOB_ACTION;
     struct yytbl_data *yyacc_tbl = 0, *yymeta_tbl = 0, *yybase_tbl = 0,
                       *yydef_tbl = 0, *yynxt_tbl = 0, *yychk_tbl = 0, *yyacclist_tbl = 0;
@@ -1056,14 +1038,8 @@ void gentabs(void)
 		 * we compute the indices that will go into the "yy_accept"
 		 * array, and save the indices in the dfaacc array.
 		 */
-        int EOB_accepting_list[2];
-
         /* Set up accepting structures for the End Of Buffer state. */
-        EOB_accepting_list[0] = 0;
-        EOB_accepting_list[1] = end_of_buffer_action;
-        accsiz[end_of_buffer_state] = 1;
-        dfaacc[end_of_buffer_state].dfaacc_set =
-            EOB_accepting_list;
+        dfas[end_of_buffer_state].acc_set = std::make_shared<Dfa::AccSet>(Dfa::AccSet{ 0, end_of_buffer_action });
 
         out_str_dec(long_align ? get_int32_decl() : get_int16_decl(), "yy_acclist", std::max(numas, 1) + 1);
 
@@ -1077,19 +1053,19 @@ void gentabs(void)
 
         j = 1; /* index into "yy_acclist" array */
 
-        for (i = 1; i <= lastdfa; ++i)
+        for (i = 1; i < dfas.size(); ++i)
         {
             acc_array[i] = j;
 
-            if (accsiz[i] != 0)
+            if (dfas[i].acc_set)
             {
-                accset = dfaacc[i].dfaacc_set;
-                nacc = accsiz[i];
+                auto &accset = *dfas[i].acc_set;
+                nacc = accset.size();
 
                 if (trace)
                     fprintf(stderr, _("state # %d accepts: "), i);
 
-                for (k = 1; k <= nacc; ++k)
+                for (k = 1; k < nacc; ++k)
                 {
                     int accnum = accset[k];
 
@@ -1115,7 +1091,7 @@ void gentabs(void)
                     {
                         fprintf(stderr, "[%d]", accset[k]);
 
-                        if (k < nacc)
+                        if (k < nacc - 1)
                             fputs(", ", stderr);
                         else
                             putc('\n', stderr);
@@ -1139,10 +1115,10 @@ void gentabs(void)
     }
     else
     {
-        dfaacc[end_of_buffer_state].dfaacc_state = end_of_buffer_action;
+        dfas[end_of_buffer_state].acc_state = end_of_buffer_action;
 
-        for (i = 1; i <= lastdfa; ++i)
-            acc_array[i] = dfaacc[i].dfaacc_state;
+        for (i = 1; i < dfas.size(); ++i)
+            acc_array[i] = dfas[i].acc_state;
 
         /* add accepting number for jam state */
         acc_array[i] = 0;
@@ -1155,10 +1131,10 @@ void gentabs(void)
 	 * accepting numbers.  In either case, we just dump the numbers.
 	 */
 
-    /* "lastdfa + 2" is the size of "yy_accept"; includes room for C arrays
+    /* "dfas.size() + 1" is the size of "yy_accept"; includes room for C arrays
 	 * beginning at 0 and for "jam" state.
 	 */
-    k = lastdfa + 2;
+    k = dfas.size() + 1;
 
     if (reject)
         /* We put a "cap" on the table associating lists of accepting
@@ -1178,7 +1154,7 @@ void gentabs(void)
     yyacc_tbl->td_data = yyacc_data = (decltype(yyacc_data))calloc(yyacc_tbl->td_lolen, sizeof(flex_int32_t));
     yyacc_curr = 1;
 
-    for (i = 1; i <= lastdfa; ++i)
+    for (i = 1; i < dfas.size(); ++i)
     {
         mkdata(acc_array[i]);
         yyacc_data[yyacc_curr++] = acc_array[i];
@@ -1211,7 +1187,6 @@ void gentabs(void)
 
     if (useecs)
     {
-
         genecs();
         if (tablesext)
         {
@@ -1269,7 +1244,7 @@ void gentabs(void)
         /* End generating yy_meta */
     }
 
-    total_states = lastdfa + numtemps;
+    total_states = dfas.size() - 1 + numtemps;
 
     /* Begin generating yy_base */
     out_str_dec((tblend >= INT16_MAX || long_align) ? get_uint32_decl() : get_uint16_decl(),
@@ -1286,36 +1261,35 @@ void gentabs(void)
                                       sizeof(flex_int32_t));
     yybase_curr = 1;
 
-    for (i = 1; i <= lastdfa; ++i)
+    for (i = 1; i < dfas.size(); ++i)
     {
-        int d = def[i];
+        int d = dfas[i].def;
 
-        if (base[i] == JAMSTATE)
-            base[i] = jambase;
+        if (dfas[i].base == JAMSTATE)
+            dfas[i].base = jambase;
 
         if (d == JAMSTATE)
-            def[i] = jamstate;
-
+            dfas[i].def = jamstate;
         else if (d < 0)
         {
             /* Template reference. */
             ++tmpuses;
-            def[i] = lastdfa - d + 1;
+            dfas[i].def = dfas.size() - d;
         }
 
-        mkdata(base[i]);
-        yybase_data[yybase_curr++] = base[i];
+        mkdata(dfas[i].base);
+        yybase_data[yybase_curr++] = dfas[i].base;
     }
 
     /* Generate jam state's base index. */
-    mkdata(base[i]);
-    yybase_data[yybase_curr++] = base[i];
+    mkdata(dfas[i].base);
+    yybase_data[yybase_curr++] = dfas[i].base;
 
     for (++i /* skip jam state */; i <= total_states; ++i)
     {
-        mkdata(base[i]);
-        yybase_data[yybase_curr++] = base[i];
-        def[i] = jamstate;
+        mkdata(dfas[i].base);
+        yybase_data[yybase_curr++] = dfas[i].base;
+        dfas[i].def = jamstate;
     }
 
     dataend();
@@ -1344,8 +1318,8 @@ void gentabs(void)
 
     for (i = 1; i <= total_states; ++i)
     {
-        mkdata(def[i]);
-        yydef_data[i] = def[i];
+        mkdata(dfas[i].def);
+        yydef_data[i] = dfas[i].def;
     }
 
     dataend();
@@ -1431,7 +1405,6 @@ void gentabs(void)
 
 /* make_tables - generate transition tables and finishes generating output file
  */
-
 void make_tables(void)
 {
     int i;
@@ -1631,8 +1604,7 @@ void make_tables(void)
         flex_int32_t *yynultrans_data = 0;
 
         /* Begin generating yy_NUL_trans */
-        out_str_dec(get_state_decl(), "yy_NUL_trans",
-                    lastdfa + 1);
+        out_str_dec(get_state_decl(), "yy_NUL_trans", dfas.size());
 
         yydmap_buf.addLine(String() + "\t{YYTD_ID_NUL_TRANS, (void**)&yy_NUL_trans, sizeof(" +
                            ((fullspd) ? "struct yy_trans_info*" : "flex_int32_t") + ")},\n");
@@ -1641,22 +1613,22 @@ void make_tables(void)
         yytbl_data_init(yynultrans_tbl, YYTD_ID_NUL_TRANS);
         if (fullspd)
             yynultrans_tbl->td_flags |= YYTD_PTRANS;
-        yynultrans_tbl->td_lolen = lastdfa + 1;
+        yynultrans_tbl->td_lolen = dfas.size();
         yynultrans_tbl->td_data = yynultrans_data =
             (decltype(yynultrans_data))calloc(yynultrans_tbl->td_lolen,
                                               sizeof(flex_int32_t));
 
-        for (i = 1; i <= lastdfa; ++i)
+        for (i = 1; i < dfas.size(); ++i)
         {
             if (fullspd)
             {
-                processed_file << "    &yy_transition[" << base[i] << "]," << Context::eol;
-                yynultrans_data[i] = base[i];
+                processed_file << "    &yy_transition[" << dfas[i].base << "]," << Context::eol;
+                yynultrans_data[i] = dfas[i].base;
             }
             else
             {
-                mkdata(nultrans[i]);
-                yynultrans_data[i] = nultrans[i];
+                mkdata(dfas[i].nultrans);
+                yynultrans_data[i] = dfas[i].nultrans;
             }
         }
 

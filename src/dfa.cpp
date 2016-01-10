@@ -46,8 +46,8 @@
 
 void dump_associated_rules(FILE *, int);
 void dump_transitions(FILE *, int[]);
-void sympartition(int[], int, int[], int[]);
-int symfollowset(int[], int, int, int[]);
+void sympartition(const std::vector<int> &, int[], int[]);
+int symfollowset(const std::vector<int> &, int, int[]);
 
 /* Construct the epsilon closure of a set of ndfa states. */
 int *epsclosure(int *, int *, std::vector<int> &, int *, int *);
@@ -68,8 +68,9 @@ void check_trailing_context(int *, int, std::vector<int> &, int);
  */
 void check_for_backing_up(int ds, int state[])
 {
-    if ((reject && !dfaacc[ds].dfaacc_set) || (!reject && !dfaacc[ds].dfaacc_state))
-    { /* state is non-accepting */
+    if ((reject && !dfas[ds].acc_set) || (!reject && !dfas[ds].acc_state))
+    {
+        /* state is non-accepting */
         ++num_backing_up;
 
         if (backing_up_report)
@@ -156,10 +157,10 @@ void dump_associated_rules(FILE *file, int ds)
     int i, j;
     int num_associated_rules = 0;
     int rule_set[MAX_ASSOC_RULES + 1];
-    int *dset = dss[ds];
-    int size = dfasiz[ds];
+    auto &dset = dfas[ds].dss;
+    int size = dset.size();
 
-    for (i = 1; i <= size; ++i)
+    for (i = 1; i < size; ++i)
     {
         int rule_num = rules[nfas[dset[i]].assoc_rule].linenum;
 
@@ -379,39 +380,18 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
     return t;
 }
 
-/* increase_max_dfas - increase the maximum number of DFAs */
-void increase_max_dfas(void)
-{
-    current_max_dfas += MAX_DFAS_INCREMENT;
-
-    ++num_reallocs;
-
-    base = (int *)reallocate_integer_array(base, current_max_dfas);
-    def = (int *)reallocate_integer_array(def, current_max_dfas);
-    dfasiz = (int *)reallocate_integer_array(dfasiz, current_max_dfas);
-    accsiz = (int *)reallocate_integer_array(accsiz, current_max_dfas);
-    dhash = (int *)reallocate_integer_array(dhash, current_max_dfas);
-    dss = (int **)reallocate_int_ptr_array(dss, current_max_dfas);
-    dfaacc = (dfaacc_union *)reallocate_dfaacc_union(dfaacc, current_max_dfas);
-
-    if (nultrans)
-        nultrans =
-            (int *)reallocate_integer_array(nultrans,
-                                            current_max_dfas);
-}
-
 /* ntod - convert an ndfa to a dfa
  *
  * Creates the dfa corresponding to the ndfa we've constructed.  The
  * dfa starts out in state #1.
  */
-void ntod(void)
+void ntod()
 {
-    int ds, nacc, newds;
-    int sym, hashval, numstates, dsize;
+    int newds;
+    int sym;
     int num_full_table_rows = 0; /* used only for -f */
-    int *nset, *dset;
-    int targptr, totaltrans, i, comstate, comfreq, targ;
+    int *nset;
+    int i, comstate, comfreq, targ;
     int num_start_states;
     int todo_head, todo_next;
 
@@ -499,8 +479,7 @@ void ntod(void)
 			 */
             int power_of_two;
 
-            for (power_of_two = 1; power_of_two <= csize;
-                 power_of_two *= 2)
+            for (power_of_two = 1; power_of_two <= csize; power_of_two *= 2)
                 if (numecs == power_of_two)
                 {
                     use_NUL_table = true;
@@ -509,8 +488,7 @@ void ntod(void)
         }
 
         if (use_NUL_table)
-            nultrans =
-                (decltype(nultrans))allocate_integer_array(current_max_dfas);
+            nultrans = true;
 
         /* From now on, nultrans != nil indicates that we're
 		 * saving null transitions for later, separate encoding.
@@ -523,7 +501,7 @@ void ntod(void)
             state[i] = 0;
 
         place_state(state, 0, 0);
-        dfaacc[0].dfaacc_state = 0;
+        dfas[0].acc_state = 0;
     }
     else if (fulltbl)
     {
@@ -596,7 +574,7 @@ void ntod(void)
 
     for (i = 1; i <= num_start_states; ++i)
     {
-        numstates = 1;
+        int numstates = 1;
 
         /* For each start condition, make one state for the case when
 		 * we're at the beginning of the line (the '^' operator) and
@@ -607,8 +585,11 @@ void ntod(void)
         else
             nset[numstates] = mkbranch(start_conditions[i / 2].bol, start_conditions[i / 2].set);
 
+        int hashval = 0;
+        int nacc = 0;
         nset = epsclosure(nset, &numstates, accset, &nacc, &hashval);
 
+        int ds = 0;
         if (snstods(nset, numstates, accset, nacc, hashval, &ds))
         {
             numas += nacc;
@@ -632,21 +613,18 @@ void ntod(void)
 
     while (todo_head < todo_next)
     {
-        targptr = 0;
-        totaltrans = 0;
+        int targptr = 0;
+        int totaltrans = 0;
 
         for (i = 1; i <= numecs; ++i)
             state[i] = 0;
 
-        ds = ++todo_head;
-
-        dset = dss[ds];
-        dsize = dfasiz[ds];
-
+        int ds = ++todo_head;
+        
         if (trace)
             fprintf(stderr, _("state # %d:\n"), ds);
 
-        sympartition(dset, dsize, symlist, duplist);
+        sympartition(dfas[ds].dss, symlist, duplist);
 
         for (sym = 1; sym <= numecs; ++sym)
         {
@@ -657,41 +635,31 @@ void ntod(void)
                 if (duplist[sym] == NIL)
                 {
                     /* Symbol has unique out-transitions. */
-                    numstates =
-                        symfollowset(dset, dsize,
-                                     sym, nset);
-                    nset = epsclosure(nset,
-                                      &numstates,
-                                      accset, &nacc,
-                                      &hashval);
+                    int numstates = symfollowset(dfas[ds].dss, sym, nset);
 
-                    if (snstods(nset, numstates, accset, nacc,
-                                hashval, &newds))
+                    int hashval = 0;
+                    int nacc = 0;
+                    nset = epsclosure(nset, &numstates, accset, &nacc, &hashval);
+
+                    if (snstods(nset, numstates, accset, nacc, hashval, &newds))
                     {
-                        totnst = totnst +
-                                 numstates;
+                        totnst = totnst + numstates;
                         ++todo_next;
                         numas += nacc;
 
                         if (variable_trailing_context_rules && nacc > 0)
-                            check_trailing_context(nset,
-                                                   numstates,
-                                                   accset,
-                                                   nacc);
+                            check_trailing_context(nset, numstates, accset, nacc);
                     }
 
                     state[sym] = newds;
 
                     if (trace)
-                        fprintf(stderr,
-                                "\t%d\t%d\n", sym,
-                                newds);
+                        fprintf(stderr, "\t%d\t%d\n", sym, newds);
 
                     targfreq[++targptr] = 1;
                     targstate[targptr] = newds;
                     ++numuniq;
                 }
-
                 else
                 {
                     /* sym's equivalence class has the same
@@ -702,14 +670,11 @@ void ntod(void)
                     state[sym] = targ;
 
                     if (trace)
-                        fprintf(stderr,
-                                "\t%d\t%d\n", sym,
-                                targ);
+                        fprintf(stderr, "\t%d\t%d\n", sym, targ);
 
                     /* Update frequency count for
 					 * destination state.
 					 */
-
                     i = 0;
                     while (targstate[++i] != targ)
                         ;
@@ -730,7 +695,7 @@ void ntod(void)
 
         if (nultrans)
         {
-            nultrans[ds] = state[NUL_ec];
+            dfas[ds].nultrans = state[NUL_ec];
             state[NUL_ec] = 0; /* remove transition */
         }
 
@@ -794,11 +759,13 @@ void ntod(void)
             comstate = 0;
 
             for (i = 1; i <= targptr; ++i)
+            {
                 if (targfreq[i] > comfreq)
                 {
                     comfreq = targfreq[i];
                     comstate = targstate[i];
                 }
+            }
 
             bldtbl(state, ds, totaltrans, comstate, comfreq);
         }
@@ -852,27 +819,29 @@ int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int ha
 {
     int didsort = 0;
     int i, j;
-    int newds, *oldsns;
 
-    for (i = 1; i <= lastdfa; ++i)
-        if (hashval == dhash[i])
+    for (i = 1; i < dfas.size(); ++i)
+    {
+        if (hashval == dfas[i].hash)
         {
-            if (numstates == dfasiz[i])
+            if (numstates == dfas[i].dss.size() - 1)
             {
-                oldsns = dss[i];
+                const auto &oldsns = dfas[i].dss;
 
                 if (!didsort)
                 {
                     /* We sort the states in sns so we
-					 * can compare it to oldsns quickly.
-					 */
+                     * can compare it to oldsns quickly.
+                     */
                     qsort(&sns[1], numstates, sizeof(sns[1]), intcmp);
                     didsort = 1;
                 }
 
                 for (j = 1; j <= numstates; ++j)
+                {
                     if (sns[j] != oldsns[j])
                         break;
+                }
 
                 if (j > numstates)
                 {
@@ -883,41 +852,31 @@ int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int ha
 
                 ++hshcol;
             }
-
             else
                 ++hshsave;
         }
+    }
 
     /* Make a new dfa. */
-
-    if (++lastdfa >= current_max_dfas)
-        increase_max_dfas();
-
-    newds = lastdfa;
-
-    dss[newds] = (int *)allocate_integer_array(numstates + 1);
+    dfas.emplace_back();
+    auto &dfa = dfas.back();
 
     /* If we haven't already sorted the states in sns, we do so now,
 	 * so that future comparisons with it can be made quickly.
 	 */
-
     if (!didsort)
         qsort(&sns[1], numstates, sizeof(sns[1]), intcmp);
 
+    dfa.dss.resize(numstates + 1, 0);
     for (i = 1; i <= numstates; ++i)
-        dss[newds][i] = sns[i];
+        dfa.dss[i] = sns[i];
 
-    dfasiz[newds] = numstates;
-    dhash[newds] = hashval;
+    dfa.hash = hashval;
 
     if (nacc == 0)
     {
-        if (reject)
-            dfaacc[newds].dfaacc_set = NULL;
-        else
-            dfaacc[newds].dfaacc_state = 0;
-
-        accsiz[newds] = 0;
+        if (!reject)
+            dfa.acc_state = 0;
     }
     else if (reject)
     {
@@ -925,23 +884,18 @@ int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int ha
 		 * disambiguating rule that the first rule listed is considered
 		 * match in the event of ties will work.
 		 */
-
         qsort(&accset[1], nacc, sizeof(accset[1]), intcmp);
 
-        dfaacc[newds].dfaacc_set =
-            (int *)allocate_integer_array(nacc + 1);
-
         /* Save the accepting set for later */
+        dfa.acc_set = std::make_shared<Dfa::AccSet>(nacc + 1);
         for (i = 1; i <= nacc; ++i)
         {
-            dfaacc[newds].dfaacc_set[i] = accset[i];
+            (*dfa.acc_set)[i] = accset[i];
 
             if (accset[i] < rules.size())
                 /* Who knows, perhaps a REJECT can yield this rule. */
                 rules[accset[i]].useful = true;
         }
-
-        accsiz[newds] = nacc;
     }
     else
     {
@@ -949,16 +903,18 @@ int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int ha
         j = rules.size();
 
         for (i = 1; i <= nacc; ++i)
+        {
             if (accset[i] < j)
                 j = accset[i];
+        }
 
-        dfaacc[newds].dfaacc_state = j;
+        dfa.acc_state = j;
 
         if (j < rules.size())
             rules[j].useful = true;
     }
 
-    *newds_addr = newds;
+    *newds_addr = dfas.size() - 1;
 
     return 1;
 }
@@ -969,11 +925,11 @@ int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int ha
  *    numstates = symfollowset( int ds[current_max_dfa_size], int dsize,
  *				int transsym, int nset[current_max_dfa_size] );
  */
-int symfollowset(int ds[], int dsize, int transsym, int nset[])
+int symfollowset(const std::vector<int> &ds, int transsym, int nset[])
 {
     int numstates = 0;
 
-    for (int i = 1; i <= dsize; ++i)
+    for (int i = 1; i < ds.size(); ++i)
     {
         /* for each nfa state ns in the state set of ds */
         int ns = ds[i];
@@ -1044,7 +1000,7 @@ int symfollowset(int ds[], int dsize, int transsym, int nset[])
  *    sympartition( int ds[current_max_dfa_size], int numstates,
  *			int symlist[numecs], int duplist[numecs] );
  */
-void sympartition(int ds[], int numstates, int symlist[], int duplist[])
+void sympartition(const std::vector<int> &ds, int symlist[], int duplist[])
 {
     int dupfwd[CSIZE + 1];
 
@@ -1062,7 +1018,7 @@ void sympartition(int ds[], int numstates, int symlist[], int duplist[])
     duplist[1] = NIL;
     dupfwd[numecs] = NIL;
 
-    for (int i = 1; i <= numstates; ++i)
+    for (int i = 1; i < ds.size(); ++i)
     {
         int ns = ds[i];
         int tch = nfas[ns].transchar;
