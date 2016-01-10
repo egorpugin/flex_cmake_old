@@ -107,6 +107,7 @@ void mkeccl(const CharacterClass::Table &table, int fwd[], int bck[], int llsiz,
     /* Note that it doesn't matter whether or not the character class is
 	 * negated.  The same results will be obtained in either case.
 	 */
+    int it = 0;
     for (auto iter = table.begin(); iter != table.end();)
     {
         auto cclm = *iter;
@@ -118,11 +119,12 @@ void mkeccl(const CharacterClass::Table &table, int fwd[], int bck[], int llsiz,
         int newec = cclm;
 
         auto j = std::next(iter);
+        auto jt = it + 1;
 
         for (int i = fwd[cclm]; i != NIL && i <= llsiz; i = fwd[i])
         {
             /* look for the symbol in the character class */
-            for (; j != table.end(); ++j)
+            for (; j != table.end(); ++j, ++jt)
             {
                 auto ccl_char = *j;
 
@@ -132,7 +134,7 @@ void mkeccl(const CharacterClass::Table &table, int fwd[], int bck[], int llsiz,
                 if (ccl_char > i)
                     break;
 
-                auto d = std::distance(table.begin(), j);
+                auto d = jt;
                 if (ccl_char == i && !cclflags[d])
                 {
                     /* We found an old companion of cclm
@@ -174,14 +176,10 @@ void mkeccl(const CharacterClass::Table &table, int fwd[], int bck[], int llsiz,
         fwd[newec] = NIL;
 
         /* Find next ccl member to process. */
-        for (++iter; iter != table.end(); ++iter)
+        for (++iter, ++it; iter != table.end() && cclflags[it]; ++iter, ++it)
         {
-            auto d = std::distance(table.begin(), iter);
-            if (!cclflags[d])
-                break;
-
             /* Reset "doesn't need processing" flag. */
-            cclflags[d] = 0;
+            cclflags[it] = 0;
         }
         if (iter == table.end())
             break;
