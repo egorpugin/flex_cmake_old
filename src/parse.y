@@ -76,7 +76,7 @@
 int pat, scnum, eps, headcnt, trailcnt, lastchar, i, rulelen;
 int trlcontxt, xcluflg, currccl, varlength, variable_trail_rule;
 
-int *scon_stk;
+std::vector<int> scon_stk;
 int scon_stk_ptr;
 
 static int madeany = false;  /* whether we've made the '.' character class */
@@ -178,7 +178,7 @@ sect1		:  sect1 startconddecl namelist1
 sect1end	:  SECTEND
 			{
 			check_options();
-			scon_stk = (decltype(scon_stk))allocate_integer_array( start_conditions.size() );
+			scon_stk.resize(start_conditions.size() + 1);
 			scon_stk_ptr = 0;
 			}
 		;
@@ -255,13 +255,11 @@ flexrule	:  '^' rule
 				for ( i = 1; i <= scon_stk_ptr; ++i )
 					start_conditions[scon_stk[i]].bol = mkbranch( start_conditions[scon_stk[i]].bol, pat );
 				}
-
 			else
 				{
 				/* Add to all non-exclusive start conditions,
 				 * including the default (0) start condition.
 				 */
-
 				for ( i = 1; i < start_conditions.size(); ++i )
 					if ( ! start_conditions[i].xclu )
 						start_conditions[i].bol = mkbranch( start_conditions[i].bol, pat );
@@ -272,8 +270,7 @@ flexrule	:  '^' rule
 				bol_needed = true;
 
 				if ( performance_report > 1 )
-					pinpoint_message(
-			"'^' operator results in sub-optimal performance" );
+					pinpoint_message("'^' operator results in sub-optimal performance" );
 				}
 			}
 

@@ -43,7 +43,6 @@ EXTRA_DIST = \
 	autogen.sh
 
 SUBDIRS = \
-	lib \
 	doc \
 	examples \
 	po \

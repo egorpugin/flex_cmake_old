@@ -54,8 +54,7 @@ const std::string flex_version = FLEX_VERSION;
 /* declare functions that have forward references */
 
 void flexinit(int, char **);
-void readin(void);
-void set_up_initial_allocations(void);
+void readin();
 static String basename2(String path);
 
 /* these globals are all defined and commented in flexdef.h */
@@ -104,7 +103,6 @@ StateType current_state_type;
 
 StartConditions start_conditions(1);
 
-int current_max_dfa_size;
 std::vector<int> nxt(1), chk(1), tnxt(1);
 int NUL_ec, tblend, firstfree;
 bool nultrans = false;
@@ -1228,8 +1226,6 @@ void flexinit(int argc, char **argv)
 	 * of the proto queue.
 	 */
     lastprot = 1;
-
-    set_up_initial_allocations();
 }
 
 /* readin - read in the rules section of the input file(s) */
@@ -1498,12 +1494,6 @@ void readin(void)
 
     if (useecs)
         ccl2ecl();
-}
-
-/* set_up_initial_allocations - allocate memory for internal tables */
-void set_up_initial_allocations(void)
-{
-    current_max_dfa_size = INITIAL_MAX_DFA_SIZE;
 }
 
 /* extracts basename from path, optionally stripping the extension "\.*"

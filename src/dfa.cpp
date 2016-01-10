@@ -47,16 +47,16 @@
 void dump_associated_rules(FILE *, int);
 void dump_transitions(FILE *, int[]);
 void sympartition(const std::vector<int> &, int[], int[]);
-int symfollowset(const std::vector<int> &, int, int[]);
+int symfollowset(const std::vector<int> &, int, std::vector<int> &);
 
 /* Construct the epsilon closure of a set of ndfa states. */
-int *epsclosure(int *, int *, std::vector<int> &, int *, int *);
+void epsclosure(std::vector<int> &, int *, std::vector<int> &, int *, int *);
 
 /* Converts a set of ndfa states into a dfa state. */
-int snstods(int[], int, std::vector<int> &, int, int, int *);
+int snstods(std::vector<int> &, int, std::vector<int> &, int, int, int *);
 
 /* Check to see if NFA state set constitutes "dangerous" trailing context. */
-void check_trailing_context(int *, int, std::vector<int> &, int);
+void check_trailing_context(std::vector<int> &, int, std::vector<int> &, int);
 
 /* check_for_backing_up - check a DFA state for backing up
  *
@@ -112,11 +112,9 @@ void check_for_backing_up(int ds, int state[])
  *    nfa_states[1 .. num_states] is the list of NFA states in the DFA.
  *    accset[1 .. nacc] is the list of accepting numbers for the DFA state.
  */
-void check_trailing_context(int *nfa_states, int num_states, std::vector<int> &accset, int nacc)
+void check_trailing_context(std::vector<int> &nfa_states, int num_states, std::vector<int> &accset, int nacc)
 {
-    int i, j;
-
-    for (i = 1; i <= num_states; ++i)
+    for (int i = 1; i <= num_states; ++i)
     {
         int ns = nfa_states[i];
         auto type = nfas[ns].state_type;
@@ -134,7 +132,7 @@ void check_trailing_context(int *nfa_states, int num_states, std::vector<int> &a
 			 * since it's rare that an accepting number set
 			 * is large.
 			 */
-            for (j = 1; j <= nacc; ++j)
+            for (int j = 1; j <= nacc; ++j)
             {
                 if (accset[j] & YY_TRAILING_HEAD_MASK)
                 {
@@ -247,12 +245,12 @@ void dump_transitions(FILE *file, int state[])
  *
  *  hashval is the hash value for the dfa corresponding to the state set.
  */
-int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, int *hv_addr)
+void epsclosure(std::vector<int> &t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, int *hv_addr)
 {
     int stkpos, ns, tsp;
     int numstates = *ns_addr, nacc, hashval, transsym, nfaccnum;
     int stkend, nstate;
-    static int did_stk_init = false, *stk;
+    static std::vector<int> stk(dfas.capacity() + 1);
 
     /* Enough so that if it's subtracted from an NFA state number, the result
     * is guaranteed to be negative.
@@ -283,20 +281,18 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
             accset[++nacc] = nfaccnum; \
     } while (0)
 
-#define DO_REALLOCATION()                                                 \
+#define DO_REALLOCATION(x)                                                 \
     do                                                                    \
     {                                                                     \
-        current_max_dfa_size += MAX_DFA_SIZE_INCREMENT;                   \
-        ++num_reallocs;                                                   \
-        t = (int *)reallocate_integer_array(t, current_max_dfa_size);     \
-        stk = (int *)reallocate_integer_array(stk, current_max_dfa_size); \
+        t.resize(x);     \
+        stk.resize(x); \
     } while (0)
 
 #define PUT_ON_STACK(state)                   \
     do                                        \
     {                                         \
-        if (++stkend >= current_max_dfa_size) \
-            DO_REALLOCATION();                \
+        if (++stkend + 1 > stk.size()) \
+            DO_REALLOCATION(stkend + 1);                \
         stk[stkend] = state;                  \
         MARK_STATE(state);                    \
     } while (0)
@@ -304,8 +300,8 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
 #define ADD_STATE(state)                         \
     do                                           \
     {                                            \
-        if (++numstates >= current_max_dfa_size) \
-            DO_REALLOCATION();                   \
+        if (++numstates + 1 > stk.size()) \
+            DO_REALLOCATION(numstates + 1);                   \
         t[numstates] = state;                    \
         hashval += state;                        \
     } while (0)
@@ -318,14 +314,7 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
         if (nfaccnum != NIL || nfas[state].transchar != SYM_EPSILON) \
             ADD_STATE(state);                                   \
     } while (0)
-
-    ////////////////////////////////////////////////////
-    if (!did_stk_init)
-    {
-        stk = (int *)allocate_integer_array(current_max_dfa_size);
-        did_stk_init = true;
-    }
-
+    
     nacc = stkend = hashval = 0;
 
     for (nstate = 1; nstate <= numstates; ++nstate)
@@ -377,8 +366,6 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
     *ns_addr = numstates;
     *hv_addr = hashval;
     *nacc_addr = nacc;
-
-    return t;
 }
 
 /* ntod - convert an ndfa to a dfa
@@ -391,7 +378,7 @@ void ntod()
     int newds;
     int sym;
     int num_full_table_rows = 0; /* used only for -f */
-    int *nset;
+    std::vector<int> nset;
     int i, comstate, comfreq, targ;
     int num_start_states;
     int todo_head, todo_next;
@@ -416,7 +403,7 @@ void ntod()
 	 * in the input, *plus* their YY_TRAILING_HEAD_MASK variants.
      */
     std::vector<int> accset(rules.size() * 2, 0);
-    nset = (int *)allocate_integer_array(current_max_dfa_size);
+    nset.resize(dfas.capacity() + 1);
 
     /* The "todo" queue is represented by the head, which is the DFA
 	 * state currently being processed, and the "next", which is the
@@ -588,7 +575,7 @@ void ntod()
 
         int hashval = 0;
         int nacc = 0;
-        nset = epsclosure(nset, &numstates, accset, &nacc, &hashval);
+        epsclosure(nset, &numstates, accset, &nacc, &hashval);
 
         int ds = 0;
         if (snstods(nset, numstates, accset, nacc, hashval, &ds))
@@ -640,7 +627,7 @@ void ntod()
 
                     int hashval = 0;
                     int nacc = 0;
-                    nset = epsclosure(nset, &numstates, accset, &nacc, &hashval);
+                    epsclosure(nset, &numstates, accset, &nacc, &hashval);
 
                     if (snstods(nset, numstates, accset, nacc, hashval, &newds))
                     {
@@ -803,8 +790,6 @@ void ntod()
 
         mkdeftbl();
     }
-
-    free(nset);
 }
 
 /* snstods - converts a set of ndfa states into a dfa state
@@ -816,7 +801,7 @@ void ntod()
  *
  * On return, the dfa state number is in newds.
  */
-int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int hashval, int *newds_addr)
+int snstods(std::vector<int> &sns, int numstates, std::vector<int> &accset, int nacc, int hashval, int *newds_addr)
 {
     int didsort = 0;
     int i, j;
@@ -926,7 +911,7 @@ int snstods(int sns[], int numstates, std::vector<int> &accset, int nacc, int ha
  *    numstates = symfollowset( int ds[current_max_dfa_size], int dsize,
  *				int transsym, int nset[current_max_dfa_size] );
  */
-int symfollowset(const std::vector<int> &ds, int transsym, int nset[])
+int symfollowset(const std::vector<int> &ds, int transsym, std::vector<int> &nset)
 {
     int numstates = 0;
 

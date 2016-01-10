@@ -334,17 +334,6 @@ extern int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
 
 
 
-void *allocate_array(int, size_t);
-void *reallocate_array(void *, int, size_t);
-
-#define allocate_integer_array(size) \
-    allocate_array(size, sizeof(int))
-
-#define reallocate_integer_array(array, size) \
-    reallocate_array((void *)array, size, sizeof(int))
-
-
-
 
 
 
@@ -396,11 +385,6 @@ extern int tecfwd[CSIZE + 1], tecbck[CSIZE + 1];
 
 
 /* Variables for dfa machine data:
- * current_max_dfa_size - current maximum number of NFA states in DFA
- * current_max_xpairs - current maximum number of non-template xtion pairs
- * current_max_template_xpairs - current maximum number of template pairs
- * current_max_dfas - current maximum number DFA states
- * lastdfa - last dfa state number created
  * nxt - state to enter upon reading character
  * chk - check value to see if "nxt" applies
  * tnxt - internal nxt table for templates
@@ -417,7 +401,6 @@ extern int tecfwd[CSIZE + 1], tecbck[CSIZE + 1];
  */
 
 extern int NUL_ec, firstfree, tblend;
-extern int current_max_dfa_size;
 extern std::vector<int> nxt, chk, tnxt;
 extern int numas;
 extern int numsnpairs, jambase, jamstate;
