@@ -255,10 +255,9 @@ yytbl_data *mkctbl(void)
     /* So that "make test" won't show arb. differences. */
     nxt[tblend + 2] = 0;
 
-    /* Make sure every state has an end-of-buffer transition and an
-	 * action #.
-	 */
-    for (i = 1; i < dfas.size(); ++i)
+    /* Make sure every state has an end-of-buffer transition and an action #. */
+    // this loop should start from 0, not 1
+    for (i = 0; i < dfas.size(); ++i)
     {
         int anum = dfas[i].acc_state;
         int offset = dfas[i].base;
@@ -268,6 +267,7 @@ yytbl_data *mkctbl(void)
         nxt[offset - 1] = anum; /* action number */
     }
 
+    // this loop should start from 0, not 1
     for (i = 0; i <= tblend; ++i)
     {
         if (chk[i] == EOB_POSITION)
@@ -380,10 +380,9 @@ void genctbl(void)
     /* So that "make test" won't show arb. differences. */
     nxt[tblend + 2] = 0;
 
-    /* Make sure every state has an end-of-buffer transition and an
-	 * action #.
-     */
-    for (i = 1; i < dfas.size(); ++i)
+    /* Make sure every state has an end-of-buffer transition and an action #. */
+    // this loop should start from 0, not 1
+    for (i = 0; i < dfas.size(); ++i)
     {
         int anum = dfas[i].acc_state;
         int offset = dfas[i].base;
@@ -393,6 +392,7 @@ void genctbl(void)
         nxt[offset - 1] = anum; /* action number */
     }
 
+    // this loop should start from 0, not 1
     for (i = 0; i <= tblend; ++i)
     {
         if (chk[i] == EOB_POSITION)
