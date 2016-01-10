@@ -238,9 +238,11 @@ yytbl_data *mkctbl(void)
 	 * nxt/chk pair with is EOB, i.e., 0, so we don't have to make sure
 	 * there's room for jam entries for other characters.
 	 */
-
-    while (tblend + 2 >= current_max_xpairs)
-        expand_nxt_chk();
+    if (tblend + 2 + 1 > chk.size())
+    {
+        chk.resize(tblend + 2 + 1);
+        nxt.resize(tblend + 2 + 1);
+    }
 
     if (dfas.size() + 1 > dfas.capacity())
     {
@@ -363,9 +365,11 @@ void genctbl(void)
 	 * nxt/chk pair with is EOB, i.e., 0, so we don't have to make sure
 	 * there's room for jam entries for other characters.
 	 */
-
-    while (tblend + 2 >= current_max_xpairs)
-        expand_nxt_chk();
+    if (tblend + 2 + 1 > chk.size())
+    {
+        chk.resize(tblend + 2 + 1);
+        nxt.resize(tblend + 2 + 1);
+    }
 
     if (dfas.size() + 1 > dfas.capacity())
     {

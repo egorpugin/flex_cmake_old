@@ -104,9 +104,8 @@ StateType current_state_type;
 
 StartConditions start_conditions(1);
 
-int current_max_dfa_size, current_max_xpairs;
-int current_max_template_xpairs;
-int *nxt, *chk, *tnxt;
+int current_max_dfa_size;
+std::vector<int> nxt(1), chk(1), tnxt(1);
 int NUL_ec, tblend, firstfree;
 bool nultrans = false;
 Dfas dfas(1);
@@ -712,12 +711,10 @@ void flexend(int exit_status)
 
             fprintf(stderr, _("  %d base-def entries created\n"),
                 (dfas.size() - 1) + numtemps);
-            fprintf(stderr, _("  %d/%d (peak %d) nxt-chk entries created\n"),
-                    tblend, current_max_xpairs, peakpairs);
-            fprintf(stderr,  _("  %d/%d (peak %d) template nxt-chk entries created\n"),
-                    numtemps * nummecs,
-                    current_max_template_xpairs,
-                    numtemps * numecs);
+            fprintf(stderr, _("  %d (peak %d) nxt-chk entries created\n"),
+                    tblend, peakpairs);
+            fprintf(stderr,  _("  %d (peak %d) template nxt-chk entries created\n"),
+                    numtemps * nummecs, numtemps * numecs);
             fprintf(stderr, _("  %d empty table entries\n"), nummt);
             fprintf(stderr, _("  %d protos created\n"), numprots);
             fprintf(stderr, _("  %d templates created, %d uses\n"), numtemps, tmpuses);
@@ -1507,13 +1504,6 @@ void readin(void)
 void set_up_initial_allocations(void)
 {
     current_max_dfa_size = INITIAL_MAX_DFA_SIZE;
-
-    current_max_xpairs = INITIAL_MAX_XPAIRS;
-    nxt = (decltype(nxt))allocate_integer_array(current_max_xpairs);
-    chk = (decltype(chk))allocate_integer_array(current_max_xpairs);
-
-    current_max_template_xpairs = INITIAL_MAX_TEMPLATE_XPAIRS;
-    tnxt = (decltype(tnxt))allocate_integer_array(current_max_template_xpairs);
 }
 
 /* extracts basename from path, optionally stripping the extension "\.*"

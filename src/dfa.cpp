@@ -169,7 +169,8 @@ void dump_associated_rules(FILE *file, int ds)
                 break;
 
         if (j > num_associated_rules)
-        { /* new rule */
+        {
+            /* new rule */
             if (num_associated_rules < MAX_ASSOC_RULES)
                 rule_set[++num_associated_rules] =
                     rule_num;
@@ -318,6 +319,7 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
             ADD_STATE(state);                                   \
     } while (0)
 
+    ////////////////////////////////////////////////////
     if (!did_stk_init)
     {
         stk = (int *)allocate_integer_array(current_max_dfa_size);
@@ -364,7 +366,6 @@ int *epsclosure(int *t, int *ns_addr, std::vector<int> &accset, int *nacc_addr, 
     }
 
     /* Clear out "visit" markers. */
-
     for (stkpos = 1; stkpos <= stkend; ++stkpos)
     {
         if (IS_MARKED(stk[stkpos]))

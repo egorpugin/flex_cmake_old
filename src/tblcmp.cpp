@@ -40,7 +40,7 @@
 
 /* declarations for functions that have forward references */
 void mkentry(int *, int, int, int, int);
-void mkprot(int[], int, int);
+void mkprot(int*, int, int);
 void mktemplate(int[], int, int);
 void mv2front(int);
 int tbldiff(int[], int, int[]);
@@ -176,21 +176,19 @@ void bldtbl(int state[], int statenum, int totaltrans, int comstate, int comfreq
             else
             {
                 mkprot(state, statenum, comstate);
-                mkentry(state, numecs, statenum,
-                        JAMSTATE, totaltrans);
+                mkentry(state, numecs, statenum, JAMSTATE, totaltrans);
             }
         }
         else
-        { /* use the proto */
+        {
+            /* use the proto */
             mkentry(extrct[extptr], numecs, statenum,
                     prottbl[minprot], mindiff);
 
             /* If this state was sufficiently different from the
 			 * proto we built it from, make it, too, a proto.
 			 */
-
-            if (mindiff * 100 >=
-                totaltrans * NEW_PROTO_DIFF_PERCENTAGE)
+            if (mindiff * 100 >= totaltrans * NEW_PROTO_DIFF_PERCENTAGE)
                 mkprot(state, statenum, comstate);
 
             /* Since mkprot added a new proto to the proto queue,
@@ -202,7 +200,6 @@ void bldtbl(int state[], int statenum, int totaltrans, int comstate, int comfreq
 			 * beginning of the queue), so in that case the
 			 * following call will do nothing.
 			 */
-
             mv2front(minprot);
         }
     }
@@ -281,21 +278,6 @@ void cmptmps()
     }
 }
 
-/* expand_nxt_chk - expand the next check arrays */
-void expand_nxt_chk(void)
-{
-    int old_max = current_max_xpairs;
-
-    current_max_xpairs += MAX_XPAIRS_INCREMENT;
-
-    ++num_reallocs;
-
-    nxt = (decltype(nxt))reallocate_integer_array(nxt, current_max_xpairs);
-    chk = (decltype(chk))reallocate_integer_array(chk, current_max_xpairs);
-
-    memset(chk + old_max, 0, MAX_XPAIRS_INCREMENT * sizeof(int));
-}
-
 /* find_table_space - finds a space in the table for a state to be placed
  *
  * synopsis
@@ -340,7 +322,6 @@ int find_table_space(int *state, int numtrans)
 		 */
         i = tblend - numecs;
     }
-
     else
         /* Start searching for table space from the beginning
 		 * (skipping only the elements which will definitely not
@@ -349,9 +330,12 @@ int find_table_space(int *state, int numtrans)
         i = firstfree;
 
     while (1)
-    { /* loops until a space is found */
-        while (i + numecs >= current_max_xpairs)
-            expand_nxt_chk();
+    {
+        if (i + numecs + 1 > chk.size())
+        {
+            chk.resize(i + numecs + 1);
+            nxt.resize(i + numecs + 1);
+        }
 
         /* Loops until space for end-of-buffer and action number
 		 * are found.
@@ -373,12 +357,14 @@ int find_table_space(int *state, int numtrans)
 					 */
                     i += 2;
             }
-
             else
                 ++i;
 
-            while (i + numecs >= current_max_xpairs)
-                expand_nxt_chk();
+            if (i + numecs + 1 > chk.size())
+            {
+                chk.resize(i + numecs + 1);
+                nxt.resize(i + numecs + 1);
+            }
         }
 
         /* If we started search from the beginning, store the new
@@ -412,12 +398,9 @@ int find_table_space(int *state, int numtrans)
  * Initializes "firstfree" to be one beyond the end of the table.  Initializes
  * all "chk" entries to be zero.
  */
-void inittbl(void)
+void inittbl()
 {
     int i;
-
-    memset(chk, 0, current_max_xpairs * sizeof(int));
-
     tblend = 0;
     firstfree = tblend + 1;
     numtemps = 0;
@@ -428,7 +411,6 @@ void inittbl(void)
 		 * are sets of equivalence classes which all have identical
 		 * transitions out of TEMPLATES.
 		 */
-
         tecbck[1] = NIL;
 
         for (i = 2; i <= numecs; ++i)
@@ -450,8 +432,11 @@ void mkdeftbl(void)
 
     ++tblend; /* room for transition on end-of-buffer character */
 
-    while (tblend + numecs >= current_max_xpairs)
-        expand_nxt_chk();
+    if (tblend + numecs + 1 > chk.size())
+    {
+        chk.resize(tblend + numecs + 1);
+        nxt.resize(tblend + numecs + 1);
+    }
 
     /* Add in default end-of-buffer transition. */
     nxt[tblend] = end_of_buffer_state;
@@ -554,8 +539,11 @@ void mkentry(int *state, int numchars, int statenum, int deflink, int totaltrans
                 ;
         }
 
-        while (baseaddr + maxec - minec + 1 >= current_max_xpairs)
-            expand_nxt_chk();
+        if (baseaddr + maxec - minec + 1 + 1 > chk.size())
+        {
+            chk.resize(baseaddr + maxec - minec + 1 + 1);
+            nxt.resize(baseaddr + maxec - minec + 1 + 1);
+        }
 
         for (i = minec; i <= maxec; ++i)
         {
@@ -564,11 +552,14 @@ void mkentry(int *state, int numchars, int statenum, int deflink, int totaltrans
                 chk[baseaddr + i - minec] != 0)
             {
                 /* baseaddr unsuitable - find another */
-                for (++baseaddr; baseaddr < current_max_xpairs && chk[baseaddr] != 0; ++baseaddr)
+                for (++baseaddr; baseaddr < chk.size() && chk[baseaddr] != 0; ++baseaddr)
                     ;
 
-                while (baseaddr + maxec - minec + 1 >= current_max_xpairs)
-                    expand_nxt_chk();
+                if (baseaddr + maxec - minec + 1 + 1 > chk.size())
+                {
+                    chk.resize(baseaddr + maxec - minec + 1 + 1);
+                    nxt.resize(baseaddr + maxec - minec + 1 + 1);
+                }
 
                 /* Reset the loop counter so we'll start all
                  * over again next time it's incremented.
@@ -588,8 +579,11 @@ void mkentry(int *state, int numchars, int statenum, int deflink, int totaltrans
     tblbase = baseaddr - minec;
     tbllast = tblbase + maxec;
 
-    while (tbllast + 1 >= current_max_xpairs)
-        expand_nxt_chk();
+    if (tbllast + 1 + 1 > chk.size())
+    {
+        chk.resize(tbllast + 1 + 1);
+        nxt.resize(tbllast + 1 + 1);
+    }
 
     dfas[statenum].base = tblbase;
     dfas[statenum].def = deflink;
@@ -625,8 +619,13 @@ void mk1tbl(int state, int sym, int onenxt, int onedef)
         firstfree = sym;
 
     while (chk[firstfree] != 0)
-        if (++firstfree >= current_max_xpairs)
-            expand_nxt_chk();
+    {
+        if (++firstfree + 1 > chk.size())
+        {
+            chk.resize(firstfree + 1);
+            nxt.resize(firstfree + 1);
+        }
+    }
 
     dfas[state].base = firstfree - sym;
     dfas[state].def = onedef;
@@ -637,13 +636,16 @@ void mk1tbl(int state, int sym, int onenxt, int onedef)
     {
         tblend = firstfree++;
 
-        if (firstfree >= current_max_xpairs)
-            expand_nxt_chk();
+        if (firstfree + 1 > chk.size())
+        {
+            chk.resize(firstfree + 1);
+            nxt.resize(firstfree + 1);
+        }
     }
 }
 
 /* mkprot - create new proto entry */
-void mkprot(int state[], int statenum, int comstate)
+void mkprot(int *state, int statenum, int comstate)
 {
     int i, slot, tblbase;
 
@@ -693,15 +695,9 @@ void mktemplate(int state[], int statenum, int comstate)
 	 */
     int tmpbase = numtemps * numecs;
 
-    if (tmpbase + numecs >= current_max_template_xpairs)
+    if (tmpbase + numecs + 1 > tnxt.size())
     {
-        current_max_template_xpairs +=
-            MAX_TEMPLATE_XPAIRS_INCREMENT;
-
-        ++num_reallocs;
-
-        tnxt = (decltype(tnxt))reallocate_integer_array(tnxt,
-                                                        current_max_template_xpairs);
+        tnxt.resize(tmpbase + numecs + 1);
     }
 
     for (int i = 1; i <= numecs; ++i)
@@ -718,7 +714,7 @@ void mktemplate(int state[], int statenum, int comstate)
     if (usemecs)
         mkeccl(transset, tecfwd, tecbck, numecs, 0);
 
-    mkprot(tnxt + tmpbase, -numtemps, comstate);
+    mkprot(tnxt.data() + tmpbase, -numtemps, comstate);
 
     /* We rely on the fact that mkprot adds things to the beginning
 	 * of the proto queue.

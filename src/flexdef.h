@@ -134,32 +134,7 @@
 #define UNIQUE -1          /* marks a symbol as an e.c. representative */
 #define INFINITE_REPEAT -1 /* for x{5,} constructions */
 
-#define INITIAL_MAX_CCLS 100 /* max number of unique character classes */
-#define MAX_CCLS_INCREMENT 100
-
-/* Size of table holding members of character classes. */
-#define INITIAL_MAX_CCL_TBL_SIZE 500
-#define MAX_CCL_TBL_SIZE_INCREMENT 250
-
-#define INITIAL_MNS 2000   /* default maximum number of nfa states */
-#define MNS_INCREMENT 1000 /* amount to bump above by if it's not enough */
-
-#define INITIAL_MAX_DFAS 1000 /* default maximum number of dfa states */
-#define MAX_DFAS_INCREMENT 1000
-
 #define JAMSTATE -32766 /* marks a reference to the state that always jams */
-
-/* Maximum number of NFA states. */
-#define MAXIMUM_MNS 31999
-#define MAXIMUM_MNS_LONG 1999999999
-
-/* Maximum number of nxt/chk pairs for non-templates. */
-#define INITIAL_MAX_XPAIRS 2000
-#define MAX_XPAIRS_INCREMENT 2000
-
-/* Maximum number of nxt/chk pairs needed for templates. */
-#define INITIAL_MAX_TEMPLATE_XPAIRS 2500
-#define MAX_TEMPLATE_XPAIRS_INCREMENT 2500
 
 #define SYM_EPSILON (CSIZE + 1) /* to mark transitions on the symbol epsilon */
 
@@ -359,6 +334,15 @@ extern int onenext[ONE_STACK_SIZE], onedef[ONE_STACK_SIZE], onesp;
 
 
 
+void *allocate_array(int, size_t);
+void *reallocate_array(void *, int, size_t);
+
+#define allocate_integer_array(size) \
+    allocate_array(size, sizeof(int))
+
+#define reallocate_integer_array(array, size) \
+    reallocate_array((void *)array, size, sizeof(int))
+
 
 
 
@@ -433,9 +417,8 @@ extern int tecfwd[CSIZE + 1], tecbck[CSIZE + 1];
  */
 
 extern int NUL_ec, firstfree, tblend;
-extern int current_max_dfa_size, current_max_xpairs;
-extern int current_max_template_xpairs;
-extern int *nxt, *chk, *tnxt;
+extern int current_max_dfa_size;
+extern std::vector<int> nxt, chk, tnxt;
 extern int numas;
 extern int numsnpairs, jambase, jamstate;
 extern int end_of_buffer_state;
@@ -470,58 +453,6 @@ extern int tmpuses, totnst, peakpairs, numuniq, numdup, hshsave;
 extern int num_backing_up, bol_needed;
 
 extern int nlch; // nlch - default eol char
-
-
-
-
-void *allocate_array(int, size_t);
-void *reallocate_array(void *, int, size_t);
-
-#define allocate_integer_array(size) \
-    allocate_array(size, sizeof(int))
-
-#define reallocate_integer_array(array, size) \
-    reallocate_array((void *)array, size, sizeof(int))
-
-#define allocate_bool_array(size) \
-    allocate_array(size, sizeof(bool))
-
-#define reallocate_bool_array(array, size) \
-    reallocate_array((void *)array, size, sizeof(bool))
-
-#define allocate_int_ptr_array(size) \
-    allocate_array(size, sizeof(int *))
-
-#define allocate_char_ptr_array(size) \
-    allocate_array(size, sizeof(char *))
-
-#define allocate_dfaacc_union(size) \
-    allocate_array(size, sizeof(union dfaacc_union))
-
-#define reallocate_int_ptr_array(array, size) \
-    reallocate_array((void *)array, size, sizeof(int *))
-
-#define reallocate_char_ptr_array(array, size) \
-    reallocate_array((void *)array, size, sizeof(char *))
-
-#define reallocate_dfaacc_union(array, size) \
-    reallocate_array((void *)array, size, sizeof(union dfaacc_union))
-
-#define allocate_character_array(size) \
-    allocate_array(size, sizeof(char))
-
-#define reallocate_character_array(array, size) \
-    reallocate_array((void *)array, size, sizeof(char))
-
-#define allocate_Character_array(size) \
-    allocate_array(size, sizeof(unsigned char))
-
-#define reallocate_Character_array(array, size) \
-    reallocate_array((void *)array, size, sizeof(unsigned char))
-
-
-
-
 
 
 
