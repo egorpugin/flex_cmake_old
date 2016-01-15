@@ -26,6 +26,8 @@ public:
 
 public:
     using base::base;
+    using base::capacity;
+    using base::data;
 
     reference operator[](size_type i)
     {
