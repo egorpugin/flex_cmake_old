@@ -25,6 +25,8 @@ addons:
     - g++-5
     - flex
     - bison
+    - texinfo
+    - help2man
 
 before_install:
   - if [[ $TRAVIS_OS_NAME == linux   ]]; then LINUX=true; fi
