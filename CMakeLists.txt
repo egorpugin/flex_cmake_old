@@ -117,3 +117,9 @@ add_custom_target(uninstall
 
 ###############################################################################
 
+
+SET(CPACK_GENERATOR "TGZ")
+SET(CPACK_SOURCE_GENERATOR "TGZ")
+
+INCLUDE(CPack)
+

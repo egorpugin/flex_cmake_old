@@ -35,4 +35,3 @@ add_custom_target(html
     COMMAND makeinfo --html -o flex.html ${CMAKE_CURRENT_SOURCE_DIR}/flex.texi
 )
 
-
