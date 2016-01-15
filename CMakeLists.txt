@@ -89,6 +89,7 @@ configure_file(${AUTOCONFIG_SRC} ${AUTOCONFIG} @ONLY)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(tests)
 
