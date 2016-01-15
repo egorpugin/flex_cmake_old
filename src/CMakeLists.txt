@@ -127,3 +127,5 @@ set(flex_src
 
 add_executable(flex ${flex_src})
 target_link_libraries(flex common)
+install(TARGETS flex RUNTIME DESTINATION bin)
+
