@@ -18,6 +18,8 @@ source_group("Generated Files" "${BSRC}/${H_CPP}")
 
 ########################################
 
+add_definitions(-DLOCALEDIR="${CMAKE_INSTALL_PREFIX}/share/locale/")
+
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 

@@ -744,9 +744,9 @@ void gen_next_match(void)
     /* NOTE - changes in here should be reflected in gen_next_state() and
 	 * gen_NUL_trans().
 	 */
-    char *char_map = useecs ? "yy_ec[YY_SC_TO_UI(*yy_cp)] " : "YY_SC_TO_UI(*yy_cp)";
+    const char *char_map = useecs ? "yy_ec[YY_SC_TO_UI(*yy_cp)] " : "YY_SC_TO_UI(*yy_cp)";
 
-    char *char_map_2 = useecs ? "yy_ec[YY_SC_TO_UI(*++yy_cp)] " : "YY_SC_TO_UI(*++yy_cp)";
+    const char *char_map_2 = useecs ? "yy_ec[YY_SC_TO_UI(*++yy_cp)] " : "YY_SC_TO_UI(*++yy_cp)";
 
     if (fulltbl)
     {
@@ -1470,7 +1470,7 @@ void make_tables(void)
 		 * enough to hold the biggest offset.
 		 */
         int total_table_size = tblend + numecs + 1;
-        char *trans_offset_type =
+        const char *trans_offset_type =
             (total_table_size >= INT16_MAX || long_align) ? "flex_int32_t" : "flex_int16_t";
 
         set_indent(0);

@@ -45,12 +45,16 @@ set(include_files_list
 )
 check_includes(include_files_list)
 
+if (GETTEXT_FOUND)
+    set(ENABLE_NLS 1)
+endif()
+
 file(APPEND ${AUTOCONFIG_SRC} "
 ////////////////////////////////////////////////////////////////////////////////
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
-//#define ENABLE_NLS 1
+#cmakedefine ENABLE_NLS 1
 
 /* pthread library */
 #define HAVE_LIBPTHREAD 1

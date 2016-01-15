@@ -372,7 +372,7 @@ unsigned char myesc(unsigned char array[])
  *
  * The returned string is in static storage.
  */
-char *readable_form(int c)
+const char *readable_form(int c)
 {
     static char rform[20];
 
@@ -609,3 +609,11 @@ void transition_struct_out(int element_v, int element_n)
         datapos = 0;
     }
 }
+
+void report_internal(const String &s, const char *file, int line, const char *func)
+{
+    fprintf(stderr, _("%s: fatal internal error at %s:%d (%s): %s\n"),
+        program_name.c_str(), file, line, func, s.c_str());
+    flex_exit(1); 
+}
+

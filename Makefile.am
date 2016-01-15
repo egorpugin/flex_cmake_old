@@ -43,10 +43,7 @@ EXTRA_DIST = \
 	autogen.sh
 
 SUBDIRS = \
-	doc \
-	examples \
-	po \
-	tools
+	examples
 
 # Create the ChangeLog, but only if we're inside a git working directory
 

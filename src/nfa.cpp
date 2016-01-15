@@ -206,11 +206,11 @@ void finish_rule(int mach, int variable_trail_rule, int headcnt, int trailcnt, i
     if (pcont_act && rules[rule_id - 1].has_nl)
         rules[rule_id].has_nl = true;
 
-    snprintf(action_text, sizeof(action_text), "case %d:\n", rule_id);
+    snprintf(action_text, sizeof(action_text), "case %d:\n", (int)rule_id);
     add_action(action_text);
     if (rules[rule_id].has_nl)
     {
-        snprintf(action_text, sizeof(action_text), "/* rule %d can match eol */\n", rule_id);
+        snprintf(action_text, sizeof(action_text), "/* rule %d can match eol */\n", (int)rule_id);
         add_action(action_text);
     }
 
@@ -232,8 +232,8 @@ void finish_rule(int mach, int variable_trail_rule, int headcnt, int trailcnt, i
             /* Do trailing context magic to not match the trailing
 			 * characters.
 			 */
-            char *scanner_cp = "YY_G(yy_c_buf_p) = yy_cp";
-            char *scanner_bp = "yy_bp";
+            auto scanner_cp = "YY_G(yy_c_buf_p) = yy_cp";
+            auto scanner_bp = "yy_bp";
 
             add_action("*yy_cp = YY_G(yy_hold_char); /* undo effects of setting up yytext */\n");
 

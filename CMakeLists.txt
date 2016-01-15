@@ -50,6 +50,8 @@ set(VERSION_PLAIN ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 find_package(BISON REQUIRED 3.0)
 find_package(FLEX REQUIRED 2.5.35)
+find_package(Gettext)
+find_package(Intl)
 
 ###############################################################################
 #
@@ -92,6 +94,7 @@ configure_file(${AUTOCONFIG_SRC} ${AUTOCONFIG} @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(doc)
+add_subdirectory(po)
 add_subdirectory(src)
 
 if (WITH_TESTS)

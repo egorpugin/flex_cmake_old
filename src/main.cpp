@@ -304,7 +304,7 @@ int flex_main(int argc, char *argv[])
         {
             output_file = fopen(headerfilename.c_str(), "wb");
             if (!output_file)
-                lerr(_("could not create %s"), headerfilename);
+                lerr(_("could not create %s"), headerfilename.c_str());
             print_lines(output_file, header_file);
             fclose(output_file);
         }
@@ -498,7 +498,7 @@ void check_options(void)
     }
 
     if (!skelname.empty() && !(skelfile = decltype(skelfile)(skelname.c_str())))
-        lerr(_("can't open skeleton file %s"), skelname);
+        lerr(_("can't open skeleton file %s"), skelname.c_str());
 
     if (reentrant)
     {
@@ -568,7 +568,7 @@ void flexend(int exit_status)
     if (skelfile)
     {
         if (skelfile.bad())
-            lerr(_("input error reading skeleton file %s"), skelname);
+            lerr(_("input error reading skeleton file %s"), skelname.c_str());
         skelfile.close();
     }
 
@@ -675,10 +675,10 @@ void flexend(int exit_status)
 
         putc('\n', stderr);
 
-        fprintf(stderr, _("  %d NFA states\n"), nfas.size() - 1);
-        fprintf(stderr, _("  %d DFA states (%d words)\n"), dfas.size() - 1, totnst);
+        fprintf(stderr, _("  %d NFA states\n"), (int)nfas.size() - 1);
+        fprintf(stderr, _("  %d DFA states (%d words)\n"), (int)dfas.size() - 1, totnst);
         fprintf(stderr, _("  %d rules\n"),
-            rules.size() - 1 /* - 1 for dummy rule */ + num_eof_rules - 1 /* - 1 for def. rule */);
+            (int)rules.size() - 1 /* - 1 for dummy rule */ + num_eof_rules - 1 /* - 1 for def. rule */);
 
         if (num_backing_up == 0)
             fprintf(stderr, _("  No backing up\n"));
@@ -690,10 +690,10 @@ void flexend(int exit_status)
         if (bol_needed)
             fprintf(stderr, _("  Beginning-of-line patterns used\n"));
 
-        fprintf(stderr, _("  %d start conditions\n"), start_conditions.size() - 1);
+        fprintf(stderr, _("  %d start conditions\n"), (int)start_conditions.size() - 1);
         fprintf(stderr, _("  %d epsilon states, %d double epsilon states\n"), numeps, eps2);
 
-        fprintf(stderr, _("  %d character classes\n"), ccls.size() - 1);
+        fprintf(stderr, _("  %d character classes\n"), (int)ccls.size() - 1);
 
         fprintf(stderr, _("  %d state/nextstate pairs created\n"), numsnpairs);
         fprintf(stderr, _("  %d/%d unique/duplicate transitions\n"), numuniq, numdup);
@@ -708,7 +708,7 @@ void flexend(int exit_status)
             tblsiz = 2 * ((dfas.size() - 1) + numtemps) + 2 * tblend;
 
             fprintf(stderr, _("  %d base-def entries created\n"),
-                (dfas.size() - 1) + numtemps);
+                (int)(dfas.size() - 1) + numtemps);
             fprintf(stderr, _("  %d (peak %d) nxt-chk entries created\n"),
                     tblend, peakpairs);
             fprintf(stderr,  _("  %d (peak %d) template nxt-chk entries created\n"),

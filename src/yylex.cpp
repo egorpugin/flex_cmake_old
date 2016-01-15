@@ -71,7 +71,7 @@ int yylex()
     {
         if (beglin)
         {
-            fprintf(stderr, "%d\t", rules.size());
+            fprintf(stderr, "%d\t", (int)rules.size());
             beglin = 0;
         }
 

@@ -39,27 +39,9 @@ void flexerror(const String &);
 void flexfatal(const String &);
 
 /* Report a fatal error with a pinpoint, and terminate */
-#if HAVE_DECL___FUNC__
-#define flex_die(msg)                                              \
-    do                                                             \
-    {                                                              \
-        fprintf(stderr,                                            \
-                _("%s: fatal internal error at %s:%d (%s): %s\n"), \
-                program_name, __FILE__, (int)__LINE__,             \
-                __func__, msg);                                    \
-        flex_exit(1);                                              \
-    } while (0)
-#else /* ! HAVE_DECL___FUNC__ */
-#define flex_die(msg)                                        \
-    do                                                       \
-    {                                                        \
-        fprintf(stderr,                                      \
-                _("%s: fatal internal error at %s:%d %s\n"), \
-                program_name, __FILE__, (int)__LINE__,       \
-                msg);                                        \
-        flex_exit(1);                                        \
-    } while (0)
-#endif /* ! HAVE_DECL___func__ */
+void report_internal(const String &s, const char *file, int line, const char *func);
+
+#define flex_die(msg) report_internal(msg, __FILE__, __LINE__, __func__)
 
 /* Report an error message formatted  */
 void lerr(const char *, ...)
@@ -94,7 +76,7 @@ unsigned char myesc(unsigned char[]);
 /* Return a printable version of the given character, which might be
 * 8-bit.
 */
-char *readable_form(int);
+const char *readable_form(int);
 
 /* Write out one section of the skeleton file. */
 void skelout(void);
