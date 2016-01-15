@@ -39,7 +39,9 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake Targets")
 
 project(flex C CXX)
 
-enable_testing()
+if (WITH_TESTS)
+    enable_testing()
+endif()
 
 set(VERSION_MAJOR 3)
 set(VERSION_MINOR 0)
@@ -91,6 +93,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(doc)
 add_subdirectory(src)
-add_subdirectory(tests)
+
+if (WITH_TESTS)
+    add_subdirectory(tests)
+endif()
 
 ###############################################################################

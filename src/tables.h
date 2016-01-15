@@ -31,18 +31,24 @@
  *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  *  PURPOSE.
  */
-
-#ifndef TABLES_H
-#define TABLES_H
+
+#pragma once
+
+#include <stdio.h>
+
+#include "common.h"
+#include "flexint.h"
 
 /* Tables serialization API declarations. */
 #include "tables_shared.h"
-struct yytbl_writer {
-	FILE   *out;
-	flex_uint32_t total_written;
-			    /**< bytes written so far */
-	fpos_t  th_ssize_pos;
-			    /**< position of th_ssize */
+
+struct yytbl_writer
+{
+    FILE *out;
+    flex_uint32_t total_written;
+    /**< bytes written so far */
+    fpos_t th_ssize_pos;
+    /**< position of th_ssize */
 };
 
 /* These are used by main.c, gen.c, etc.
@@ -53,21 +59,16 @@ struct yytbl_writer {
  * tablesverify - true if tables-verify option specified
  * gentables - true if we should spit out the normal C tables
  */
-extern bool tablesext, tablesverify,gentables;
-extern char *tablesfilename, *tablesname;
+extern bool tablesext, tablesverify, gentables;
+extern String tablesfilename, tablesname;
 extern struct yytbl_writer tableswr;
 
-int     yytbl_writer_init (struct yytbl_writer *, FILE *);
-int     yytbl_hdr_init (struct yytbl_hdr *th, const char *version_str,
-			const char *name);
-int     yytbl_data_init (struct yytbl_data *tbl, enum yytbl_id id);
-int     yytbl_data_destroy (struct yytbl_data *td);
-int     yytbl_hdr_fwrite (struct yytbl_writer *wr,
-			  const struct yytbl_hdr *th);
-int     yytbl_data_fwrite (struct yytbl_writer *wr, struct yytbl_data *td);
-void    yytbl_data_compress (struct yytbl_data *tbl);
-struct yytbl_data *mkftbl (void);
-
-#endif
-
-/* vim:set expandtab cindent tabstop=4 softtabstop=4 shiftwidth=4 textwidth=0: */
+int yytbl_writer_init(struct yytbl_writer *, FILE *);
+int yytbl_hdr_init(struct yytbl_hdr *th, const String& version_str, const String& name);
+int yytbl_data_init(struct yytbl_data *tbl, enum yytbl_id id);
+int yytbl_data_destroy(struct yytbl_data *td);
+int yytbl_hdr_fwrite(struct yytbl_writer *wr,
+                     const struct yytbl_hdr *th);
+int yytbl_data_fwrite(struct yytbl_writer *wr, struct yytbl_data *td);
+void yytbl_data_compress(struct yytbl_data *tbl);
+struct yytbl_data *mkftbl(void);

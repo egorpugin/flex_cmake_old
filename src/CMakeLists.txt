@@ -2,6 +2,22 @@
 # flex
 #
 
+########################################
+
+set(BSRC ${CMAKE_BINARY_DIR})
+
+set(_CPP ".*\\.cpp")
+set(CPP "${_CPP}$")
+
+set(_H ".*\\.h")
+set(H "${_H}$")
+
+set(H_CPP "(${H}|${CPP})")
+
+source_group("Generated Files" "${BSRC}/${H_CPP}")
+
+########################################
+
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${EXECUTABLE_OUTPUT_PATH}")
 
@@ -12,7 +28,7 @@ bison_target(parse
     "parse.y"
     "${CMAKE_CURRENT_BINARY_DIR}/parse.cpp"
     COMPILE_FLAGS "--defines=${CMAKE_CURRENT_BINARY_DIR}/parse.h"
-    DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parse.h
+    DEFINES_FILE "${CMAKE_CURRENT_BINARY_DIR}/parse.h"
 )
 flex_target(scan
     "${CMAKE_CURRENT_SOURCE_DIR}/scan.l"
@@ -45,27 +61,36 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp
 
 set(common_flex_src
     ccl.cpp
+    ccl.h
+    common.h
     dfa.cpp
+    dfa.h
     ecs.cpp
+    ecs.h
     flexdef.h
     flexint.h
     gen.cpp
+    gen.h
     gettext.h
     main.cpp
     misc.cpp
+    misc.h
     nfa.cpp
+    nfa.h
     options.cpp
     options.h
     scanflags.cpp
+    scanflags.h
     scanopt.cpp
     scanopt.h
     sym.cpp
+    sym.h
     tables.cpp
     tables.h
     tables_shared.cpp
     tables_shared.h
     tblcmp.cpp
-    version.h
+    tblcmp.h
     yylex.cpp
     
     ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp

@@ -79,7 +79,7 @@ file(APPEND ${AUTOCONFIG_SRC} "
 #define PACKAGE_VERSION \"@VERSION_PLAIN@\"
 
 /* Version number of package */
-#define VERSION \"@VERSION_PLAIN@\"
+#define FLEX_VERSION \"@VERSION_PLAIN@\"
 ")
 
 ########################################
