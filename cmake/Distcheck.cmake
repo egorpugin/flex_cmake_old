@@ -104,6 +104,11 @@ macro(add_distcheck)
         COMMAND ls -l
         
         COMMAND echo
+        COMMAND echo tar -xzvf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
+        COMMAND echo tar -xvf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz -C "${DISTCHECK_BASESOURCEDIR}"
+        COMMAND echo
+        
+        COMMAND echo
         COMMAND echo before tar
         COMMAND echo
 
