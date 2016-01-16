@@ -38,7 +38,7 @@
 /* ccl2ecl - convert character classes to set of equivalence classes */
 void ccl2ecl(void)
 {
-    for (int i = 1; i < ccls.size(); ++i)
+    for (size_t i = 1; i < ccls.size(); ++i)
     {
         /* We loop through each character class, and for each character
 		 * in the class, add the character's equivalence class to the
@@ -121,7 +121,7 @@ void mkeccl(const CharacterClass::Table &table, int fwd[], int bck[], int llsiz,
         auto j = std::next(iter);
         auto jt = it + 1;
 
-        for (int i = fwd[cclm]; i != NIL && i <= llsiz; i = fwd[i])
+        for (size_t i = fwd[cclm]; i != NIL && i <= llsiz; i = fwd[i])
         {
             /* look for the symbol in the character class */
             for (; j != table.end(); ++j, ++jt)

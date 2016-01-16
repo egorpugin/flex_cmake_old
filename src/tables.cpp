@@ -98,8 +98,8 @@ int yytbl_hdr_init(struct yytbl_hdr *th, const String& version_str, const String
     th->th_hsize += yypad64(th->th_hsize);
     th->th_ssize = 0; // Not known at this point.
     th->th_flags = 0;
-    th->th_version = xstrdup(version_str.c_str());
-    th->th_name = xstrdup(name.c_str());
+    th->th_version = strdup(version_str.c_str());
+    th->th_name = strdup(name.c_str());
     return 0;
 }
 
@@ -110,7 +110,6 @@ int yytbl_hdr_init(struct yytbl_hdr *th, const String& version_str, const String
  */
 int yytbl_data_init(struct yytbl_data *td, enum yytbl_id id)
 {
-
     memset(td, 0, sizeof(struct yytbl_data));
     td->td_id = id;
     td->td_flags = YYTD_DATA32;

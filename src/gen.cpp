@@ -108,7 +108,6 @@ void out_str_dec(const char *fmt, const char str[], int n)
  */
 static struct yytbl_data *mkeoltbl(void)
 {
-    int i;
     flex_int8_t *tdata = 0;
     struct yytbl_data *tbl;
 
@@ -119,7 +118,7 @@ static struct yytbl_data *mkeoltbl(void)
     tbl->td_data = tdata =
         (decltype(tdata))calloc(tbl->td_lolen, sizeof(flex_int8_t));
 
-    for (i = 1; i < rules.size(); i++)
+    for (size_t i = 1; i < rules.size(); i++)
         tdata[i] = rules[i].has_nl ? 1 : 0;
 
     yydmap_buf.addLine("\t{YYTD_ID_RULE_CAN_MATCH_EOL, (void**)&yy_rule_can_match_eol, sizeof(flex_int32_t)},");
@@ -130,15 +129,13 @@ static struct yytbl_data *mkeoltbl(void)
 /* Generate the table for possible eol matches. */
 static void geneoltbl(void)
 {
-    int i;
-
     outn("m4_ifdef( [[M4_YY_USE_LINENO]],[[");
     outn("/* Table of booleans, true if rule could match eol. */");
     out_str_dec(get_int32_decl(), "yy_rule_can_match_eol", rules.size());
 
     if (gentables)
     {
-        for (i = 1; i < rules.size(); i++)
+        for (size_t i = 1; i < rules.size(); i++)
         {
             processed_file << (rules[i].has_nl ? 1 : 0) << ", " << Context::eol;
             /* format nicely, 20 numbers per line. */
@@ -204,7 +201,6 @@ void gen_bu_action(void)
  */
 yytbl_data *mkctbl(void)
 {
-    int i;
     struct yytbl_data *tbl = 0;
     flex_int32_t *tdata = 0, curr = 0;
     int end_of_buffer_action = EOB_ACTION;
@@ -218,8 +214,7 @@ yytbl_data *mkctbl(void)
     tbl->td_hilen = 0;
     tbl->td_lolen = tblend + numecs + 1; /* number of structs */
 
-    tbl->td_data = tdata =
-        (decltype(tdata))calloc(tbl->td_lolen * 2, sizeof(flex_int32_t));
+    tbl->td_data = tdata = (decltype(tdata))calloc(tbl->td_lolen * 2, sizeof(flex_int32_t));
 
     /* We want the transition to be represented as the offset to the
 	 * next state, not the actual state number, which is what it currently
@@ -259,7 +254,7 @@ yytbl_data *mkctbl(void)
 
     /* Make sure every state has an end-of-buffer transition and an action #. */
     // this loop should start from 0, not 1
-    for (i = 0; i < dfas.size(); ++i)
+    for (size_t i = 0; i < dfas.size(); ++i)
     {
         int anum = dfas[i].acc_state;
         int offset = dfas[i].base;
@@ -270,7 +265,7 @@ yytbl_data *mkctbl(void)
     }
 
     // this loop should start from 0, not 1
-    for (i = 0; i <= tblend; ++i)
+    for (size_t i = 0; i <= tblend; ++i)
     {
         if (chk[i] == EOB_POSITION)
         {
@@ -314,7 +309,6 @@ static struct yytbl_data *mkssltbl(void)
 {
     struct yytbl_data *tbl = 0;
     flex_int32_t *tdata = 0;
-    flex_int32_t i;
 
     tbl = (decltype(tbl))calloc(1, sizeof(struct yytbl_data));
     yytbl_data_init(tbl, YYTD_ID_START_STATE_LIST);
@@ -322,10 +316,9 @@ static struct yytbl_data *mkssltbl(void)
     tbl->td_hilen = 0;
     tbl->td_lolen = (start_conditions.size() - 1) * 2 + 1;
 
-    tbl->td_data = tdata =
-        (decltype(tdata))calloc(tbl->td_lolen, sizeof(flex_int32_t));
+    tbl->td_data = tdata = (decltype(tdata))calloc(tbl->td_lolen, sizeof(flex_int32_t));
 
-    for (i = 0; i <= (start_conditions.size() - 1) * 2; ++i)
+    for (size_t i = 0; i <= (start_conditions.size() - 1) * 2; ++i)
         tdata[i] = dfas[i].base;
 
     yydmap_buf.addLine("\t{YYTD_ID_START_STATE_LIST, (void**)&yy_start_state_list, sizeof(struct yy_trans_info*)},");

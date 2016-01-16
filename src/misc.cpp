@@ -131,16 +131,6 @@ unsigned char clower(int c)
     return (unsigned char)((isascii(c) && isupper(c)) ? tolower(c) : c);
 }
 
-char *xstrdup(const char *s)
-{
-    char *s2;
-
-    if ((s2 = strdup(s)) == NULL)
-        flexfatal(_("memory allocation failure in xstrdup()"));
-
-    return s2;
-}
-
 /* dataend - finish up a block of data declarations */
 void dataend(void)
 {

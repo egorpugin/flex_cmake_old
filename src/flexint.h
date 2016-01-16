@@ -21,7 +21,13 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+
 #else
+
+#if defined(__cplusplus) && __cplusplus >= 199711L
+#include <stdint.h>
+#endif
+
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
 typedef int flex_int32_t;
