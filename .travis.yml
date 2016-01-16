@@ -27,6 +27,7 @@ addons:
     - bison
     - texinfo
     - help2man
+    - tar
 
 before_install:
   - if [[ $TRAVIS_OS_NAME == linux   ]]; then LINUX=true; fi
