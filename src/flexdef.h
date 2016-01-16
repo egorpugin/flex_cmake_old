@@ -101,13 +101,6 @@
     (nfas[state].transchar == SYM_EPSILON && \
      nfas[state].trans1 == NO_TRANSITION)
 
-/* Maximum number of NFA states that can comprise a DFA state.  It's real
- * big because if there's a lot of rules, the initial state will have a
- * huge epsilon closure.
- */
-#define INITIAL_MAX_DFA_SIZE 750
-#define MAX_DFA_SIZE_INCREMENT 750
-
 /* A note on the following masks.  They are used to mark accepting numbers
  * as being special.  As such, they implicitly limit the number of accepting
  * numbers (i.e., rules) because if there are too many rules the rule numbers
