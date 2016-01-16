@@ -95,8 +95,20 @@ macro(add_distcheck)
         COMMAND rm -rf "${DISTCHECK_TMPDIR}"
         COMMAND mkdir -p "${DISTCHECK_SOURCEDIR}" "${DISTCHECK_BUILDDIR}"
 
+        COMMAND echo
+        COMMAND echo pwd
+        COMMAND pwd
+
+        COMMAND echo
+        COMMAND echo ls -l
+        COMMAND ls -l
+
         # extract tarball
         COMMAND tar xvf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz -C "${DISTCHECK_BASESOURCEDIR}"
+
+        COMMAND echo
+        COMMAND echo pwd
+        COMMAND pwd
 
         COMMAND echo
         COMMAND echo CPACK_SOURCE_PACKAGE_FILE_NAME
