@@ -96,6 +96,10 @@ macro(add_distcheck)
 
         # extract tarball
         COMMAND tar xzf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz -C "${DISTCHECK_BASESOURCEDIR}"
+
+        COMMAND ls ${DISTCHECK_BASESOURCEDIR}
+        COMMAND ls ${DISTCHECK_SOURCEDIR}
+
         # write-protect sources to detect modifies-sourcetree bugs
         COMMAND chmod -R a-w "${DISTCHECK_SOURCEDIR}"
 

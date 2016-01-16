@@ -3,7 +3,6 @@ if (NOT GETTEXT_FOUND)
 endif()
 
 set(sdir ${CMAKE_SOURCE_DIR}/src)
-set(bdir ${CMAKE_BINARY_DIR}/src)
 set(src_list
     ${sdir}/ccl.cpp
     ${sdir}/dfa.cpp
