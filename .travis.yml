@@ -4,6 +4,7 @@ notifications:
   email:
     recipients:
       - egor.pugin@gmail.com
+    on_failure: change
   
 sudo: required
 dist: trusty
