@@ -96,7 +96,7 @@ macro(add_distcheck)
         COMMAND mkdir -p "${DISTCHECK_SOURCEDIR}" "${DISTCHECK_BUILDDIR}"
 
         # extract tarball
-        COMMAND tar xzf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz -C "${DISTCHECK_BASESOURCEDIR}"
+        COMMAND tar xvf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz -C "${DISTCHECK_BASESOURCEDIR}"
 
         COMMAND echo
         COMMAND echo CPACK_SOURCE_PACKAGE_FILE_NAME
