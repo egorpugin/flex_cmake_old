@@ -111,29 +111,22 @@ set(common_flex_src
 add_library(common ${common_flex_src})
 target_link_libraries(common simple_m4 ${winsock_lib})
 
-set(stage1flex_src
-    ${FLEX_scan_OUTPUTS}
-)
-
-add_library(stage1flex ${stage1flex_src})
+add_library(stage1flex ${FLEX_scan_OUTPUTS})
 target_link_libraries(stage1flex common)
 
 add_executable(stage1flexmain main.cpp)
-target_link_libraries(stage1flexmain stage1flex)
+target_link_libraries(stage1flexmain common stage1flex)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scan.cpp
     COMMAND stage1flexmain -o "${CMAKE_CURRENT_BINARY_DIR}/scan.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/scan.l"
     DEPENDS stage1flexmain scan.l
 )
 
-set(flex_src
-    "${CMAKE_CURRENT_BINARY_DIR}/scan.cpp"
-)
-
-add_library(flex ${flex_src})
-target_link_libraries(flex PRIVATE common)
+add_library(flex ${CMAKE_CURRENT_BINARY_DIR}/scan.cpp)
+target_link_libraries(flex common)
 
 add_executable(flexmain main.cpp)
-target_link_libraries(flexmain flex)
+target_link_libraries(flexmain common flex)
 set_target_properties(flexmain PROPERTIES OUTPUT_NAME flex)
 install(TARGETS flexmain RUNTIME DESTINATION bin)
+

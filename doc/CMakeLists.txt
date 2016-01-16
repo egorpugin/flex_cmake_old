@@ -23,8 +23,8 @@ add_custom_target(info ALL
 )
 
 add_custom_target(man ALL
-    COMMAND help2man --name='the fast lexical analyser generator' --section=1 $<TARGET_FILE:flex> > flex.1
-    DEPENDS flex
+    COMMAND help2man --name='the fast lexical analyser generator' --section=1 $<TARGET_FILE:flexmain> > flex.1
+    DEPENDS flexmain
 )
 
 add_custom_target(pdf
