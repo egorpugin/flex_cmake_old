@@ -71,10 +71,10 @@ set(common_flex_src
     ecs.h
     flexdef.h
     flexint.h
+    flexmain.cpp
     gen.cpp
     gen.h
     gettext.h
-    main.cpp
     misc.cpp
     misc.h
     nfa.cpp
@@ -115,19 +115,25 @@ set(stage1flex_src
     ${FLEX_scan_OUTPUTS}
 )
 
-add_executable(stage1flex ${stage1flex_src})
+add_library(stage1flex ${stage1flex_src})
 target_link_libraries(stage1flex common)
 
+add_executable(stage1flexmain main.cpp)
+target_link_libraries(stage1flexmain stage1flex)
+
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scan.cpp
-    COMMAND stage1flex -o "${CMAKE_CURRENT_BINARY_DIR}/scan.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/scan.l"
-    DEPENDS stage1flex scan.l
+    COMMAND stage1flexmain -o "${CMAKE_CURRENT_BINARY_DIR}/scan.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/scan.l"
+    DEPENDS stage1flexmain scan.l
 )
 
 set(flex_src
     "${CMAKE_CURRENT_BINARY_DIR}/scan.cpp"
 )
 
-add_executable(flex ${flex_src})
-target_link_libraries(flex common)
-install(TARGETS flex RUNTIME DESTINATION bin)
+add_library(flex ${flex_src})
+target_link_libraries(flex PRIVATE common)
 
+add_executable(flexmain main.cpp)
+target_link_libraries(flexmain flex)
+set_target_properties(flexmain PROPERTIES OUTPUT_NAME flex)
+install(TARGETS flexmain RUNTIME DESTINATION bin)
