@@ -96,39 +96,12 @@ macro(add_distcheck)
         COMMAND mkdir -p "${DISTCHECK_SOURCEDIR}" "${DISTCHECK_BUILDDIR}"
 
         COMMAND echo
-        COMMAND echo pwd
-        COMMAND pwd
-
-        COMMAND echo
-        COMMAND echo ls -l
-        COMMAND ls -l
-        
-        COMMAND echo
-        COMMAND echo tar -xzvf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
-        COMMAND echo tar -xvf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz -C "${DISTCHECK_BASESOURCEDIR}"
-        COMMAND echo
-        
-        COMMAND echo
-        COMMAND echo before tar
-        COMMAND echo
-
-        COMMAND tar -xzvf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
-        
-        COMMAND echo
-        COMMAND echo after tar0
-        COMMAND echo
-
-        COMMAND echo
         COMMAND echo ls -l
         COMMAND ls -l
         
         # extract tarball
         COMMAND tar -xzvf ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz -C "${DISTCHECK_BASESOURCEDIR}"
-
-        COMMAND echo
-        COMMAND echo after tar
-        COMMAND echo
-
+        
         # write-protect sources to detect modifies-sourcetree bugs
         COMMAND chmod -R a-w "${DISTCHECK_SOURCEDIR}"
 
