@@ -102,6 +102,10 @@ if (WITH_TESTS)
     add_subdirectory(tests)
 endif()
 
+if (MSVC)
+    return()
+endif()
+
 ###############################################################################
 #
 # uninstall
