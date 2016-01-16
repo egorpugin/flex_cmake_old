@@ -90,8 +90,6 @@ int copysingl(int singl, int num)
 /* dumpnfa - debugging routine to write out an nfa */
 void dumpnfa(int state1)
 {
-    int sym, tsp1, tsp2, anum, ns;
-
     fprintf(stderr, _("\n\n********** beginning dump of nfa with start state %d\n"), state1);
 
     /* We probably should loop starting at firstst[state1] and going to
@@ -101,14 +99,14 @@ void dumpnfa(int state1)
 	 */
 
     /* for ( ns = firstst[state1]; ns <= lastst[state1]; ++ns ) */
-    for (ns = 1; ns < nfas.size(); ++ns)
+    for (size_t ns = 1; ns < nfas.size(); ++ns)
     {
         fprintf(stderr, _("state # %4d\t"), ns);
 
-        sym = nfas[ns].transchar;
-        tsp1 = nfas[ns].trans1;
-        tsp2 = nfas[ns].trans2;
-        anum = nfas[ns].accptnum;
+        int sym = nfas[ns].transchar;
+        int tsp1 = nfas[ns].trans1;
+        int tsp2 = nfas[ns].trans2;
+        int anum = nfas[ns].accptnum;
 
         fprintf(stderr, "%3d:  %4d, %4d", sym, tsp1, tsp2);
 

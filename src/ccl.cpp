@@ -132,7 +132,7 @@ int ccl_set_diff(int a, int b)
 /* ccl_set_union - create a new ccl as the set union of the two given ccls. */
 int ccl_set_union(int a, int b)
 {
-    int d, i;
+    int d;
 
     /* create new class  */
     d = cclinit();

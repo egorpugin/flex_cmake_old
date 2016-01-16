@@ -23,9 +23,6 @@ void check_char(int c);
 /* Replace upper-case letter to lower-case. */
 unsigned char clower(int);
 
-/* strdup() that fails fatally on allocation failures. */
-char *xstrdup(const char *);
-
 /* Finish up a block of data declarations. */
 void dataend();
 
