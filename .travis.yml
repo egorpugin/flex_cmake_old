@@ -49,5 +49,5 @@ install:
 script:
   - mkdir build
   - cd build
-  - if [[ $LINUX ]]; then cmake .. -DWITH_TESTS=1 && make distcheck   ; fi
+  - if [[ $LINUX ]]; then cmake .. -DWITH_TESTS=1 && make -j2 && make distcheck   ; fi
   - if [[ $OSX ]];   then cmake .. -DWITH_TESTS=1 && make -j2 && ctest; fi
