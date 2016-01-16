@@ -66,7 +66,7 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W2")
 elseif (UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fpermissive")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 endif()
 
 if (WIN32)
@@ -133,6 +133,7 @@ set(CPACK_SOURCE_PACKAGE_FILE_NAME
 set(CPACK_SOURCE_IGNORE_FILES "/build/;/.git/;~$;${CPACK_SOURCE_IGNORE_FILES}")
 
 include(CPack)
+
 include(Distcheck)
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 add_distcheck()

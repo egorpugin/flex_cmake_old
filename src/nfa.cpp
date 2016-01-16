@@ -101,7 +101,7 @@ void dumpnfa(int state1)
     /* for ( ns = firstst[state1]; ns <= lastst[state1]; ++ns ) */
     for (size_t ns = 1; ns < nfas.size(); ++ns)
     {
-        fprintf(stderr, _("state # %4d\t"), ns);
+        fprintf(stderr, _("state # %4d\t"), (int)ns);
 
         int sym = nfas[ns].transchar;
         int tsp1 = nfas[ns].trans1;

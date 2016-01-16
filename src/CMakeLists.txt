@@ -27,13 +27,14 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 bison_target(parse
-    "parse.y"
-    "${CMAKE_CURRENT_BINARY_DIR}/parse.cpp"
+    parse.y
+    ${CMAKE_CURRENT_BINARY_DIR}/parse.cpp
+    COMPILE_FLAGS "--defines=${CMAKE_CURRENT_BINARY_DIR}/parse.h"
     DEFINES_FILE "${CMAKE_CURRENT_BINARY_DIR}/parse.h"
 )
 flex_target(scan
-    "${CMAKE_CURRENT_SOURCE_DIR}/scan.l"
-    "${CMAKE_CURRENT_BINARY_DIR}/stage1scan.cpp"
+    ${CMAKE_CURRENT_SOURCE_DIR}/scan.l
+    ${CMAKE_CURRENT_BINARY_DIR}/stage1scan.cpp
 )
 
 set(context_src
@@ -56,8 +57,8 @@ target_link_libraries(prepare_skel simple_m4)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp
     COMMAND prepare_skel "${CMAKE_CURRENT_SOURCE_DIR}/flex.skl" "${CMAKE_CURRENT_BINARY_DIR}/skel.cpp"
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/flex.skl
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    DEPENDS prepare_skel flex.skl
 )
 
 set(common_flex_src
@@ -111,21 +112,24 @@ add_library(common ${common_flex_src})
 target_link_libraries(common simple_m4 ${winsock_lib})
 
 add_library(stage1flex ${FLEX_scan_OUTPUTS})
-target_link_libraries(stage1flex common)
+target_link_libraries(stage1flex PRIVATE common)
 
 add_executable(stage1flexmain main.cpp)
 target_link_libraries(stage1flexmain common stage1flex)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scan.cpp
     COMMAND stage1flexmain -o "${CMAKE_CURRENT_BINARY_DIR}/scan.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/scan.l"
-    DEPENDS stage1flexmain scan.l
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scan.l
 )
 
 add_library(flex ${CMAKE_CURRENT_BINARY_DIR}/scan.cpp)
-target_link_libraries(flex common)
+target_link_libraries(flex PRIVATE common)
 
 add_executable(flexmain main.cpp)
 target_link_libraries(flexmain common flex)
 set_target_properties(flexmain PROPERTIES OUTPUT_NAME flex)
+if (GETTEXT_FOUND)
+    add_dependencies(flexmain potfiles)
+endif()
 install(TARGETS flexmain RUNTIME DESTINATION bin)
 

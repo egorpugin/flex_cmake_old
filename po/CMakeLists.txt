@@ -2,8 +2,6 @@ if (NOT GETTEXT_FOUND)
     return()
 endif()
 
-file(GLOB po_files "${CMAKE_SOURCE_DIR}/po/*.po")
-
 set(sdir ${CMAKE_SOURCE_DIR}/src)
 set(bdir ${CMAKE_BINARY_DIR}/src)
 set(src_list
@@ -27,9 +25,12 @@ set(src_list
     ${sdir}/scan.l
 )
 
-SET(pot_file ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pot)
-ADD_CUSTOM_COMMAND(OUTPUT ${pot_file}
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/)
+
+set(pot_file ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pot)
+add_custom_command(OUTPUT ${pot_file}
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/
+    COMMAND chmod a+w ${CMAKE_CURRENT_BINARY_DIR}/*.po
     COMMAND xgettext --keyword=_ --keyword=N_ -o ${pot_file} ${src_list}
     DEPENDS ${src_list}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -37,7 +38,7 @@ ADD_CUSTOM_COMMAND(OUTPUT ${pot_file}
 )
 
 GETTEXT_PROCESS_POT_FILE(${pot_file}
-    INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}/share/locale/
+    INSTALL_DESTINATION "${CMAKE_INSTALL_PREFIX}/share/locale/"
     LANGUAGES
         ca
         da
