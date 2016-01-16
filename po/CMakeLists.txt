@@ -20,7 +20,7 @@ set(src_list
     ${sdir}/tables_shared.cpp
     ${sdir}/tblcmp.cpp
     ${sdir}/yylex.cpp
-    ${bdir}/skel.cpp
+    ${sdir}/flex.skl
     ${sdir}/parse.y
     ${sdir}/scan.l
 )
