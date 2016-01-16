@@ -31,9 +31,11 @@
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
-#include "flexdef.h"
-#include "parse.h"
 #include <ctype.h>
+
+#include <parse.h>
+
+#include "flexdef.h"
 
 /* Used to communicate between scanner and parser.  The type should really
 * be YYSTYPE, but we can't easily get our hands on it.

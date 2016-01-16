@@ -18,7 +18,10 @@ set(compare_suffix _compare)
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/empty_file.txt)
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/nodefault_warn.err.txt0 "nodefault_warn.l:7: warning, -s option given but default rule can be matched\n")
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS flexmain)
+add_custom_target(check
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
+    COMMAND ${CMAKE_CTEST_COMMAND}
+)
 
 ################################################################################
 

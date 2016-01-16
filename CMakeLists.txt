@@ -116,10 +116,26 @@ add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 ###############################################################################
+#
+# pack & distcheck
+#
+###############################################################################
 
+set(CPACK_GENERATOR "TGZ")
+set(CPACK_SOURCE_GENERATOR "TGZ")
 
-SET(CPACK_GENERATOR "TGZ")
-SET(CPACK_SOURCE_GENERATOR "TGZ")
+set(CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH})
+set(CPACK_SOURCE_PACKAGE_FILE_NAME
+    "${CMAKE_PROJECT_NAME}-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+set(CPACK_SOURCE_IGNORE_FILES "/build/;/.git/;~$;${CPACK_SOURCE_IGNORE_FILES}")
 
-INCLUDE(CPack)
+include(CPack)
+include(Distcheck)
+add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+add_distcheck()
+
+###############################################################################
+
 
