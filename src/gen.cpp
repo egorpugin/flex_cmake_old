@@ -1789,7 +1789,7 @@ void make_tables(void)
         if (use_read)
         {
             outn("\terrno=0; \\");
-            outn("\twhile ( (result = read( fileno(yyin), (char *) buf, max_size )) < 0 ) \\");
+            outn("\twhile ( (result = read( fileno(yyin), (char *) buf, (flex_uint32_t)max_size )) < 0 ) \\");
             outn("\t{ \\");
             outn("\t\tif( errno != EINTR) \\");
             outn("\t\t{ \\");
@@ -1800,7 +1800,6 @@ void make_tables(void)
             outn("\t\tclearerr(yyin); \\");
             outn("\t}\\");
         }
-
         else
         {
             outn("\tif ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \\");

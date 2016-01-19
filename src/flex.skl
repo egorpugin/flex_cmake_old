@@ -788,16 +788,12 @@ m4_ifdef( [[M4_YY_NO_UNISTD_H]],,
 %if-c-only
 m4_ifdef( [[M4_YY_NOT_IN_HEADER]],
 [[
-    m4_ifdef( [[M4_YY_ALWAYS_INTERACTIVE]],[[]],
-    [[
-        m4_ifdef( [[M4_YY_NEVER_INTERACTIVE]],[[]],
-        [[
 #ifdef WIN32
 #include <io.h>
+#define fileno _fileno
 #define isatty _isatty
+#define read _read
 #endif
-        ]])
-    ]])
 ]])
 %endif
 
