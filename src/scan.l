@@ -78,7 +78,7 @@ std::unordered_map<String, String> ndtbl;
     } while(0)
 
 #define YY_DECL \
-	int flexscan()
+	int flexscan(void)
 
 #define RETURNCHAR \
 	yylval = (unsigned char) yytext[0]; \
