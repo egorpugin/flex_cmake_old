@@ -1,8 +1,8 @@
 /* parse.y - parser for flex input */
 
 %token CHAR NUMBER SECTEND SCDECL XSCDECL NAME PREVCCL EOF_OP
-%token OPTION_OP TOK_OUTFILE TOK_PREFIX TOK_YYCLASS OPT_HEADER OPT_EXTRA_TYPE
-%token OPT_TABLES
+%token TOK_OPTION TOK_OUTFILE TOK_PREFIX TOK_YYCLASS TOK_HEADER_FILE TOK_EXTRA_TYPE
+%token TOK_TABLES_FILE
 
 %token CCE_ALNUM CCE_ALPHA CCE_BLANK CCE_CNTRL CCE_DIGIT CCE_GRAPH
 %token CCE_LOWER CCE_PRINT CCE_PUNCT CCE_SPACE CCE_UPPER CCE_XDIGIT
@@ -200,7 +200,7 @@ namelist1	:  namelist1 NAME
 			{ synerr( _("bad start condition list") ); }
 		;
 
-options		:  OPTION_OP optionlist
+options		:  TOK_OPTION optionlist
 		;
 
 optionlist	:  optionlist option
@@ -212,15 +212,15 @@ option		:  TOK_OUTFILE '=' NAME
 			outfilename = nmstr;
 			did_outfilename = 1;
 			}
-		|  OPT_EXTRA_TYPE '=' NAME
+		|  TOK_EXTRA_TYPE '=' NAME
 			{ extra_type = nmstr; }
 		|  TOK_PREFIX '=' NAME
 			{ prefix = nmstr; }
 		|  TOK_YYCLASS '=' NAME
 			{ yyclass = nmstr; }
-		|  OPT_HEADER '=' NAME
+		|  TOK_HEADER_FILE '=' NAME
 			{ headerfilename = nmstr; }
-	    |  OPT_TABLES '=' NAME
+	    |  TOK_TABLES_FILE '=' NAME
             { tablesext = true; tablesfilename = nmstr; }
 		;
 
