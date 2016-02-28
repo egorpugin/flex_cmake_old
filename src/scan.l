@@ -89,8 +89,11 @@ std::unordered_map<String, String> ndtbl;
 	return NAME;
 
 #define PUT_BACK_STRING(str, start) \
-	for ( int i = strlen( str ) - 1; i >= start; --i ) \
-		unput((str)[i])
+    {                               \
+        size_t i = strlen(str);     \
+        while (i > start)           \
+            unput((str)[--i]);      \
+    }
 
 #define CHECK_REJECT(str) \
 	if ( is_all_upper( str ) ) \
