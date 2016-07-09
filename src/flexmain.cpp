@@ -48,6 +48,7 @@
 #include "simple_m4.h"
 #include "gen.h"
 #include "scanflags.h"
+#include <parse.h>
 
 const std::string flex_version = FLEX_VERSION;
 
@@ -117,8 +118,6 @@ Rules rules(1); // make one dummy rule at 0 position
 bool tablesext, tablesverify, gentables;
 String tablesfilename, tablesname;
 struct yytbl_writer tableswr;
-
-int yyparse(); /* the YACC parser */
 
 /* Open the given file (if NULL, stdin) for scanning. */
 void set_input_file(const String &);
