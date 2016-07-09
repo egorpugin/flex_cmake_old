@@ -369,7 +369,7 @@ M4QEND      "]]"
 	main		{
 			ACTION_M4_IFDEF( "M4""_YY_MAIN", option_sense);
             /* Override yywrap */
-            if( option_sense == true )
+            if( option_sense )
                 do_yywrap = false;
 			}
 	meta-ecs	usemecs = option_sense;
