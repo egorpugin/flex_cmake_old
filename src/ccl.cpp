@@ -62,7 +62,7 @@ void ccladd(int cclp, int ch)
     /* mark newlines */
     if (ch == nlch)
         ccl.has_nl = true;
-    
+
     t.insert(ch);
 }
 

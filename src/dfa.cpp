@@ -175,7 +175,7 @@ void dump_associated_rules(FILE *file, int ds)
         }
     }
 
-    qsort(&rule_set[1], num_associated_rules, sizeof(rule_set[1]), intcmp);
+    qsort(&rule_set[1], (size_t)num_associated_rules, sizeof(rule_set[1]), intcmp);
 
     fprintf(file, _(" associated rule line numbers:"));
 
@@ -314,7 +314,7 @@ void epsclosure(std::vector<int> &t, int *ns_addr, std::vector<int> &accset, int
         if (nfaccnum != NIL || nfas[state].transchar != SYM_EPSILON) \
             ADD_STATE(state);                                   \
     } while (0)
-    
+
     nacc = stkend = hashval = 0;
 
     for (nstate = 1; nstate <= numstates; ++nstate)
@@ -412,7 +412,7 @@ void ntod()
 	 * need only know the bounds of the dfas to be processed.
 	 */
     todo_head = todo_next = 0;
-    
+
     if (trace)
     {
         dumpnfa(start_conditions[1].set);
@@ -608,7 +608,7 @@ void ntod()
             state[i] = 0;
 
         int ds = ++todo_head;
-        
+
         if (trace)
             fprintf(stderr, _("state # %d:\n"), ds);
 
@@ -819,7 +819,7 @@ int snstods(std::vector<int> &sns, int numstates, std::vector<int> &accset, int 
                     /* We sort the states in sns so we
                      * can compare it to oldsns quickly.
                      */
-                    qsort(&sns[1], numstates, sizeof(sns[1]), intcmp);
+                    qsort(&sns[1], (size_t)numstates, sizeof(sns[1]), intcmp);
                     didsort = 1;
                 }
 
@@ -851,7 +851,7 @@ int snstods(std::vector<int> &sns, int numstates, std::vector<int> &accset, int 
 	 * so that future comparisons with it can be made quickly.
 	 */
     if (!didsort)
-        qsort(&sns[1], numstates, sizeof(sns[1]), intcmp);
+        qsort(&sns[1], (size_t)numstates, sizeof(sns[1]), intcmp);
 
     dfa.dss.resize(numstates + 1, 0);
     for (i = 1; i <= numstates; ++i)
@@ -870,7 +870,7 @@ int snstods(std::vector<int> &sns, int numstates, std::vector<int> &accset, int 
 		 * disambiguating rule that the first rule listed is considered
 		 * match in the event of ties will work.
 		 */
-        qsort(&accset[1], nacc, sizeof(accset[1]), intcmp);
+        qsort(&accset[1], (size_t)nacc, sizeof(accset[1]), intcmp);
 
         /* Save the accepting set for later */
         dfa.acc_set = std::make_shared<Dfa::AccSet>(nacc + 1);
