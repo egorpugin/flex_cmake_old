@@ -234,7 +234,7 @@ M4QEND      "]]"
 <EXTENDED_COMMENT>{
     ")"         yy_pop_state();
     [^\n\)]+      ;
-    {NL}        ++linenum;        
+    {NL}        ++linenum;
 }
 
 <LINEDIR>{
@@ -601,7 +601,7 @@ M4QEND      "]]"
 
 	"["({FIRST_CCL_CHAR}|{CCL_EXPR})({CCL_CHAR}|{CCL_EXPR})*	{
 			nmstr = yytext;
-            
+
                 /* Push back everything but the leading bracket
                  * so the ccl can be rescanned.
                  */
@@ -676,7 +676,7 @@ M4QEND      "]]"
                     if (lex_compat || posix_compat){
                         /* Push back the "?#" and treat it like a normal parens. */
                         yyless(1);
-                        sf_push(); 
+                        sf_push();
                         return '(';
                     }
                     else
