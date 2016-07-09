@@ -94,7 +94,7 @@ set(common_flex_src
     tblcmp.cpp
     tblcmp.h
     yylex.cpp
-    
+
     ${CMAKE_CURRENT_BINARY_DIR}/skel.cpp
 
     ${CMAKE_BINARY_DIR}/config.h

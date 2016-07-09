@@ -220,10 +220,10 @@ void line_directive_out(bool print, bool do_infile)
         filename = "<stdin>";
 
     replace_all(filename, "\\", "\\\\");
-    
+
     std::ostringstream ss;
     ss << "#line " << (do_infile ? linenum : 0) << " \"" << filename << "\"" << "\n";
-    
+
     /* If print is false then we should put the directive in
 	 * the accumulated actions.
 	 */
@@ -535,7 +535,7 @@ void skelout(void)
             {
                 /* only for C++ */
                 sko_stack.push(do_copy);
-                do_copy = C_plus_plus;
+                do_copy = !!C_plus_plus;
             }
             else if (cmd_match(CMD_IF_C_ONLY))
             {
@@ -604,6 +604,6 @@ void report_internal(const String &s, const char *file, int line, const char *fu
 {
     fprintf(stderr, _("%s: fatal internal error at %s:%d (%s): %s\n"),
         program_name.c_str(), file, line, func, s.c_str());
-    flex_exit(1); 
+    flex_exit(1);
 }
 
