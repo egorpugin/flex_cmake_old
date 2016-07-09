@@ -173,7 +173,7 @@ scanopt_t *scanopt_init(const optspec_t *options, int argc, char **argv, int fla
         s->optc++;
 
     /* Build auxiliary data */
-    s->aux = (decltype(s->aux))malloc(s->optc * sizeof(struct _aux));
+    s->aux = (decltype(s->aux))malloc((size_t) s->optc * sizeof(struct _aux));
 
     for (i = 0; i < s->optc; i++)
     {
@@ -284,7 +284,7 @@ int scanopt_usage(scanopt_t *scanner, FILE *fp, const char *usage)
     fprintf(fp, "\n");
 
     /* Sort by r_val and string. Yes, this is O(n*n), but n is small. */
-    store = (decltype(store))malloc(s->optc * sizeof(usg_elem));
+    store = (decltype(store))malloc((size_t) s->optc * sizeof(usg_elem));
     for (i = 0; i < s->optc; i++)
     {
 
