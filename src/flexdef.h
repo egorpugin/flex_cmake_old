@@ -280,7 +280,6 @@ extern int trace_hex;
  * skelfile - the skeleton file
  * skel - compiled-in skeleton array
  * skel_ind - index into "skel" array, if skelfile is nil
- * yyin - input file
  * backing_up_file - file to summarize backing-up states to
  * infilename - name of input file
  * outfilename - name of output file
