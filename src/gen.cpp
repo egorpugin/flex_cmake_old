@@ -721,14 +721,14 @@ void gen_next_compressed_state(char *char_map)
         processed_file << "if ( yy_current_state >= " << (dfas.size() + 1) << " )" << Context::eol;
 
         ++indent_level;
-        indent_puts("yy_c = yy_meta[(unsigned int) yy_c];");
+        indent_puts("yy_c = yy_meta[yy_c];");
         --indent_level;
     }
 
     indent_puts("}");
     --indent_level;
 
-    indent_puts("yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];");
+    indent_puts("yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];");
 }
 
 /* Generate the code to find the next match. */
@@ -775,7 +775,7 @@ void gen_next_match(void)
         indent_puts("yyconst struct yy_trans_info *yy_trans_info;\n");
         indent_puts("YY_CHAR yy_c;\n");
         processed_file << "for ( yy_c = " << char_map << ";" << Context::eol;
-        indent_puts("      (yy_trans_info = &yy_current_state[(unsigned int) yy_c])->");
+        indent_puts("      (yy_trans_info = &yy_current_state[yy_c])->");
         indent_puts("yy_verify == yy_c;");
         processed_file << "      yy_c = " << char_map_2 << " )" << Context::eol;
 

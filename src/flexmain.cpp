@@ -1347,11 +1347,8 @@ void readin(void)
     if (ddebug)
         outn("\n#define FLEX_DEBUG");
 
-    OUT_BEGIN_CODE();
-    if (csize == 256)
-        outn("typedef unsigned char YY_CHAR;");
-    else
-        outn("typedef char YY_CHAR;");
+	OUT_BEGIN_CODE();
+	outn("typedef flex_uint8_t YY_CHAR;");
     OUT_END_CODE();
 
     if (C_plus_plus)
