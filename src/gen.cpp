@@ -1887,7 +1887,7 @@ void make_tables(void)
     indent_puts("if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )");
     ++indent_level;
     indent_puts("{");
-    indent_puts("yy_size_t yyl;");
+    indent_puts("int yyl;");
     //do_indent ();
     processed_file << "for ( yyl = " << (yymore_used ? (yytext_is_array ? "YY_G(yy_prev_more_offset)" : "YY_G(yy_more_len)") : "0") << "; yyl < yyleng; ++yyl )" << Context::eol;
     ++indent_level;
