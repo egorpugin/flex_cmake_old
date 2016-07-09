@@ -303,8 +303,7 @@ int find_table_space(int *state, int numtrans)
 	 * consecutive unused records in the chk and nxt arrays.
 	 */
     int i;
-    int *state_ptr, *chk_ptr;
-    int *ptr_to_last_entry_in_state;
+    int *state_ptr;
 
     /* If there are too many out-transitions, put the state at the end of
 	 * nxt and chk.
@@ -378,16 +377,14 @@ int find_table_space(int *state, int numtrans)
 		 */
 
         state_ptr = &state[1];
-        ptr_to_last_entry_in_state = &chk[i + numecs + 1];
 
-        for (chk_ptr = &chk[i + 1];
-             chk_ptr != ptr_to_last_entry_in_state; ++chk_ptr)
-            if (*(state_ptr++) != 0 && *chk_ptr != 0)
+		auto it = chk.begin() + i + 1;
+		for (; it != chk.end(); ++it)
+            if (*(state_ptr++) != 0 && *it != 0)
                 break;
 
-        if (chk_ptr == ptr_to_last_entry_in_state)
+        if (it == chk.end())
             return i;
-
         else
             ++i;
     }
@@ -535,7 +532,7 @@ void mkentry(int *state, int numchars, int statenum, int deflink, int totaltrans
             /* Using baseaddr would result in a negative base
 			 * address below; find the next free slot.
 			 */
-            for (++baseaddr; chk[baseaddr] != 0; ++baseaddr)
+            for (++baseaddr; baseaddr < chk.size() && chk[baseaddr] != 0; ++baseaddr)
                 ;
         }
 
@@ -618,7 +615,7 @@ void mk1tbl(int state, int sym, int onenxt, int onedef)
     if (firstfree < sym)
         firstfree = sym;
 
-    while (chk[firstfree] != 0)
+    while (firstfree >= chk.size() || chk[firstfree] != 0)
     {
         if (++firstfree + 1 > chk.size())
         {
