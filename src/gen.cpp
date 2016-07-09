@@ -1789,7 +1789,7 @@ void make_tables(void)
         if (use_read)
         {
             outn("\terrno=0; \\");
-            outn("\twhile ( (result = (int) read( fileno(yyin), buf, (flex_uint32_t)max_size )) < 0 ) \\");
+            outn("\twhile ( (result = (int) read( fileno(yyin), buf, (yy_size_t)max_size )) < 0 ) \\");
             outn("\t{ \\");
             outn("\t\tif( errno != EINTR) \\");
             outn("\t\t{ \\");
@@ -1805,7 +1805,7 @@ void make_tables(void)
             outn("\tif ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \\");
             outn("\t\t{ \\");
             outn("\t\tint c = '*'; \\");
-            outn("\t\tsize_t n; \\");
+            outn("\t\tint n; \\");
             outn("\t\tfor ( n = 0; n < max_size && \\");
             outn("\t\t\t     (c = getc( yyin )) != EOF && c != '\\n'; ++n ) \\");
             outn("\t\t\tbuf[n] = (char) c; \\");
@@ -1818,7 +1818,7 @@ void make_tables(void)
             outn("\telse \\");
             outn("\t\t{ \\");
             outn("\t\terrno=0; \\");
-            outn("\t\twhile ( (result = fread(buf, 1, max_size, yyin))==0 && ferror(yyin)) \\");
+            outn("\t\twhile ( (result = (int) fread(buf, 1, (yy_size_t) max_size, yyin))==0 && ferror(yyin)) \\");
             outn("\t\t\t{ \\");
             outn("\t\t\tif( errno != EINTR) \\");
             outn("\t\t\t\t{ \\");
