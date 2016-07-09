@@ -197,7 +197,7 @@ scanopt_t *scanopt_init(const optspec_t *options, int argc, char **argv, int fla
             pname = (const unsigned char *)(opt->opt_fmt + 1);
             s->has_short = 1;
         }
-        aux->printlen = strlen(opt->opt_fmt);
+        aux->printlen = (int)strlen(opt->opt_fmt);
 
         aux->namelen = 0;
         for (p = pname + 1; *p; p++)
@@ -390,7 +390,7 @@ int scanopt_usage(scanopt_t *scanner, FILE *fp, const char *usage)
             maxlen[0] = len;
 
         /* It's much easier to calculate length for description column! */
-        len = strlen(DESC(s, ue->idx));
+        len = (int) strlen(DESC(s, ue->idx));
         if (len > maxlen[1])
             maxlen[1] = len;
     }
@@ -797,7 +797,7 @@ int scanopt(scanopt_t *svoid, char **arg, int *optindex)
             arglen = 0;
         }
         else
-            arglen = strlen(optarg);
+            arglen = (int)strlen(optarg);
     }
 
     /* At this point, we have a long or short option matched at opt_offset into

@@ -48,7 +48,7 @@
 
 /** Convert size_t to t_flag.
  *  @param n in {1,2,4}
- *  @return YYTD_DATA*. 
+ *  @return YYTD_DATA*.
  */
 #define BYTES2TFLAG(n)                    \
     (((n) == sizeof(flex_int8_t))         \
@@ -163,12 +163,12 @@ int yytbl_hdr_fwrite(struct yytbl_writer *wr, const struct yytbl_hdr *th)
         flex_die(_("th_ssize|th_flags write failed"));
     bwritten += 6;
 
-    sz = strlen(th->th_version) + 1;
+    sz = (int)strlen(th->th_version) + 1;
     if ((rv = yytbl_writen(wr, th->th_version, sz)) != sz)
         flex_die(_("th_version writen failed"));
     bwritten += rv;
 
-    sz = strlen(th->th_name) + 1;
+    sz = (int)strlen(th->th_name) + 1;
     if ((rv = yytbl_writen(wr, th->th_name, sz)) != sz)
         flex_die(_("th_name writen failed"));
     bwritten += rv;
@@ -339,7 +339,7 @@ int yytbl_write8(struct yytbl_writer *wr, flex_uint8_t v)
 
 /* XXX Not Used */
 #if 0
-/** Extract data element [i][j] from array data tables. 
+/** Extract data element [i][j] from array data tables.
  * @param tbl data table
  * @param i index into higher dimension array. i should be zero for one-dimensional arrays.
  * @param j index into lower dimension array.
@@ -377,7 +377,7 @@ static flex_int32_t yytbl_data_getijk (const struct yytbl_data *tbl, int i,
 
 /** Extract data element [i] from array data tables treated as a single flat array of integers.
  * Be careful for 2-dimensional arrays or for YYTD_ID_TRANSITION, which is an array
- * of structs. 
+ * of structs.
  * @param tbl data table
  * @param i index into array.
  * @return data[i]
@@ -402,7 +402,7 @@ static flex_int32_t yytbl_data_geti(const struct yytbl_data *tbl, int i)
 
 /** Set data element [i] in array data tables treated as a single flat array of integers.
  * Be careful for 2-dimensional arrays or for YYTD_ID_TRANSITION, which is an array
- * of structs. 
+ * of structs.
  * @param tbl data table
  * @param i index into array.
  * @param newval new value for data[i]
