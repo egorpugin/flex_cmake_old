@@ -529,7 +529,8 @@ void check_options(void)
     processed_file += m4defs_buf;
 
     /* Place a bogus line directive, it will be fixed in the filter. */
-    outn("#line 0 \"M4_YY_OUTFILE_NAME\"\n");
+	if (gen_line_dirs)
+		outn("#line 0 \"M4_YY_OUTFILE_NAME\"\n");
 
     /* Dump the user defined preproc directives. */
     if (!userdef_buf.empty())
