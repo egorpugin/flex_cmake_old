@@ -32,7 +32,7 @@ dnl  THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
 dnl  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 dnl  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 dnl  PURPOSE.
-
+
 dnl
 dnl  This file is meant to be included in both the skeleton and the actual
 dnl  flex code (hence the name "_shared").
